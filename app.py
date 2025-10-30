@@ -98,24 +98,64 @@ def generate_image():
 def generate_video():
     """Generate a video using Vertex AI Veo"""
     try:
-        data = request.get_json()
-        prompt = data.get('prompt')
+        # Handle both JSON and form data
+        if request.is_json:
+            data = request.get_json()
+        else:
+            data = request.form.to_dict()
 
-        if not prompt:
-            return jsonify({'error': 'Prompt is required'}), 400
+        prompt = data.get('prompt', '')
+
+        # Prompt is optional if image is provided
+        has_image = 'input_image' in request.files
+        if not prompt and not has_image:
+            return jsonify({'error': 'Either prompt or input image is required'}), 400
 
         # Optional parameters
         model = data.get('model', 'veo-3.1-generate-001')
         aspect_ratio = data.get('aspect_ratio', '16:9')
-        duration_seconds = data.get('duration_seconds', 8)
+        duration_seconds = int(data.get('duration_seconds', 8))
         resolution = data.get('resolution', '720p')
         compression_quality = data.get('compression_quality', 'optimized')
-        enhance_prompt = data.get('enhance_prompt', True)
-        generate_audio = data.get('generate_audio', False)
+        enhance_prompt = data.get('enhance_prompt', 'true').lower() == 'true'
+        generate_audio = data.get('generate_audio', 'false').lower() == 'true'
         negative_prompt = data.get('negative_prompt', '')
         person_generation = data.get('person_generation', 'allow_adult')
-        sample_count = data.get('sample_count', 1)
-        seed = data.get('seed', None)
+        sample_count = int(data.get('sample_count', 1))
+        seed_val = data.get('seed', None)
+        seed = int(seed_val) if seed_val and seed_val != 'null' else None
+        resize_mode = data.get('resize_mode', 'pad')
+        storage_uri = data.get('storage_uri', None)
+
+        # Handle file uploads
+        image_bytes = None
+        last_frame_bytes = None
+        reference_images = None
+
+        if 'input_image' in request.files:
+            file = request.files['input_image']
+            if file.filename:
+                image_bytes = file.read()
+
+        if 'last_frame' in request.files:
+            file = request.files['last_frame']
+            if file.filename:
+                last_frame_bytes = file.read()
+
+        # Handle reference images (up to 3)
+        ref_imgs = []
+        for i in range(1, 4):
+            field_name = f'reference_image_{i}'
+            if field_name in request.files:
+                file = request.files[field_name]
+                if file.filename:
+                    ref_type = data.get(f'reference_type_{i}', 'asset')
+                    ref_imgs.append({
+                        'bytes': file.read(),
+                        'type': ref_type
+                    })
+        if ref_imgs:
+            reference_images = ref_imgs
 
         # Generate video
         video_path = media_generator.generate_video(
@@ -130,7 +170,12 @@ def generate_video():
             negative_prompt=negative_prompt,
             person_generation=person_generation,
             sample_count=sample_count,
-            seed=seed
+            seed=seed,
+            resize_mode=resize_mode,
+            storage_uri=storage_uri,
+            image_bytes=image_bytes,
+            last_frame_bytes=last_frame_bytes,
+            reference_images=reference_images
         )
 
         # Read video file and convert to base64

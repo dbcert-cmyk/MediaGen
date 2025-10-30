@@ -378,14 +378,57 @@
                 <h2 style="margin-bottom: 25px;">Generate Video with Veo 3.1</h2>
                 <form id="video-form">
                     <div class="form-group">
-                        <label for="video-prompt">Prompt *</label>
-                        <textarea id="video-prompt" placeholder="Describe the video you want to generate..." required></textarea>
+                        <label for="video-prompt">Prompt (Required for text-to-video)</label>
+                        <textarea id="video-prompt" placeholder="Describe the video you want to generate..."></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="video-negative-prompt">Negative Prompt (Optional)</label>
                         <input type="text" id="video-negative-prompt" placeholder="Things to avoid in the video...">
                     </div>
+
+                    <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">📷 Image Inputs (Optional)</h3>
+
+                    <div class="form-group">
+                        <label for="input-image">Input Image (for Image-to-Video)</label>
+                        <input type="file" id="input-image" accept="image/jpeg,image/png,image/webp">
+                        <small style="color: #666;">Upload an image to animate</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="last-frame">Last Frame Image</label>
+                        <input type="file" id="last-frame" accept="image/jpeg,image/png,image/webp">
+                        <small style="color: #666;">Specify the final frame of the video</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reference-image-1">Reference Image 1</label>
+                        <input type="file" id="reference-image-1" accept="image/jpeg,image/png,image/webp">
+                        <select id="reference-type-1" style="margin-top: 5px;">
+                            <option value="asset">Asset (Subject/Scene/Object)</option>
+                            <option value="style">Style (Colors/Lighting)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reference-image-2">Reference Image 2</label>
+                        <input type="file" id="reference-image-2" accept="image/jpeg,image/png,image/webp">
+                        <select id="reference-type-2" style="margin-top: 5px;">
+                            <option value="asset">Asset (Subject/Scene/Object)</option>
+                            <option value="style">Style (Colors/Lighting)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reference-image-3">Reference Image 3</label>
+                        <input type="file" id="reference-image-3" accept="image/jpeg,image/png,image/webp">
+                        <select id="reference-type-3" style="margin-top: 5px;">
+                            <option value="asset">Asset (Subject/Scene/Object)</option>
+                            <option value="style">Style (Colors/Lighting)</option>
+                        </select>
+                    </div>
+
+                    <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">⚙️ Video Settings</h3>
 
                     <div class="row">
                         <div class="form-group">
@@ -457,6 +500,21 @@
                         <div class="form-group">
                             <label for="video-seed">Seed (Optional)</label>
                             <input type="number" id="video-seed" placeholder="0-4294967295" min="0" max="4294967295">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="video-resize-mode">Resize Mode (Image-to-Video)</label>
+                            <select id="video-resize-mode">
+                                <option value="pad" selected>Pad (Default)</option>
+                                <option value="crop">Crop</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="video-storage-uri">Storage URI (Optional)</label>
+                            <input type="text" id="video-storage-uri" placeholder="gs://bucket/path">
                         </div>
                     </div>
 
@@ -585,8 +643,79 @@
             const sampleCount = parseInt(document.getElementById('video-sample-count').value);
             const seedInput = document.getElementById('video-seed').value;
             const seed = seedInput ? parseInt(seedInput) : null;
+            const resizeMode = document.getElementById('video-resize-mode').value;
+            const storageUri = document.getElementById('video-storage-uri').value;
             const enhancePrompt = document.getElementById('video-enhance-prompt').checked;
             const generateAudio = document.getElementById('video-generate-audio').checked;
+
+            // Get file inputs
+            const inputImage = document.getElementById('input-image').files[0];
+            const lastFrame = document.getElementById('last-frame').files[0];
+            const refImage1 = document.getElementById('reference-image-1').files[0];
+            const refImage2 = document.getElementById('reference-image-2').files[0];
+            const refImage3 = document.getElementById('reference-image-3').files[0];
+
+            // Use FormData if files are present, otherwise use JSON
+            const hasFiles = inputImage || lastFrame || refImage1 || refImage2 || refImage3;
+
+            let requestData;
+            let headers = {};
+
+            if (hasFiles) {
+                // Use FormData for file uploads
+                const formData = new FormData();
+                formData.append('prompt', prompt);
+                formData.append('negative_prompt', negativePrompt);
+                formData.append('model', model);
+                formData.append('duration_seconds', duration);
+                formData.append('aspect_ratio', aspectRatio);
+                formData.append('resolution', resolution);
+                formData.append('compression_quality', compression);
+                formData.append('person_generation', personGeneration);
+                formData.append('sample_count', sampleCount);
+                formData.append('seed', seed || '');
+                formData.append('resize_mode', resizeMode);
+                formData.append('storage_uri', storageUri);
+                formData.append('enhance_prompt', enhancePrompt);
+                formData.append('generate_audio', generateAudio);
+
+                if (inputImage) formData.append('input_image', inputImage);
+                if (lastFrame) formData.append('last_frame', lastFrame);
+                if (refImage1) {
+                    formData.append('reference_image_1', refImage1);
+                    formData.append('reference_type_1', document.getElementById('reference-type-1').value);
+                }
+                if (refImage2) {
+                    formData.append('reference_image_2', refImage2);
+                    formData.append('reference_type_2', document.getElementById('reference-type-2').value);
+                }
+                if (refImage3) {
+                    formData.append('reference_image_3', refImage3);
+                    formData.append('reference_type_3', document.getElementById('reference-type-3').value);
+                }
+
+                requestData = formData;
+                // Don't set Content-Type header - browser will set it with boundary
+            } else {
+                // Use JSON for text-only requests
+                headers['Content-Type'] = 'application/json';
+                requestData = JSON.stringify({
+                    prompt,
+                    negative_prompt: negativePrompt,
+                    model: model,
+                    duration_seconds: duration,
+                    aspect_ratio: aspectRatio,
+                    resolution: resolution,
+                    compression_quality: compression,
+                    person_generation: personGeneration,
+                    sample_count: sampleCount,
+                    seed: seed,
+                    resize_mode: resizeMode,
+                    storage_uri: storageUri,
+                    enhance_prompt: enhancePrompt,
+                    generate_audio: generateAudio
+                });
+            }
 
             // Show loading, hide results and errors
             document.getElementById('video-loading').classList.add('active');
@@ -596,23 +725,8 @@
             try {
                 const response = await fetch('/api/generate-video', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        prompt,
-                        negative_prompt: negativePrompt,
-                        model: model,
-                        duration_seconds: duration,
-                        aspect_ratio: aspectRatio,
-                        resolution: resolution,
-                        compression_quality: compression,
-                        person_generation: personGeneration,
-                        sample_count: sampleCount,
-                        seed: seed,
-                        enhance_prompt: enhancePrompt,
-                        generate_audio: generateAudio
-                    })
+                    headers: headers,
+                    body: requestData
                 });
 
                 const data = await response.json();

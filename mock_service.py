@@ -153,15 +153,30 @@ class MockMediaGenerator:
             Path to the generated video file
         """
         print(f"🎭 MOCK: Generating placeholder video")
-        print(f"📝 Prompt: {prompt}")
+        if prompt:
+            print(f"📝 Prompt: {prompt}")
         print(f"📐 Aspect Ratio: {aspect_ratio}")
         print(f"🤖 Model: {model}")
+
+        # Log image inputs
+        if 'image_bytes' in kwargs and kwargs['image_bytes']:
+            print(f"📷 Image-to-Video: Using input image")
+        if 'last_frame_bytes' in kwargs and kwargs['last_frame_bytes']:
+            print(f"🎞️  Last Frame: Using custom last frame")
+        if 'reference_images' in kwargs and kwargs['reference_images']:
+            print(f"🖼️  Reference Images: {len(kwargs['reference_images'])} image(s)")
+
+        # Log other parameters
         if 'duration_seconds' in kwargs:
             print(f"⏱️  Duration: {kwargs['duration_seconds']}s")
         if 'resolution' in kwargs:
             print(f"📺 Resolution: {kwargs['resolution']}")
+        if 'resize_mode' in kwargs:
+            print(f"🔧 Resize Mode: {kwargs['resize_mode']}")
         if 'generate_audio' in kwargs and kwargs['generate_audio']:
             print(f"🔊 Audio: Enabled")
+        if 'storage_uri' in kwargs and kwargs['storage_uri']:
+            print(f"💾 Storage URI: {kwargs['storage_uri']}")
 
         # Simulate longer processing time for video
         time.sleep(2)
