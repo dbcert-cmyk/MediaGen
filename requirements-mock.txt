@@ -4,5 +4,6 @@ Pillow==10.1.0
 python-dotenv==1.0.0
 
 # Optional: For better mock video generation (with animation)
-opencv-python==4.8.1.78
-numpy==1.24.3
+# Using newer versions compatible with Python 3.12+
+numpy>=1.26.0
+opencv-python>=4.8.1
