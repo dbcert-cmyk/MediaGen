@@ -99,7 +99,7 @@ class VertexAIMediaGenerator:
     def generate_video(
         self,
         prompt: str,
-        model: str = "veo-2.0-generate-001",
+        model: str = "veo-3.1-generate-001",
         aspect_ratio: str = "16:9",
         output_path: Optional[str] = None
     ) -> str:
@@ -108,7 +108,7 @@ class VertexAIMediaGenerator:
 
         Args:
             prompt: Text description of the video to generate
-            model: Model to use (veo-2.0-generate-001 for Veo 2, or veo-001 for Veo 1)
+            model: Model to use (veo-3.1-generate-001 for Veo 3.1, veo-2.0-generate-001 for Veo 2, or veo-001 for Veo 1)
             aspect_ratio: Aspect ratio (16:9, 9:16, 1:1)
             output_path: Optional custom output path
 
@@ -161,7 +161,7 @@ class VertexAIMediaGenerator:
         self,
         prompt: str,
         image: Image.Image,
-        model: str = "veo-2.0-generate-001",
+        model: str = "veo-3.1-generate-001",
         aspect_ratio: str = "16:9",
         output_path: Optional[str] = None
     ) -> str:
@@ -171,7 +171,7 @@ class VertexAIMediaGenerator:
         Args:
             prompt: Text description for video generation
             image: Base PIL Image to animate
-            model: Model to use (veo-2.0-generate-001 for Veo 2)
+            model: Model to use (veo-3.1-generate-001 for Veo 3.1, veo-2.0-generate-001 for Veo 2)
             aspect_ratio: Aspect ratio (16:9, 9:16, 1:1)
             output_path: Optional custom output path
 

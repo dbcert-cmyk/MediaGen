@@ -105,7 +105,7 @@ def generate_video():
             return jsonify({'error': 'Prompt is required'}), 400
 
         # Optional parameters
-        model = data.get('model', 'veo-2.0-generate-001')
+        model = data.get('model', 'veo-3.1-generate-001')
         aspect_ratio = data.get('aspect_ratio', '16:9')
 
         # Generate video
