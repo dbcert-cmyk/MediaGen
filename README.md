@@ -83,7 +83,7 @@ Before using real AI generation, ensure you have:
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/dbcert-cmyk/MediaGen.git
 cd MediaGen
 ```
 
