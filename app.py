@@ -107,12 +107,30 @@ def generate_video():
         # Optional parameters
         model = data.get('model', 'veo-3.1-generate-001')
         aspect_ratio = data.get('aspect_ratio', '16:9')
+        duration_seconds = data.get('duration_seconds', 8)
+        resolution = data.get('resolution', '720p')
+        compression_quality = data.get('compression_quality', 'optimized')
+        enhance_prompt = data.get('enhance_prompt', True)
+        generate_audio = data.get('generate_audio', False)
+        negative_prompt = data.get('negative_prompt', '')
+        person_generation = data.get('person_generation', 'allow_adult')
+        sample_count = data.get('sample_count', 1)
+        seed = data.get('seed', None)
 
         # Generate video
         video_path = media_generator.generate_video(
             prompt=prompt,
             model=model,
-            aspect_ratio=aspect_ratio
+            aspect_ratio=aspect_ratio,
+            duration_seconds=duration_seconds,
+            resolution=resolution,
+            compression_quality=compression_quality,
+            enhance_prompt=enhance_prompt,
+            generate_audio=generate_audio,
+            negative_prompt=negative_prompt,
+            person_generation=person_generation,
+            sample_count=sample_count,
+            seed=seed
         )
 
         # Read video file and convert to base64

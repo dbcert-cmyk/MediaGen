@@ -101,6 +101,15 @@ class VertexAIMediaGenerator:
         prompt: str,
         model: str = "veo-3.1-generate-001",
         aspect_ratio: str = "16:9",
+        duration_seconds: int = 8,
+        resolution: str = "720p",
+        compression_quality: str = "optimized",
+        enhance_prompt: bool = True,
+        generate_audio: bool = False,
+        negative_prompt: str = "",
+        person_generation: str = "allow_adult",
+        sample_count: int = 1,
+        seed: int = None,
         output_path: Optional[str] = None
     ) -> str:
         """
@@ -109,7 +118,16 @@ class VertexAIMediaGenerator:
         Args:
             prompt: Text description of the video to generate
             model: Model to use (veo-3.1-generate-001 for Veo 3.1, veo-2.0-generate-001 for Veo 2, or veo-001 for Veo 1)
-            aspect_ratio: Aspect ratio (16:9, 9:16, 1:1)
+            aspect_ratio: Aspect ratio (16:9, 9:16)
+            duration_seconds: Duration in seconds (4, 6, or 8)
+            resolution: Video resolution (720p, 1080p)
+            compression_quality: Compression quality (optimized, lossless)
+            enhance_prompt: Use Gemini to refine prompt (True/False)
+            generate_audio: Generate audio for the video (True/False)
+            negative_prompt: Things to avoid in the video
+            person_generation: Person generation policy (allow_adult, dont_allow)
+            sample_count: Number of videos to generate (1-4)
+            seed: Seed for deterministic results (0-4294967295, None for random)
             output_path: Optional custom output path
 
         Returns:
@@ -120,15 +138,36 @@ class VertexAIMediaGenerator:
             print(f"Model: {model}")
             print(f"Prompt: {prompt}")
             print(f"Aspect Ratio: {aspect_ratio}")
+            print(f"Duration: {duration_seconds}s")
+            print(f"Resolution: {resolution}")
 
             # Initialize video generation model
             video_model = VideoGenerationModel.from_pretrained(model)
 
+            # Build parameters dict
+            generation_params = {
+                "prompt": prompt,
+                "aspect_ratio": aspect_ratio
+            }
+
+            # Add Veo 3.1 specific parameters if using Veo 3.1
+            if "veo-3" in model.lower():
+                generation_params["duration_seconds"] = duration_seconds
+                generation_params["resolution"] = resolution
+                generation_params["compression_quality"] = compression_quality
+                generation_params["enhance_prompt"] = enhance_prompt
+                generation_params["generate_audio"] = generate_audio
+                generation_params["person_generation"] = person_generation
+                generation_params["sample_count"] = sample_count
+
+                if negative_prompt:
+                    generation_params["negative_prompt"] = negative_prompt
+
+                if seed is not None:
+                    generation_params["seed"] = seed
+
             # Generate video
-            response = video_model.generate_video(
-                prompt=prompt,
-                aspect_ratio=aspect_ratio
-            )
+            response = video_model.generate_video(**generation_params)
 
             # Save video
             timestamp = int(time.time())

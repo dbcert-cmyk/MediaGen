@@ -156,6 +156,12 @@ class MockMediaGenerator:
         print(f"📝 Prompt: {prompt}")
         print(f"📐 Aspect Ratio: {aspect_ratio}")
         print(f"🤖 Model: {model}")
+        if 'duration_seconds' in kwargs:
+            print(f"⏱️  Duration: {kwargs['duration_seconds']}s")
+        if 'resolution' in kwargs:
+            print(f"📺 Resolution: {kwargs['resolution']}")
+        if 'generate_audio' in kwargs and kwargs['generate_audio']:
+            print(f"🔊 Audio: Enabled")
 
         # Simulate longer processing time for video
         time.sleep(2)
