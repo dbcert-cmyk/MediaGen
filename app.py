@@ -3,7 +3,6 @@ import base64
 from io import BytesIO
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
-from vertex_ai_service import VertexAIMediaGenerator
 
 # Load environment variables
 load_dotenv()
@@ -11,14 +10,28 @@ load_dotenv()
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max request size
 
-# Initialize Vertex AI service
-project_id = os.getenv('GCP_PROJECT_ID')
-location = os.getenv('GCP_LOCATION', 'us-central1')
+# Check if running in mock mode
+mock_mode = os.getenv('MOCK_MODE', 'false').lower() == 'true'
 
-if not project_id:
-    raise ValueError("GCP_PROJECT_ID environment variable is required")
+if mock_mode:
+    # Use mock service for testing without GCP
+    from mock_service import MockMediaGenerator
+    media_generator = MockMediaGenerator()
+    print("\n" + "="*60)
+    print("🎭 MOCK MODE ENABLED - Testing without GCP credentials")
+    print("   No costs will be incurred, placeholder media will be generated")
+    print("="*60 + "\n")
+else:
+    # Use real Vertex AI service
+    from vertex_ai_service import VertexAIMediaGenerator
+    project_id = os.getenv('GCP_PROJECT_ID')
+    location = os.getenv('GCP_LOCATION', 'us-central1')
 
-media_generator = VertexAIMediaGenerator(project_id, location)
+    if not project_id:
+        raise ValueError("GCP_PROJECT_ID environment variable is required (or set MOCK_MODE=true to test without GCP)")
+
+    media_generator = VertexAIMediaGenerator(project_id, location)
+    print(f"\n✅ Vertex AI initialized for project: {project_id}\n")
 
 
 @app.route('/')

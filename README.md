@@ -20,9 +20,43 @@ A web application for generating images and videos using Google Cloud's Vertex A
   - Real-time preview of generated media
   - Loading states and error handling
 
+## 🆓 Testing for Free (Mock Mode)
+
+**Want to test the app without any GCP account or costs?** Use Mock Mode!
+
+Mock Mode allows you to test the entire application locally with placeholder images and videos - perfect for:
+- Testing the UI/UX without GCP credentials
+- Development and debugging
+- Demos and presentations
+- Learning how the app works before using real AI
+
+### Quick Start (No GCP Required)
+
+```bash
+# 1. Install minimal dependencies
+pip install -r requirements-mock.txt
+
+# 2. Create .env file with mock mode enabled
+echo "MOCK_MODE=true" > .env
+
+# 3. Run the app
+python app.py
+
+# 4. Open http://localhost:5000 in your browser
+```
+
+That's it! The app will generate colorful placeholder images and videos with your prompts displayed on them.
+
+For better animated mock videos, install opencv:
+```bash
+pip install opencv-python numpy
+```
+
 ## Prerequisites
 
-Before you begin, ensure you have the following:
+### For Real AI Generation (Vertex AI)
+
+Before using real AI generation, ensure you have:
 
 1. **Python 3.8+** installed
 2. **Google Cloud Platform (GCP) Account** with:
@@ -30,7 +64,21 @@ Before you begin, ensure you have the following:
    - Vertex AI API enabled
    - Appropriate permissions to use Vertex AI
 
+**💡 New to GCP?** Get **$300 in free credits** for 90 days:
+- Visit [Google Cloud Free Trial](https://cloud.google.com/free)
+- Sign up with your Google account
+- This is MORE than enough to generate thousands of images and many videos
+- Estimated costs: ~$0.02-0.08 per image, varies for video
+
+**⚠️ Note:** While GCP offers free credits, you'll need to provide payment information. You won't be charged after credits run out unless you explicitly upgrade.
+
 ## Setup Instructions
+
+### Choose Your Mode
+
+**🎭 Mock Mode (Free, No GCP):** See [Testing for Free](#-testing-for-free-mock-mode) section above
+
+**☁️ Real AI Mode (Vertex AI):** Follow the instructions below
 
 ### 1. Clone the Repository
 
@@ -39,7 +87,7 @@ git clone <repository-url>
 cd MediaGen
 ```
 
-### 2. Set Up Google Cloud Authentication
+### 2. Set Up Google Cloud Authentication (Real AI Mode Only)
 
 #### Option A: Using Application Default Credentials (Recommended for Development)
 
@@ -66,7 +114,7 @@ gcloud config set project YOUR_PROJECT_ID
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your-service-account-key.json"
 ```
 
-### 3. Enable Required APIs
+### 3. Enable Required APIs (Real AI Mode Only)
 
 Enable the Vertex AI API in your GCP project:
 
@@ -83,8 +131,11 @@ Or via the [GCP Console](https://console.cloud.google.com/apis/library/aiplatfor
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
+# For Real AI Mode (includes Vertex AI SDK)
 pip install -r requirements.txt
+
+# OR for Mock Mode (minimal dependencies, no GCP)
+pip install -r requirements-mock.txt
 ```
 
 ### 5. Configure Environment Variables
@@ -97,8 +148,15 @@ cp .env.example .env
 
 Edit the `.env` file with your configuration:
 
+**For Mock Mode (Free Testing):**
 ```env
-GCP_PROJECT_ID=your-project-id
+MOCK_MODE=true
+```
+
+**For Real AI Mode (Vertex AI):**
+```env
+MOCK_MODE=false
+GCP_PROJECT_ID=your-actual-project-id
 GCP_LOCATION=us-central1
 ```
 

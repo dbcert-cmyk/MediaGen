@@ -1,0 +1,8 @@
+# Minimal requirements for MOCK MODE (testing without GCP)
+flask==3.0.0
+Pillow==10.1.0
+python-dotenv==1.0.0
+
+# Optional: For better mock video generation (with animation)
+opencv-python==4.8.1.78
+numpy==1.24.3
