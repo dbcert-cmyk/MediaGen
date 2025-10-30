@@ -24,43 +24,53 @@ class VertexAIMediaGenerator:
         # Initialize Vertex AI
         vertexai.init(project=project_id, location=location)
 
-        # Initialize models
-        self.image_model = ImageGenerationModel.from_pretrained("imagegeneration@006")
-
     def generate_image(
         self,
         prompt: str,
         negative_prompt: str = "",
         number_of_images: int = 1,
         aspect_ratio: str = "1:1",
+        model: str = "imagen-3.0-generate-001",
         safety_filter_level: str = "block_some",
-        person_generation: str = "allow_adult"
+        person_generation: str = "allow_adult",
+        language: str = "auto",
+        output_mime_type: str = "image/png"
     ) -> List[Image.Image]:
         """
-        Generate images using Vertex AI Imagen
+        Generate images using Vertex AI Imagen 3
 
         Args:
             prompt: Text description of the image to generate
             negative_prompt: Things to avoid in the generated image
             number_of_images: Number of images to generate (1-8)
             aspect_ratio: Aspect ratio (1:1, 9:16, 16:9, 4:3, 3:4)
-            safety_filter_level: Safety filter level
-            person_generation: Person generation policy
+            model: Model to use (imagen-3.0-generate-001, imagen-3.0-fast-generate-001)
+            safety_filter_level: Safety filter level (block_some, block_few, block_most, block_fewest)
+            person_generation: Person generation policy (allow_adult, allow_all, dont_allow)
+            language: Language code (auto, en, es, fr, de, it, ja, ko, pt, hi, etc.)
+            output_mime_type: Output format (image/png, image/jpeg)
 
         Returns:
             List of PIL Image objects
         """
         try:
-            print(f"Generating {number_of_images} image(s) with prompt: {prompt}")
+            print(f"Generating {number_of_images} image(s) with Imagen 3")
+            print(f"Model: {model}")
+            print(f"Prompt: {prompt}")
+
+            # Initialize the model
+            image_model = ImageGenerationModel.from_pretrained(model)
 
             # Generate images
-            response = self.image_model.generate_images(
+            response = image_model.generate_images(
                 prompt=prompt,
                 negative_prompt=negative_prompt if negative_prompt else None,
                 number_of_images=number_of_images,
                 aspect_ratio=aspect_ratio,
                 safety_filter_level=safety_filter_level,
                 person_generation=person_generation,
+                language=language,
+                output_mime_type=output_mime_type
             )
 
             # Convert to PIL Images
@@ -75,7 +85,8 @@ class VertexAIMediaGenerator:
 
                 # Save locally for reference
                 timestamp = int(time.time())
-                output_path = f"generated_media/image_{timestamp}_{idx}.png"
+                file_ext = "png" if output_mime_type == "image/png" else "jpg"
+                output_path = f"generated_media/image_{timestamp}_{idx}.{file_ext}"
                 pil_image.save(output_path)
                 print(f"Saved image to: {output_path}")
 
@@ -88,33 +99,35 @@ class VertexAIMediaGenerator:
     def generate_video(
         self,
         prompt: str,
-        duration: int = 5,
+        model: str = "veo-2.0-generate-001",
+        aspect_ratio: str = "16:9",
         output_path: Optional[str] = None
     ) -> str:
         """
-        Generate a video using Vertex AI Video Generation
-
-        Note: As of now, Vertex AI's video generation is in preview and may have
-        limited availability. This method provides a placeholder implementation.
+        Generate a video using Vertex AI Veo (Video Generation)
 
         Args:
             prompt: Text description of the video to generate
-            duration: Duration in seconds (typically 5-10 seconds)
+            model: Model to use (veo-2.0-generate-001 for Veo 2, or veo-001 for Veo 1)
+            aspect_ratio: Aspect ratio (16:9, 9:16, 1:1)
             output_path: Optional custom output path
 
         Returns:
             Path to the generated video file
         """
         try:
-            print(f"Generating video with prompt: {prompt}")
+            print(f"Generating video with Veo")
+            print(f"Model: {model}")
+            print(f"Prompt: {prompt}")
+            print(f"Aspect Ratio: {aspect_ratio}")
 
             # Initialize video generation model
-            # Note: Video generation model name may vary based on availability
-            video_model = VideoGenerationModel.from_pretrained("veo-001")
+            video_model = VideoGenerationModel.from_pretrained(model)
 
             # Generate video
             response = video_model.generate_video(
                 prompt=prompt,
+                aspect_ratio=aspect_ratio
             )
 
             # Save video
@@ -123,7 +136,7 @@ class VertexAIMediaGenerator:
                 output_path = f"generated_media/video_{timestamp}.mp4"
 
             # Ensure directory exists
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            os.makedirs(os.path.dirname(output_path) or "generated_media", exist_ok=True)
 
             # Get video bytes and save
             video_bytes = response.video_bytes
@@ -148,24 +161,30 @@ class VertexAIMediaGenerator:
         self,
         prompt: str,
         image: Image.Image,
+        model: str = "veo-2.0-generate-001",
+        aspect_ratio: str = "16:9",
         output_path: Optional[str] = None
     ) -> str:
         """
-        Generate a video from a base image using Vertex AI
+        Generate a video from a base image using Vertex AI Veo
 
         Args:
             prompt: Text description for video generation
             image: Base PIL Image to animate
+            model: Model to use (veo-2.0-generate-001 for Veo 2)
+            aspect_ratio: Aspect ratio (16:9, 9:16, 1:1)
             output_path: Optional custom output path
 
         Returns:
             Path to the generated video file
         """
         try:
-            print(f"Generating video from image with prompt: {prompt}")
+            print(f"Generating video from image with Veo")
+            print(f"Model: {model}")
+            print(f"Prompt: {prompt}")
 
             # Initialize video generation model
-            video_model = VideoGenerationModel.from_pretrained("veo-001")
+            video_model = VideoGenerationModel.from_pretrained(model)
 
             # Convert PIL Image to bytes
             img_byte_arr = BytesIO()
@@ -175,7 +194,8 @@ class VertexAIMediaGenerator:
             # Generate video from image
             response = video_model.generate_video(
                 prompt=prompt,
-                image_bytes=img_bytes
+                image_bytes=img_bytes,
+                aspect_ratio=aspect_ratio
             )
 
             # Save video
@@ -184,7 +204,7 @@ class VertexAIMediaGenerator:
                 output_path = f"generated_media/video_from_image_{timestamp}.mp4"
 
             # Ensure directory exists
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            os.makedirs(os.path.dirname(output_path) or "generated_media", exist_ok=True)
 
             # Get video bytes and save
             video_bytes = response.video_bytes

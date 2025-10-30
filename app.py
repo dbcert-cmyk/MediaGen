@@ -42,7 +42,7 @@ def index():
 
 @app.route('/api/generate-image', methods=['POST'])
 def generate_image():
-    """Generate an image using Vertex AI Imagen"""
+    """Generate an image using Vertex AI Imagen 3"""
     try:
         data = request.get_json()
         prompt = data.get('prompt')
@@ -54,13 +54,23 @@ def generate_image():
         negative_prompt = data.get('negative_prompt', '')
         number_of_images = data.get('number_of_images', 1)
         aspect_ratio = data.get('aspect_ratio', '1:1')
+        model = data.get('model', 'imagen-3.0-generate-001')
+        safety_filter_level = data.get('safety_filter_level', 'block_some')
+        person_generation = data.get('person_generation', 'allow_adult')
+        language = data.get('language', 'auto')
+        output_mime_type = data.get('output_mime_type', 'image/png')
 
         # Generate image
         images = media_generator.generate_image(
             prompt=prompt,
             negative_prompt=negative_prompt,
             number_of_images=number_of_images,
-            aspect_ratio=aspect_ratio
+            aspect_ratio=aspect_ratio,
+            model=model,
+            safety_filter_level=safety_filter_level,
+            person_generation=person_generation,
+            language=language,
+            output_mime_type=output_mime_type
         )
 
         # Convert images to base64 for response
@@ -86,7 +96,7 @@ def generate_image():
 
 @app.route('/api/generate-video', methods=['POST'])
 def generate_video():
-    """Generate a video using Vertex AI"""
+    """Generate a video using Vertex AI Veo"""
     try:
         data = request.get_json()
         prompt = data.get('prompt')
@@ -95,12 +105,14 @@ def generate_video():
             return jsonify({'error': 'Prompt is required'}), 400
 
         # Optional parameters
-        duration = data.get('duration', 5)  # seconds
+        model = data.get('model', 'veo-2.0-generate-001')
+        aspect_ratio = data.get('aspect_ratio', '16:9')
 
         # Generate video
         video_path = media_generator.generate_video(
             prompt=prompt,
-            duration=duration
+            model=model,
+            aspect_ratio=aspect_ratio
         )
 
         # Read video file and convert to base64

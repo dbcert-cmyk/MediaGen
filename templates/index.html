@@ -264,7 +264,7 @@
         <!-- Image Generator Tab -->
         <div id="image-tab" class="tab-content active">
             <div class="card">
-                <h2 style="margin-bottom: 25px;">Generate Images</h2>
+                <h2 style="margin-bottom: 25px;">Generate Images with Imagen 3</h2>
                 <form id="image-form">
                     <div class="form-group">
                         <label for="image-prompt">Prompt *</label>
@@ -278,6 +278,14 @@
 
                     <div class="row">
                         <div class="form-group">
+                            <label for="image-model">Model</label>
+                            <select id="image-model">
+                                <option value="imagen-3.0-generate-001" selected>Imagen 3.0 (Quality)</option>
+                                <option value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
                             <label for="num-images">Number of Images</label>
                             <select id="num-images">
                                 <option value="1">1</option>
@@ -286,7 +294,9 @@
                                 <option value="8">8</option>
                             </select>
                         </div>
+                    </div>
 
+                    <div class="row">
                         <div class="form-group">
                             <label for="aspect-ratio">Aspect Ratio</label>
                             <select id="aspect-ratio">
@@ -297,6 +307,52 @@
                                 <option value="3:4">3:4 (Portrait)</option>
                             </select>
                         </div>
+
+                        <div class="form-group">
+                            <label for="output-format">Output Format</label>
+                            <select id="output-format">
+                                <option value="image/png" selected>PNG</option>
+                                <option value="image/jpeg">JPEG</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="safety-filter">Safety Filter</label>
+                            <select id="safety-filter">
+                                <option value="block_fewest">Block Fewest</option>
+                                <option value="block_few">Block Few</option>
+                                <option value="block_some" selected>Block Some</option>
+                                <option value="block_most">Block Most</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="person-generation">Person Generation</label>
+                            <select id="person-generation">
+                                <option value="allow_adult" selected>Allow Adult</option>
+                                <option value="allow_all">Allow All</option>
+                                <option value="dont_allow">Don't Allow</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="language">Language</label>
+                        <select id="language">
+                            <option value="auto" selected>Auto-detect</option>
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="it">Italian</option>
+                            <option value="ja">Japanese</option>
+                            <option value="ko">Korean</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="hi">Hindi</option>
+                            <option value="zh">Chinese</option>
+                        </select>
                     </div>
 
                     <button type="submit">Generate Images</button>
@@ -319,20 +375,30 @@
         <!-- Video Generator Tab -->
         <div id="video-tab" class="tab-content">
             <div class="card">
-                <h2 style="margin-bottom: 25px;">Generate Video</h2>
+                <h2 style="margin-bottom: 25px;">Generate Video with Veo 2</h2>
                 <form id="video-form">
                     <div class="form-group">
                         <label for="video-prompt">Prompt *</label>
                         <textarea id="video-prompt" placeholder="Describe the video you want to generate..." required></textarea>
                     </div>
 
-                    <div class="form-group">
-                        <label for="duration">Duration (seconds)</label>
-                        <select id="duration">
-                            <option value="5" selected>5 seconds</option>
-                            <option value="8">8 seconds</option>
-                            <option value="10">10 seconds</option>
-                        </select>
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="video-model">Model</label>
+                            <select id="video-model">
+                                <option value="veo-2.0-generate-001" selected>Veo 2.0 (Latest)</option>
+                                <option value="veo-001">Veo 1.0</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="video-aspect-ratio">Aspect Ratio</label>
+                            <select id="video-aspect-ratio">
+                                <option value="16:9" selected>16:9 (Landscape)</option>
+                                <option value="9:16">9:16 (Portrait)</option>
+                                <option value="1:1">1:1 (Square)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <button type="submit">Generate Video</button>
@@ -372,6 +438,11 @@
             const negativePrompt = document.getElementById('negative-prompt').value;
             const numImages = parseInt(document.getElementById('num-images').value);
             const aspectRatio = document.getElementById('aspect-ratio').value;
+            const model = document.getElementById('image-model').value;
+            const safetyFilter = document.getElementById('safety-filter').value;
+            const personGeneration = document.getElementById('person-generation').value;
+            const language = document.getElementById('language').value;
+            const outputFormat = document.getElementById('output-format').value;
 
             // Show loading, hide results and errors
             document.getElementById('image-loading').classList.add('active');
@@ -388,7 +459,12 @@
                         prompt,
                         negative_prompt: negativePrompt,
                         number_of_images: numImages,
-                        aspect_ratio: aspectRatio
+                        aspect_ratio: aspectRatio,
+                        model: model,
+                        safety_filter_level: safetyFilter,
+                        person_generation: personGeneration,
+                        language: language,
+                        output_mime_type: outputFormat
                     })
                 });
 
@@ -424,7 +500,8 @@
             e.preventDefault();
 
             const prompt = document.getElementById('video-prompt').value;
-            const duration = parseInt(document.getElementById('duration').value);
+            const model = document.getElementById('video-model').value;
+            const aspectRatio = document.getElementById('video-aspect-ratio').value;
 
             // Show loading, hide results and errors
             document.getElementById('video-loading').classList.add('active');
@@ -439,7 +516,8 @@
                     },
                     body: JSON.stringify({
                         prompt,
-                        duration
+                        model: model,
+                        aspect_ratio: aspectRatio
                     })
                 });
 

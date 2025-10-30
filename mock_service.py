@@ -135,15 +135,18 @@ class MockMediaGenerator:
     def generate_video(
         self,
         prompt: str,
-        duration: int = 5,
-        output_path: str = None
+        model: str = "veo-2.0-generate-001",
+        aspect_ratio: str = "16:9",
+        output_path: str = None,
+        **kwargs
     ) -> str:
         """
         Generate a mock video (creates a simple image sequence)
 
         Args:
             prompt: Text description
-            duration: Duration in seconds
+            model: Model name (not used in mock mode)
+            aspect_ratio: Aspect ratio for video
             output_path: Optional custom output path
 
         Returns:
@@ -151,14 +154,19 @@ class MockMediaGenerator:
         """
         print(f"🎭 MOCK: Generating placeholder video")
         print(f"📝 Prompt: {prompt}")
-        print(f"⏱️  Duration: {duration}s")
+        print(f"📐 Aspect Ratio: {aspect_ratio}")
+        print(f"🤖 Model: {model}")
 
         # Simulate longer processing time for video
         time.sleep(2)
 
-        # Create a simple animated placeholder
-        # In mock mode, we'll create a video file with a static image
-        # For a real mock video, you'd need opencv-python, but we'll keep dependencies minimal
+        # Parse aspect ratio to determine video dimensions
+        aspect_map = {
+            "16:9": (768, 432),
+            "9:16": (432, 768),
+            "1:1": (512, 512)
+        }
+        size = aspect_map.get(aspect_ratio, (768, 432))
 
         timestamp = int(time.time())
         if output_path is None:
@@ -175,7 +183,7 @@ class MockMediaGenerator:
 
             # Video settings
             fps = 24
-            size = (768, 432)  # 16:9 aspect ratio
+            duration = 5  # Default mock video duration in seconds
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             out = cv2.VideoWriter(output_path, fourcc, fps, size)
 
@@ -219,8 +227,7 @@ class MockMediaGenerator:
             # If opencv is not available, create a static image as fallback
             print("⚠️  OpenCV not installed - creating static image placeholder")
 
-            # Generate a single frame as PNG
-            size = (768, 432)
+            # Generate a single frame as PNG (size already set based on aspect_ratio)
             img = Image.new('RGB', size)
             draw = ImageDraw.Draw(img)
 
@@ -251,7 +258,10 @@ class MockMediaGenerator:
         self,
         prompt: str,
         image: Image.Image,
-        output_path: str = None
+        model: str = "veo-2.0-generate-001",
+        aspect_ratio: str = "16:9",
+        output_path: str = None,
+        **kwargs
     ) -> str:
         """
         Mock version of video generation from image
@@ -259,10 +269,12 @@ class MockMediaGenerator:
         Args:
             prompt: Text description
             image: Base image
+            model: Model name (not used in mock mode)
+            aspect_ratio: Aspect ratio for video
             output_path: Optional custom output path
 
         Returns:
             Path to the generated video file
         """
         print(f"🎭 MOCK: Generating placeholder video from image")
-        return self.generate_video(prompt, duration=5, output_path=output_path)
+        return self.generate_video(prompt, model=model, aspect_ratio=aspect_ratio, output_path=output_path)
