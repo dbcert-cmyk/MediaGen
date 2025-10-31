@@ -552,8 +552,8 @@
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">💰 Estimated Cost:</div>
-                            <div id="video-cost-display" style="font-size: 1.4em; font-weight: bold; color: #667eea;">$0.20</div>
-                            <div id="video-cost-breakdown" style="font-size: 0.85em; color: #888; margin-top: 3px;">1 video × $0.20 (8s @ 720p)</div>
+                            <div id="video-cost-display" style="font-size: 1.4em; font-weight: bold; color: #667eea;">$0.32</div>
+                            <div id="video-cost-breakdown" style="font-size: 0.85em; color: #888; margin-top: 3px;">1 video × $0.32 (8s @ $0.040/sec)</div>
                         </div>
                         <div style="text-align: right;">
                             <div style="font-size: 0.75em; color: #999; font-style: italic;">Updates in real-time</div>
@@ -789,11 +789,10 @@
         // Cost Calculation Functions
         const PRICING = {
             image: {
-                perImage: 0.0025
+                perImage: 0.0025  // $0.0025 per image
             },
             video: {
-                '720p': { 4: 0.10, 6: 0.15, 8: 0.20 },
-                '1080p': { 4: 0.20, 6: 0.30, 8: 0.40 }
+                perSecond: 0.040  // $0.040 per second (resolution doesn't affect price)
             }
         };
 
@@ -809,15 +808,15 @@
 
         function updateVideoCost() {
             const duration = parseInt(document.getElementById('video-duration').value) || 8;
-            const resolution = document.getElementById('video-resolution').value || '720p';
             const sampleCount = parseInt(document.getElementById('video-sample-count').value) || 1;
 
-            const costPerVideo = PRICING.video[resolution][duration];
+            // Calculate cost: duration × $0.040 per second × number of videos
+            const costPerVideo = duration * PRICING.video.perSecond;
             const totalCost = (sampleCount * costPerVideo).toFixed(2);
 
             document.getElementById('video-cost-display').textContent = `$${totalCost}`;
             document.getElementById('video-cost-breakdown').textContent =
-                `${sampleCount} video${sampleCount > 1 ? 's' : ''} × $${costPerVideo.toFixed(2)} (${duration}s @ ${resolution})`;
+                `${sampleCount} video${sampleCount > 1 ? 's' : ''} × $${costPerVideo.toFixed(2)} (${duration}s @ $${PRICING.video.perSecond}/sec)`;
         }
 
         // Add event listeners for real-time cost updates

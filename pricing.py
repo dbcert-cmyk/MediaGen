@@ -15,19 +15,15 @@ class VertexAIPricing:
     GEMINI_FLASH_IMAGE_PER_IMAGE = 0.0025  # $0.0025 per image
 
     # Veo 3.1 Video Generation Pricing
-    # Prices vary by resolution and duration
+    # $0.040 per second of generated video
+    VEO_PRICE_PER_SECOND = 0.040
+
+    # Calculated prices by duration (for quick reference)
     VEO_PRICING = {
-        # Resolution: {duration: price_per_video}
-        "720p": {
-            4: 0.10,   # 4 seconds at 720p
-            6: 0.15,   # 6 seconds at 720p
-            8: 0.20,   # 8 seconds at 720p
-        },
-        "1080p": {
-            4: 0.20,   # 4 seconds at 1080p
-            6: 0.30,   # 6 seconds at 1080p
-            8: 0.40,   # 8 seconds at 1080p
-        }
+        # Duration in seconds: price
+        4: 0.16,   # 4 seconds × $0.040
+        6: 0.24,   # 6 seconds × $0.040
+        8: 0.32,   # 8 seconds × $0.040
     }
 
     @classmethod
@@ -66,35 +62,35 @@ class VertexAIPricing:
     ) -> dict:
         """
         Estimate cost for video generation with Veo 3.1
+        Pricing: $0.040 per second of generated video
 
         Args:
             duration_seconds: Video duration (4, 6, or 8 seconds)
-            resolution: Video resolution (720p or 1080p)
+            resolution: Video resolution (720p or 1080p) - for display only, doesn't affect price
             sample_count: Number of videos to generate (1-4)
 
         Returns:
             dict: Cost breakdown with total, per_video, and details
         """
-        # Validate inputs
-        if resolution not in cls.VEO_PRICING:
-            resolution = "720p"  # Default fallback
+        # Calculate cost based on duration
+        # Use pre-calculated prices if available, otherwise calculate
+        if duration_seconds in cls.VEO_PRICING:
+            per_video_cost = cls.VEO_PRICING[duration_seconds]
+        else:
+            # Calculate for custom duration
+            per_video_cost = duration_seconds * cls.VEO_PRICE_PER_SECOND
 
-        if duration_seconds not in cls.VEO_PRICING[resolution]:
-            # Find closest duration
-            available_durations = list(cls.VEO_PRICING[resolution].keys())
-            duration_seconds = min(available_durations, key=lambda x: abs(x - duration_seconds))
-
-        per_video_cost = cls.VEO_PRICING[resolution][duration_seconds]
         total_cost = per_video_cost * sample_count
 
         return {
-            "total": round(total_cost, 4),
-            "per_video": round(per_video_cost, 4),
+            "total": round(total_cost, 2),
+            "per_video": round(per_video_cost, 2),
+            "per_second": cls.VEO_PRICE_PER_SECOND,
             "sample_count": sample_count,
             "duration": duration_seconds,
             "resolution": resolution,
             "model": "veo-3.1-generate-001",
-            "breakdown": f"{sample_count} video(s) × ${per_video_cost:.2f} ({duration_seconds}s @ {resolution}) = ${total_cost:.2f}"
+            "breakdown": f"{sample_count} video(s) × ${per_video_cost:.2f} ({duration_seconds}s @ ${cls.VEO_PRICE_PER_SECOND}/sec) = ${total_cost:.2f}"
         }
 
     @classmethod
@@ -114,9 +110,10 @@ class VertexAIPricing:
             },
             "video": {
                 "model": "veo-3.1-generate-001",
-                "pricing_table": cls.VEO_PRICING,
+                "per_second": cls.VEO_PRICE_PER_SECOND,
+                "pricing_examples": cls.VEO_PRICING,
                 "description": "Veo 3.1 Video Generation",
-                "notes": "Price varies by resolution and duration"
+                "notes": "Price is $0.040 per second of generated video (resolution doesn't affect price)"
             },
             "disclaimer": "Prices shown are estimates. Actual costs may vary. "
                          "Always verify current pricing at cloud.google.com/vertex-ai/generative-ai/pricing"
@@ -148,12 +145,13 @@ if __name__ == "__main__":
         print(f"{num_images} image(s): ${cost['total']:.4f} ({cost['breakdown']})")
 
     # Test video pricing
-    print("\n🎬 VIDEO GENERATION COSTS:")
+    print("\n🎬 VIDEO GENERATION COSTS ($0.040/second):")
     print("-" * 60)
-    for resolution in ["720p", "1080p"]:
-        for duration in [4, 6, 8]:
-            cost = estimate_video_cost(duration, resolution, 1)
-            print(f"{duration}s @ {resolution}: ${cost['total']:.2f}")
+    for duration in [4, 6, 8]:
+        cost = estimate_video_cost(duration, "720p", 1)
+        print(f"{duration}s video: ${cost['total']:.2f} ({duration} × $0.040)")
+
+    print("\nNote: Resolution (720p/1080p) doesn't affect pricing")
 
     print("\n💰 SAMPLE SCENARIOS:")
     print("-" * 60)
@@ -164,11 +162,11 @@ if __name__ == "__main__":
 
     # Scenario 2: Typical video generation
     vid_cost = estimate_video_cost(8, "720p", 1)
-    print(f"Generate 1 video (8s @ 720p): ${vid_cost['total']:.2f}")
+    print(f"Generate 1 video (8s): ${vid_cost['total']:.2f}")
 
-    # Scenario 3: High quality video
-    hq_vid_cost = estimate_video_cost(8, "1080p", 2)
-    print(f"Generate 2 videos (8s @ 1080p): ${hq_vid_cost['total']:.2f}")
+    # Scenario 3: Multiple videos
+    multi_vid_cost = estimate_video_cost(8, "1080p", 2)
+    print(f"Generate 2 videos (8s each): ${multi_vid_cost['total']:.2f}")
 
     # Get all pricing info
     print("\n📋 COMPLETE PRICING INFO:")
@@ -177,6 +175,7 @@ if __name__ == "__main__":
     print(f"Image Model: {pricing_info['image']['model']}")
     print(f"  Price: ${pricing_info['image']['per_image']:.4f} per image")
     print(f"Video Model: {pricing_info['video']['model']}")
-    print(f"  Pricing varies by duration and resolution")
+    print(f"  Price: ${pricing_info['video']['per_second']:.3f} per second")
+    print(f"  Note: {pricing_info['video']['notes']}")
     print(f"\n⚠️  {pricing_info['disclaimer']}")
     print("=" * 60)
