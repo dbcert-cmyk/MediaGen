@@ -353,6 +353,21 @@
                     <button type="submit">Generate Images</button>
                 </form>
 
+                <!-- Cost Estimator -->
+                <div id="image-cost-estimator" style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-radius: 10px; border: 2px solid #667eea30;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">💰 Estimated Cost:</div>
+                            <div id="image-cost-display" style="font-size: 1.4em; font-weight: bold; color: #667eea;">$0.0100</div>
+                            <div id="image-cost-breakdown" style="font-size: 0.85em; color: #888; margin-top: 3px;">4 images × $0.0025 each</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.75em; color: #999; font-style: italic;">Updates in real-time</div>
+                            <a href="https://cloud.google.com/vertex-ai/generative-ai/pricing" target="_blank" style="font-size: 0.75em; color: #667eea; text-decoration: none;">📊 View Official Pricing</a>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="image-loading" class="loading">
                     <div class="spinner"></div>
                     <p>Generating your images...</p>
@@ -531,6 +546,21 @@
 
                     <button type="submit">Generate Video</button>
                 </form>
+
+                <!-- Cost Estimator -->
+                <div id="video-cost-estimator" style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-radius: 10px; border: 2px solid #667eea30;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">💰 Estimated Cost:</div>
+                            <div id="video-cost-display" style="font-size: 1.4em; font-weight: bold; color: #667eea;">$0.20</div>
+                            <div id="video-cost-breakdown" style="font-size: 0.85em; color: #888; margin-top: 3px;">1 video × $0.20 (8s @ 720p)</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.75em; color: #999; font-style: italic;">Updates in real-time</div>
+                            <a href="https://cloud.google.com/vertex-ai/generative-ai/pricing" target="_blank" style="font-size: 0.75em; color: #667eea; text-decoration: none;">📊 View Official Pricing</a>
+                        </div>
+                    </div>
+                </div>
 
                 <div id="video-loading" class="loading">
                     <div class="spinner"></div>
@@ -755,6 +785,51 @@
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById(`${tab}-tab`).classList.add('active');
         }
+
+        // Cost Calculation Functions
+        const PRICING = {
+            image: {
+                perImage: 0.0025
+            },
+            video: {
+                '720p': { 4: 0.10, 6: 0.15, 8: 0.20 },
+                '1080p': { 4: 0.20, 6: 0.30, 8: 0.40 }
+            }
+        };
+
+        function updateImageCost() {
+            const numImages = parseInt(document.getElementById('num-images').value) || 1;
+            const costPerImage = PRICING.image.perImage;
+            const totalCost = (numImages * costPerImage).toFixed(4);
+
+            document.getElementById('image-cost-display').textContent = `$${totalCost}`;
+            document.getElementById('image-cost-breakdown').textContent =
+                `${numImages} image${numImages > 1 ? 's' : ''} × $${costPerImage.toFixed(4)} each`;
+        }
+
+        function updateVideoCost() {
+            const duration = parseInt(document.getElementById('video-duration').value) || 8;
+            const resolution = document.getElementById('video-resolution').value || '720p';
+            const sampleCount = parseInt(document.getElementById('video-sample-count').value) || 1;
+
+            const costPerVideo = PRICING.video[resolution][duration];
+            const totalCost = (sampleCount * costPerVideo).toFixed(2);
+
+            document.getElementById('video-cost-display').textContent = `$${totalCost}`;
+            document.getElementById('video-cost-breakdown').textContent =
+                `${sampleCount} video${sampleCount > 1 ? 's' : ''} × $${costPerVideo.toFixed(2)} (${duration}s @ ${resolution})`;
+        }
+
+        // Add event listeners for real-time cost updates
+        document.getElementById('num-images').addEventListener('change', updateImageCost);
+
+        document.getElementById('video-duration').addEventListener('change', updateVideoCost);
+        document.getElementById('video-resolution').addEventListener('change', updateVideoCost);
+        document.getElementById('video-sample-count').addEventListener('change', updateVideoCost);
+
+        // Initialize costs on page load
+        updateImageCost();
+        updateVideoCost();
 
         // Update slider values display
         document.getElementById('temperature').addEventListener('input', (e) => {

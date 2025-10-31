@@ -4,6 +4,7 @@ from io import BytesIO
 from flask import Flask, render_template, request, jsonify, send_file
 from dotenv import load_dotenv
 from video_editor import VideoEditor
+from pricing import estimate_image_cost, estimate_video_cost, VertexAIPricing
 
 # Load environment variables
 load_dotenv()
@@ -402,6 +403,66 @@ def change_speed():
             'message': f'Video speed changed to {speed}x'
         })
 
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/estimate-image-cost', methods=['POST'])
+def api_estimate_image_cost():
+    """Estimate cost for image generation"""
+    try:
+        data = request.get_json()
+        number_of_images = int(data.get('number_of_images', 1))
+
+        cost_estimate = estimate_image_cost(number_of_images)
+
+        return jsonify({
+            'success': True,
+            'cost': cost_estimate
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/estimate-video-cost', methods=['POST'])
+def api_estimate_video_cost():
+    """Estimate cost for video generation"""
+    try:
+        data = request.get_json()
+        duration_seconds = int(data.get('duration_seconds', 8))
+        resolution = data.get('resolution', '720p')
+        sample_count = int(data.get('sample_count', 1))
+
+        cost_estimate = estimate_video_cost(duration_seconds, resolution, sample_count)
+
+        return jsonify({
+            'success': True,
+            'cost': cost_estimate
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/pricing-info')
+def api_pricing_info():
+    """Get all pricing information"""
+    try:
+        pricing_info = VertexAIPricing.get_pricing_info()
+        return jsonify({
+            'success': True,
+            'pricing': pricing_info
+        })
     except Exception as e:
         return jsonify({
             'success': False,
