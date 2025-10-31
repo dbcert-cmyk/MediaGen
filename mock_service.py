@@ -23,36 +23,57 @@ class MockMediaGenerator:
     def generate_image(
         self,
         prompt: str,
-        negative_prompt: str = "",
         number_of_images: int = 1,
         aspect_ratio: str = "1:1",
+        model: str = "gemini-2.5-flash-image",
+        temperature: float = 1.0,
+        top_p: float = 0.95,
+        top_k: int = 64,
+        output_mime_type: str = "image/png",
+        input_images: List[bytes] = None,
         **kwargs
     ) -> List[Image.Image]:
         """
-        Generate mock images with placeholder content
+        Generate mock images with placeholder content (Gemini 2.5 Flash Image / Nano Banana)
 
         Args:
             prompt: Text description (will be displayed on image)
-            negative_prompt: Not used in mock mode
-            number_of_images: Number of images to generate
-            aspect_ratio: Aspect ratio for images
+            number_of_images: Number of images to generate (1-10)
+            aspect_ratio: Aspect ratio for images (10 options)
+            model: Model name (gemini-2.5-flash-image)
+            temperature: Controls creativity (0.0-2.0)
+            top_p: Nucleus sampling parameter (0.0-1.0)
+            top_k: Top-k sampling parameter
+            output_mime_type: Output format (image/png, image/jpeg)
+            input_images: List of input image bytes (up to 3)
 
         Returns:
             List of PIL Image objects with placeholder content
         """
-        print(f"🎭 MOCK: Generating {number_of_images} placeholder image(s)")
+        print(f"🎭 MOCK: Generating {number_of_images} placeholder image(s) with Nano Banana")
+        print(f"🤖 Model: {model}")
         print(f"📝 Prompt: {prompt}")
+        print(f"🌡️  Temperature: {temperature}, Top-P: {top_p}, Top-K: {top_k}")
+
+        # Log input images
+        if input_images:
+            print(f"📷 Using {len(input_images)} input image(s) for image-to-image generation")
 
         # Simulate API delay
         time.sleep(1)
 
-        # Parse aspect ratio
+        # Parse aspect ratio - Nano Banana supports 10 aspect ratios
         aspect_map = {
             "1:1": (512, 512),
-            "16:9": (768, 432),
+            "3:2": (768, 512),
+            "2:3": (512, 768),
+            "3:4": (512, 683),
+            "4:3": (683, 512),
+            "4:5": (512, 640),
+            "5:4": (640, 512),
             "9:16": (432, 768),
-            "4:3": (640, 480),
-            "3:4": (480, 640)
+            "16:9": (768, 432),
+            "21:9": (896, 384)
         }
         size = aspect_map.get(aspect_ratio, (512, 512))
 

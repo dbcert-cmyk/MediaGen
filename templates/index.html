@@ -264,50 +264,64 @@
         <!-- Image Generator Tab -->
         <div id="image-tab" class="tab-content active">
             <div class="card">
-                <h2 style="margin-bottom: 25px;">Generate Images with Imagen 3</h2>
+                <h2 style="margin-bottom: 25px;">Generate Images with Gemini 2.5 Flash Image (Nano Banana)</h2>
                 <form id="image-form">
                     <div class="form-group">
                         <label for="image-prompt">Prompt *</label>
                         <textarea id="image-prompt" placeholder="Describe the image you want to generate..." required></textarea>
                     </div>
 
+                    <h3 style="margin-top: 25px; margin-bottom: 15px; color: #667eea;">📷 Input Images (Optional)</h3>
+                    <small style="color: #666; display: block; margin-bottom: 15px;">Add up to 3 reference images for image-to-image generation</small>
+
                     <div class="form-group">
-                        <label for="negative-prompt">Negative Prompt (Optional)</label>
-                        <input type="text" id="negative-prompt" placeholder="Things to avoid in the image...">
+                        <label for="input-image-1">Input Image 1</label>
+                        <input type="file" id="input-image-1" accept="image/jpeg,image/png,image/webp">
                     </div>
 
-                    <div class="row">
-                        <div class="form-group">
-                            <label for="image-model">Model</label>
-                            <select id="image-model">
-                                <option value="imagen-3.0-generate-001" selected>Imagen 3.0 (Quality)</option>
-                                <option value="imagen-3.0-fast-generate-001">Imagen 3.0 Fast</option>
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label for="input-image-2">Input Image 2</label>
+                        <input type="file" id="input-image-2" accept="image/jpeg,image/png,image/webp">
+                    </div>
 
+                    <div class="form-group">
+                        <label for="input-image-3">Input Image 3</label>
+                        <input type="file" id="input-image-3" accept="image/jpeg,image/png,image/webp">
+                    </div>
+
+                    <h3 style="margin-top: 25px; margin-bottom: 15px; color: #667eea;">⚙️ Generation Settings</h3>
+
+                    <div class="row">
                         <div class="form-group">
                             <label for="num-images">Number of Images</label>
                             <select id="num-images">
                                 <option value="1">1</option>
                                 <option value="2">2</option>
                                 <option value="4" selected>4</option>
+                                <option value="6">6</option>
                                 <option value="8">8</option>
+                                <option value="10">10</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="aspect-ratio">Aspect Ratio</label>
+                            <select id="aspect-ratio">
+                                <option value="1:1" selected>1:1 (Square)</option>
+                                <option value="3:2">3:2 (Standard Landscape)</option>
+                                <option value="2:3">2:3 (Standard Portrait)</option>
+                                <option value="3:4">3:4 (Portrait)</option>
+                                <option value="4:3">4:3 (Classic)</option>
+                                <option value="4:5">4:5 (Instagram Portrait)</option>
+                                <option value="5:4">5:4 (Classic)</option>
+                                <option value="9:16">9:16 (Mobile Portrait)</option>
+                                <option value="16:9">16:9 (Widescreen)</option>
+                                <option value="21:9">21:9 (Ultrawide)</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="row">
-                        <div class="form-group">
-                            <label for="aspect-ratio">Aspect Ratio</label>
-                            <select id="aspect-ratio">
-                                <option value="1:1" selected>1:1 (Square)</option>
-                                <option value="9:16">9:16 (Portrait)</option>
-                                <option value="16:9">16:9 (Landscape)</option>
-                                <option value="4:3">4:3 (Standard)</option>
-                                <option value="3:4">3:4 (Portrait)</option>
-                            </select>
-                        </div>
-
                         <div class="form-group">
                             <label for="output-format">Output Format</label>
                             <select id="output-format">
@@ -315,44 +329,24 @@
                                 <option value="image/jpeg">JPEG</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="form-group">
-                            <label for="safety-filter">Safety Filter</label>
-                            <select id="safety-filter">
-                                <option value="block_fewest">Block Fewest</option>
-                                <option value="block_few">Block Few</option>
-                                <option value="block_some" selected>Block Some</option>
-                                <option value="block_most">Block Most</option>
-                            </select>
-                        </div>
 
                         <div class="form-group">
-                            <label for="person-generation">Person Generation</label>
-                            <select id="person-generation">
-                                <option value="allow_adult" selected>Allow Adult</option>
-                                <option value="allow_all">Allow All</option>
-                                <option value="dont_allow">Don't Allow</option>
-                            </select>
+                            <label for="top-k">Top-K (Sampling)</label>
+                            <input type="number" id="top-k" value="64" min="1" max="100" style="width: 100%;">
+                            <small style="color: #666;">Default: 64</small>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="language">Language</label>
-                        <select id="language">
-                            <option value="auto" selected>Auto-detect</option>
-                            <option value="en">English</option>
-                            <option value="es">Spanish</option>
-                            <option value="fr">French</option>
-                            <option value="de">German</option>
-                            <option value="it">Italian</option>
-                            <option value="ja">Japanese</option>
-                            <option value="ko">Korean</option>
-                            <option value="pt">Portuguese</option>
-                            <option value="hi">Hindi</option>
-                            <option value="zh">Chinese</option>
-                        </select>
+                        <label for="temperature">Temperature: <span id="temp-value">1.0</span></label>
+                        <input type="range" id="temperature" min="0" max="2" step="0.1" value="1.0" style="width: 100%;">
+                        <small style="color: #666;">Controls creativity (0.0 = conservative, 2.0 = very creative)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="top-p">Top-P (Nucleus Sampling): <span id="topp-value">0.95</span></label>
+                        <input type="range" id="top-p" min="0" max="1" step="0.05" value="0.95" style="width: 100%;">
+                        <small style="color: #666;">Controls diversity (lower = more focused)</small>
                     </div>
 
                     <button type="submit">Generate Images</button>
@@ -563,19 +557,68 @@
             document.getElementById(`${tab}-tab`).classList.add('active');
         }
 
+        // Update slider values display
+        document.getElementById('temperature').addEventListener('input', (e) => {
+            document.getElementById('temp-value').textContent = e.target.value;
+        });
+
+        document.getElementById('top-p').addEventListener('input', (e) => {
+            document.getElementById('topp-value').textContent = e.target.value;
+        });
+
         // Image Generation Form
         document.getElementById('image-form').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const prompt = document.getElementById('image-prompt').value;
-            const negativePrompt = document.getElementById('negative-prompt').value;
             const numImages = parseInt(document.getElementById('num-images').value);
             const aspectRatio = document.getElementById('aspect-ratio').value;
-            const model = document.getElementById('image-model').value;
-            const safetyFilter = document.getElementById('safety-filter').value;
-            const personGeneration = document.getElementById('person-generation').value;
-            const language = document.getElementById('language').value;
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            const topP = parseFloat(document.getElementById('top-p').value);
+            const topK = parseInt(document.getElementById('top-k').value);
             const outputFormat = document.getElementById('output-format').value;
+
+            // Get input image files
+            const inputImage1 = document.getElementById('input-image-1').files[0];
+            const inputImage2 = document.getElementById('input-image-2').files[0];
+            const inputImage3 = document.getElementById('input-image-3').files[0];
+
+            // Use FormData if files are present, otherwise use JSON
+            const hasFiles = inputImage1 || inputImage2 || inputImage3;
+
+            let requestData;
+            let headers = {};
+
+            if (hasFiles) {
+                // Use FormData for file uploads
+                const formData = new FormData();
+                formData.append('prompt', prompt);
+                formData.append('number_of_images', numImages);
+                formData.append('aspect_ratio', aspectRatio);
+                formData.append('temperature', temperature);
+                formData.append('top_p', topP);
+                formData.append('top_k', topK);
+                formData.append('output_mime_type', outputFormat);
+
+                if (inputImage1) formData.append('input_image_1', inputImage1);
+                if (inputImage2) formData.append('input_image_2', inputImage2);
+                if (inputImage3) formData.append('input_image_3', inputImage3);
+
+                requestData = formData;
+                // Don't set Content-Type header - browser will set it with boundary
+            } else {
+                // Use JSON for text-only requests
+                headers = {'Content-Type': 'application/json'};
+                requestData = JSON.stringify({
+                    prompt,
+                    number_of_images: numImages,
+                    aspect_ratio: aspectRatio,
+                    temperature,
+                    top_p: topP,
+                    top_k: topK,
+                    output_mime_type: outputFormat
+                });
+            }
 
             // Show loading, hide results and errors
             document.getElementById('image-loading').classList.add('active');
@@ -585,20 +628,8 @@
             try {
                 const response = await fetch('/api/generate-image', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        prompt,
-                        negative_prompt: negativePrompt,
-                        number_of_images: numImages,
-                        aspect_ratio: aspectRatio,
-                        model: model,
-                        safety_filter_level: safetyFilter,
-                        person_generation: personGeneration,
-                        language: language,
-                        output_mime_type: outputFormat
-                    })
+                    headers: headers,
+                    body: requestData
                 });
 
                 const data = await response.json();

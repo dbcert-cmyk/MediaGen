@@ -42,35 +42,46 @@ def index():
 
 @app.route('/api/generate-image', methods=['POST'])
 def generate_image():
-    """Generate an image using Vertex AI Imagen 3"""
+    """Generate an image using Vertex AI Gemini 2.5 Flash Image (Nano Banana)"""
     try:
-        data = request.get_json()
+        # Handle both JSON and form data (for file uploads)
+        if request.is_json:
+            data = request.get_json()
+        else:
+            data = request.form.to_dict()
+
         prompt = data.get('prompt')
 
         if not prompt:
             return jsonify({'error': 'Prompt is required'}), 400
 
         # Optional parameters
-        negative_prompt = data.get('negative_prompt', '')
-        number_of_images = data.get('number_of_images', 1)
+        number_of_images = int(data.get('number_of_images', 1))
         aspect_ratio = data.get('aspect_ratio', '1:1')
-        model = data.get('model', 'imagen-3.0-generate-001')
-        safety_filter_level = data.get('safety_filter_level', 'block_some')
-        person_generation = data.get('person_generation', 'allow_adult')
-        language = data.get('language', 'auto')
+        temperature = float(data.get('temperature', 1.0))
+        top_p = float(data.get('top_p', 0.95))
+        top_k = int(data.get('top_k', 64))
         output_mime_type = data.get('output_mime_type', 'image/png')
+
+        # Handle input image file uploads (up to 3 images)
+        input_images = []
+        for i in range(1, 4):
+            field_name = f'input_image_{i}'
+            if field_name in request.files:
+                file = request.files[field_name]
+                if file.filename:
+                    input_images.append(file.read())
 
         # Generate image
         images = media_generator.generate_image(
             prompt=prompt,
-            negative_prompt=negative_prompt,
             number_of_images=number_of_images,
             aspect_ratio=aspect_ratio,
-            model=model,
-            safety_filter_level=safety_filter_level,
-            person_generation=person_generation,
-            language=language,
-            output_mime_type=output_mime_type
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
+            output_mime_type=output_mime_type,
+            input_images=input_images if input_images else None
         )
 
         # Convert images to base64 for response

@@ -1,10 +1,12 @@
 import os
 import time
+import base64
 from typing import List, Optional
 from PIL import Image
 from io import BytesIO
 import vertexai
-from vertexai.preview.vision_models import ImageGenerationModel, VideoGenerationModel
+from vertexai.preview.vision_models import VideoGenerationModel
+from vertexai.generative_models import GenerativeModel, Part
 
 
 class VertexAIMediaGenerator:
@@ -27,68 +29,110 @@ class VertexAIMediaGenerator:
     def generate_image(
         self,
         prompt: str,
-        negative_prompt: str = "",
         number_of_images: int = 1,
         aspect_ratio: str = "1:1",
-        model: str = "imagen-3.0-generate-001",
-        safety_filter_level: str = "block_some",
-        person_generation: str = "allow_adult",
-        language: str = "auto",
-        output_mime_type: str = "image/png"
+        model: str = "gemini-2.5-flash-image",
+        temperature: float = 1.0,
+        top_p: float = 0.95,
+        top_k: int = 64,
+        output_mime_type: str = "image/png",
+        input_images: List[bytes] = None,
+        safety_settings: dict = None
     ) -> List[Image.Image]:
         """
-        Generate images using Vertex AI Imagen 3
+        Generate images using Vertex AI Gemini 2.5 Flash Image (Nano Banana)
 
         Args:
             prompt: Text description of the image to generate
-            negative_prompt: Things to avoid in the generated image
-            number_of_images: Number of images to generate (1-8)
-            aspect_ratio: Aspect ratio (1:1, 9:16, 16:9, 4:3, 3:4)
-            model: Model to use (imagen-3.0-generate-001, imagen-3.0-fast-generate-001)
-            safety_filter_level: Safety filter level (block_some, block_few, block_most, block_fewest)
-            person_generation: Person generation policy (allow_adult, allow_all, dont_allow)
-            language: Language code (auto, en, es, fr, de, it, ja, ko, pt, hi, etc.)
+            number_of_images: Number of images to generate (1-10)
+            aspect_ratio: Aspect ratio (1:1, 3:2, 2:3, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9)
+            model: Model to use (gemini-2.5-flash-image)
+            temperature: Controls randomness (0.0-2.0, default 1.0). Higher = more creative
+            top_p: Nucleus sampling parameter (0.0-1.0, default 0.95)
+            top_k: Top-k sampling parameter (default 64)
             output_mime_type: Output format (image/png, image/jpeg)
+            input_images: List of input image bytes (up to 3 images)
+            safety_settings: Safety filter settings dict
 
         Returns:
             List of PIL Image objects
         """
         try:
-            print(f"Generating {number_of_images} image(s) with Imagen 3")
+            print(f"Generating {number_of_images} image(s) with Gemini 2.5 Flash Image (Nano Banana)")
             print(f"Model: {model}")
             print(f"Prompt: {prompt}")
+            print(f"Aspect Ratio: {aspect_ratio}")
+            print(f"Temperature: {temperature}, Top-P: {top_p}, Top-K: {top_k}")
 
             # Initialize the model
-            image_model = ImageGenerationModel.from_pretrained(model)
+            image_model = GenerativeModel(model)
+
+            # Build the content parts
+            content_parts = []
+
+            # Add input images if provided (up to 3)
+            if input_images:
+                for idx, img_bytes in enumerate(input_images[:3]):
+                    content_parts.append(Part.from_data(img_bytes, mime_type="image/png"))
+                print(f"📷 Using {len(input_images[:3])} input image(s)")
+
+            # Add text prompt
+            content_parts.append(prompt)
+
+            # Configure generation parameters
+            generation_config = {
+                "temperature": temperature,
+                "top_p": top_p,
+                "top_k": top_k,
+                "candidate_count": number_of_images,
+                "response_modalities": ["TEXT", "IMAGE"]
+            }
+
+            # Configure image generation
+            image_generation_config = {
+                "aspect_ratio": aspect_ratio
+            }
+
+            # Build request parameters
+            generate_params = {
+                "contents": content_parts,
+                "generation_config": generation_config,
+                "image_generation_config": image_generation_config
+            }
+
+            # Add safety settings if provided
+            if safety_settings:
+                generate_params["safety_settings"] = safety_settings
 
             # Generate images
-            response = image_model.generate_images(
-                prompt=prompt,
-                negative_prompt=negative_prompt if negative_prompt else None,
-                number_of_images=number_of_images,
-                aspect_ratio=aspect_ratio,
-                safety_filter_level=safety_filter_level,
-                person_generation=person_generation,
-                language=language,
-                output_mime_type=output_mime_type
-            )
+            response = image_model.generate_content(**generate_params)
 
-            # Convert to PIL Images
+            # Extract images from response
             images = []
-            for idx, image in enumerate(response.images):
-                # Get image bytes
-                img_bytes = image._image_bytes
+            timestamp = int(time.time())
 
-                # Convert to PIL Image
-                pil_image = Image.open(BytesIO(img_bytes))
-                images.append(pil_image)
+            for idx, candidate in enumerate(response.candidates):
+                for part in candidate.content.parts:
+                    # Check if this part contains image data
+                    if hasattr(part, 'inline_data') and part.inline_data:
+                        img_bytes = part.inline_data.data
 
-                # Save locally for reference
-                timestamp = int(time.time())
-                file_ext = "png" if output_mime_type == "image/png" else "jpg"
-                output_path = f"generated_media/image_{timestamp}_{idx}.{file_ext}"
-                pil_image.save(output_path)
-                print(f"Saved image to: {output_path}")
+                        # Convert to PIL Image
+                        pil_image = Image.open(BytesIO(img_bytes))
+                        images.append(pil_image)
+
+                        # Save locally for reference
+                        file_ext = "png" if output_mime_type == "image/png" else "jpg"
+                        output_path = f"generated_media/image_{timestamp}_{idx}.{file_ext}"
+
+                        # Ensure directory exists
+                        os.makedirs("generated_media", exist_ok=True)
+
+                        pil_image.save(output_path)
+                        print(f"Saved image to: {output_path}")
+
+            if not images:
+                raise Exception("No images were generated in the response")
 
             return images
 
