@@ -7,3 +7,7 @@ python-dotenv==1.0.0
 # Using newer versions compatible with Python 3.12+
 numpy>=1.26.0
 opencv-python>=4.8.1
+
+# Optional: For video editing features in mock mode
+# (Mock mode will work without FFmpeg, creating placeholder videos instead)
+ffmpeg-python==0.2.0
