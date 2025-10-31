@@ -15,15 +15,15 @@ class VertexAIPricing:
     GEMINI_FLASH_IMAGE_PER_IMAGE = 0.0025  # $0.0025 per image
 
     # Veo 3.1 Video Generation Pricing
-    # $0.040 per second of generated video
-    VEO_PRICE_PER_SECOND = 0.040
+    # $0.40 per second of generated video
+    VEO_PRICE_PER_SECOND = 0.40
 
     # Calculated prices by duration (for quick reference)
     VEO_PRICING = {
         # Duration in seconds: price
-        4: 0.16,   # 4 seconds × $0.040
-        6: 0.24,   # 6 seconds × $0.040
-        8: 0.32,   # 8 seconds × $0.040
+        4: 1.60,   # 4 seconds × $0.40
+        6: 2.40,   # 6 seconds × $0.40
+        8: 3.20,   # 8 seconds × $0.40
     }
 
     @classmethod
@@ -113,7 +113,7 @@ class VertexAIPricing:
                 "per_second": cls.VEO_PRICE_PER_SECOND,
                 "pricing_examples": cls.VEO_PRICING,
                 "description": "Veo 3.1 Video Generation",
-                "notes": "Price is $0.040 per second of generated video (resolution doesn't affect price)"
+                "notes": "Price is $0.40 per second of generated video (resolution doesn't affect price)"
             },
             "disclaimer": "Prices shown are estimates. Actual costs may vary. "
                          "Always verify current pricing at cloud.google.com/vertex-ai/generative-ai/pricing"
@@ -145,11 +145,11 @@ if __name__ == "__main__":
         print(f"{num_images} image(s): ${cost['total']:.4f} ({cost['breakdown']})")
 
     # Test video pricing
-    print("\n🎬 VIDEO GENERATION COSTS ($0.040/second):")
+    print("\n🎬 VIDEO GENERATION COSTS ($0.40/second):")
     print("-" * 60)
     for duration in [4, 6, 8]:
         cost = estimate_video_cost(duration, "720p", 1)
-        print(f"{duration}s video: ${cost['total']:.2f} ({duration} × $0.040)")
+        print(f"{duration}s video: ${cost['total']:.2f} ({duration} × $0.40)")
 
     print("\nNote: Resolution (720p/1080p) doesn't affect pricing")
 
