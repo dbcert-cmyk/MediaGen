@@ -96,16 +96,14 @@ class VertexAIMediaGenerator:
                 "response_modalities": ["TEXT", "IMAGE"]
             }
 
-            # Configure image generation
-            image_generation_config = {
-                "aspect_ratio": aspect_ratio
-            }
+            # Add aspect ratio to generation_config (newer SDK version)
+            if aspect_ratio:
+                generation_config["aspect_ratio"] = aspect_ratio
 
             # Build request parameters
             generate_params = {
                 "contents": content_parts,
-                "generation_config": generation_config,
-                "image_generation_config": image_generation_config
+                "generation_config": generation_config
             }
 
             # Add safety settings if provided
