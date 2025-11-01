@@ -260,6 +260,7 @@
             <div class="tab active" onclick="switchTab('image')">Image Generator</div>
             <div class="tab" onclick="switchTab('video')">Video Generator</div>
             <div class="tab" onclick="switchTab('editor')">Video Editor</div>
+            <div class="tab" onclick="switchTab('storyboard')">Storyboard Mode</div>
         </div>
 
         <!-- Image Generator Tab -->
@@ -770,6 +771,104 @@
                         <h3>Speed-Adjusted Video</h3>
                         <div id="speed-container" class="video-item"></div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storyboard Mode Tab -->
+        <div id="storyboard-tab" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 25px;">🎬 Storyboard Mode</h2>
+                <p style="color: #666; margin-bottom: 25px;">Create multi-scene videos by chaining Veo generations together</p>
+
+                <!-- Storyboard Info -->
+                <div style="margin-bottom: 30px; padding: 15px; background: #f9f9f9; border-radius: 10px;">
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="storyboard-title">Storyboard Title</label>
+                            <input type="text" id="storyboard-title" placeholder="My Amazing Short Film" value="My Storyboard">
+                        </div>
+                        <div style="text-align: right; padding-top: 30px;">
+                            <div style="font-size: 0.9em; color: #666;">Total Scenes: <span id="scene-count" style="font-weight: bold; color: #667eea;">0</span></div>
+                            <div style="font-size: 0.9em; color: #666;">Total Duration: <span id="total-duration" style="font-weight: bold; color: #667eea;">0s</span></div>
+                            <div style="font-size: 1.1em; color: #666; margin-top: 5px;">Estimated Cost: <span id="storyboard-cost" style="font-weight: bold; color: #667eea;">$0.00</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Scene Section -->
+                <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-radius: 10px; border: 2px solid #667eea30;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">➕ Add New Scene</h3>
+                    <form id="add-scene-form">
+                        <div class="form-group">
+                            <label for="scene-prompt">Scene Prompt</label>
+                            <textarea id="scene-prompt" placeholder="Describe what happens in this scene..." required style="min-height: 60px;"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="form-group">
+                                <label for="scene-duration">Duration</label>
+                                <select id="scene-duration">
+                                    <option value="4">4 seconds ($1.60)</option>
+                                    <option value="6">6 seconds ($2.40)</option>
+                                    <option value="8" selected>8 seconds ($3.20)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="scene-aspect-ratio">Aspect Ratio</label>
+                                <select id="scene-aspect-ratio">
+                                    <option value="16:9" selected>16:9 (Landscape)</option>
+                                    <option value="9:16">9:16 (Portrait)</option>
+                                    <option value="1:1">1:1 (Square)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="scene-resolution">Resolution</label>
+                                <select id="scene-resolution">
+                                    <option value="720p" selected>720p</option>
+                                    <option value="1080p">1080p</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit">Add Scene to Storyboard</button>
+                    </form>
+                </div>
+
+                <!-- Scenes List -->
+                <div id="scenes-container" style="margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 15px; color: #333;">📋 Scenes</h3>
+                    <div id="scenes-list" style="min-height: 100px;">
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <div style="font-size: 48px; margin-bottom: 10px;">🎬</div>
+                            <div>No scenes yet. Add your first scene above!</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <button id="generate-all-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" disabled>
+                        🎥 Generate All Scenes
+                    </button>
+                    <button id="combine-storyboard-btn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" disabled>
+                        🔗 Combine into Final Video
+                    </button>
+                </div>
+
+                <!-- Loading/Error/Results -->
+                <div id="storyboard-loading" class="loading">
+                    <div class="spinner"></div>
+                    <p id="storyboard-loading-text">Processing storyboard...</p>
+                </div>
+
+                <div id="storyboard-error" class="error"></div>
+
+                <div id="storyboard-results" class="results">
+                    <h3>Final Storyboard Video</h3>
+                    <div id="storyboard-video-container" class="video-item"></div>
                 </div>
             </div>
         </div>
@@ -1329,6 +1428,343 @@
                 document.getElementById('speed-loading').classList.remove('active');
             }
         });
+
+        // ============================
+        // STORYBOARD MODE
+        // ============================
+
+        let currentStoryboard = {
+            id: `storyboard_${Date.now()}`,
+            title: 'Untitled Storyboard',
+            scenes: []
+        };
+
+        // Add Scene Form Handler
+        document.getElementById('add-scene-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const prompt = document.getElementById('scene-prompt').value.trim();
+            const duration = parseInt(document.getElementById('scene-duration').value);
+            const resolution = document.getElementById('scene-resolution').value;
+            const aspectRatio = document.getElementById('scene-aspect-ratio').value;
+
+            if (!prompt) {
+                alert('Please enter a scene description');
+                return;
+            }
+
+            // Create new scene
+            const scene = {
+                id: `scene_${Date.now()}`,
+                prompt: prompt,
+                duration: duration,
+                resolution: resolution,
+                aspect_ratio: aspectRatio,
+                generated: false,
+                video_path: null,
+                video_data: null
+            };
+
+            // Add to storyboard
+            currentStoryboard.scenes.push(scene);
+
+            // Clear form
+            document.getElementById('scene-prompt').value = '';
+
+            // Update UI
+            renderScenesList();
+            updateStoryboardStats();
+        });
+
+        // Render Scenes List
+        function renderScenesList() {
+            const scenesList = document.getElementById('scenes-list');
+
+            if (currentStoryboard.scenes.length === 0) {
+                scenesList.innerHTML = '<p style="text-align: center; color: #999; padding: 30px;">No scenes yet. Add your first scene above!</p>';
+                return;
+            }
+
+            scenesList.innerHTML = currentStoryboard.scenes.map((scene, index) => `
+                <div class="scene-item" data-scene-id="${scene.id}" style="
+                    background: ${scene.generated ? 'linear-gradient(135deg, #28a74515 0%, #4ade8015 100%)' : 'linear-gradient(135deg, #f3f4f615 0%, #e5e7eb15 100%)'};
+                    border: 2px solid ${scene.generated ? '#28a74530' : '#e5e7eb30'};
+                    border-radius: 10px;
+                    padding: 15px;
+                    margin-bottom: 15px;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <span style="font-weight: bold; color: #667eea;">Scene ${index + 1}</span>
+                                ${scene.generated ? '<span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 5px; font-size: 0.75em;">✓ Generated</span>' : '<span style="background: #ffc107; color: #333; padding: 2px 8px; border-radius: 5px; font-size: 0.75em;">Pending</span>'}
+                            </div>
+                            <p style="margin: 8px 0; color: #333;">${scene.prompt}</p>
+                            <div style="font-size: 0.85em; color: #666; margin-top: 8px;">
+                                📐 ${scene.aspect_ratio} • ⏱️ ${scene.duration}s • 📺 ${scene.resolution} • 💰 $${(scene.duration * PRICING.video.perSecond).toFixed(2)}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            ${!scene.generated ? `
+                                <button onclick="generateScene('${scene.id}')" style="
+                                    background: #667eea;
+                                    color: white;
+                                    border: none;
+                                    padding: 8px 12px;
+                                    border-radius: 5px;
+                                    cursor: pointer;
+                                    font-size: 0.85em;
+                                ">🎥 Generate</button>
+                            ` : ''}
+                            <button onclick="moveSceneUp(${index})" ${index === 0 ? 'disabled' : ''} style="
+                                background: #6c757d;
+                                color: white;
+                                border: none;
+                                padding: 8px 12px;
+                                border-radius: 5px;
+                                cursor: ${index === 0 ? 'not-allowed' : 'pointer'};
+                                font-size: 0.85em;
+                                opacity: ${index === 0 ? '0.5' : '1'};
+                            ">↑</button>
+                            <button onclick="moveSceneDown(${index})" ${index === currentStoryboard.scenes.length - 1 ? 'disabled' : ''} style="
+                                background: #6c757d;
+                                color: white;
+                                border: none;
+                                padding: 8px 12px;
+                                border-radius: 5px;
+                                cursor: ${index === currentStoryboard.scenes.length - 1 ? 'not-allowed' : 'pointer'};
+                                font-size: 0.85em;
+                                opacity: ${index === currentStoryboard.scenes.length - 1 ? '0.5' : '1'};
+                            ">↓</button>
+                            <button onclick="removeScene('${scene.id}')" style="
+                                background: #dc3545;
+                                color: white;
+                                border: none;
+                                padding: 8px 12px;
+                                border-radius: 5px;
+                                cursor: pointer;
+                                font-size: 0.85em;
+                            ">🗑️</button>
+                        </div>
+                    </div>
+                    ${scene.generated && scene.video_data ? `
+                        <div style="margin-top: 15px;">
+                            <video controls style="width: 100%; max-width: 400px; border-radius: 8px;">
+                                <source src="data:video/mp4;base64,${scene.video_data}" type="video/mp4">
+                            </video>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Update Storyboard Stats
+        function updateStoryboardStats() {
+            const sceneCount = currentStoryboard.scenes.length;
+            const totalDuration = currentStoryboard.scenes.reduce((sum, scene) => sum + scene.duration, 0);
+            const totalCost = totalDuration * PRICING.video.perSecond;
+
+            document.getElementById('scene-count').textContent = sceneCount;
+            document.getElementById('total-duration').textContent = `${totalDuration}s`;
+            document.getElementById('storyboard-cost').textContent = `$${totalCost.toFixed(2)}`;
+
+            // Enable/disable buttons based on scenes
+            const generateAllBtn = document.getElementById('generate-all-btn');
+            const combineBtn = document.getElementById('combine-storyboard-btn');
+
+            const hasScenes = sceneCount > 0;
+            const hasUngenerated = currentStoryboard.scenes.some(s => !s.generated);
+            const allGenerated = sceneCount > 0 && currentStoryboard.scenes.every(s => s.generated);
+
+            generateAllBtn.disabled = !hasUngenerated;
+            generateAllBtn.style.opacity = hasUngenerated ? '1' : '0.5';
+            generateAllBtn.style.cursor = hasUngenerated ? 'pointer' : 'not-allowed';
+
+            combineBtn.disabled = !allGenerated;
+            combineBtn.style.opacity = allGenerated ? '1' : '0.5';
+            combineBtn.style.cursor = allGenerated ? 'pointer' : 'not-allowed';
+        }
+
+        // Remove Scene
+        function removeScene(sceneId) {
+            if (confirm('Are you sure you want to remove this scene?')) {
+                currentStoryboard.scenes = currentStoryboard.scenes.filter(s => s.id !== sceneId);
+                renderScenesList();
+                updateStoryboardStats();
+            }
+        }
+
+        // Move Scene Up
+        function moveSceneUp(index) {
+            if (index > 0) {
+                const temp = currentStoryboard.scenes[index];
+                currentStoryboard.scenes[index] = currentStoryboard.scenes[index - 1];
+                currentStoryboard.scenes[index - 1] = temp;
+                renderScenesList();
+            }
+        }
+
+        // Move Scene Down
+        function moveSceneDown(index) {
+            if (index < currentStoryboard.scenes.length - 1) {
+                const temp = currentStoryboard.scenes[index];
+                currentStoryboard.scenes[index] = currentStoryboard.scenes[index + 1];
+                currentStoryboard.scenes[index + 1] = temp;
+                renderScenesList();
+            }
+        }
+
+        // Generate Single Scene
+        async function generateScene(sceneId) {
+            const scene = currentStoryboard.scenes.find(s => s.id === sceneId);
+            if (!scene) return;
+
+            try {
+                // Show loading state for this scene
+                renderScenesList();
+
+                // Prepare request data
+                const formData = new FormData();
+                formData.append('prompt', scene.prompt);
+                formData.append('duration', scene.duration);
+                formData.append('resolution', scene.resolution);
+                formData.append('aspect_ratio', scene.aspect_ratio);
+                formData.append('sample_count', 1);
+
+                // Call video generation API
+                const response = await fetch('/generate-video', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.videos && data.videos.length > 0) {
+                    // Mark scene as generated
+                    scene.generated = true;
+                    scene.video_data = data.videos[0];
+                    scene.video_path = data.file_paths ? data.file_paths[0] : null;
+
+                    // Update UI
+                    renderScenesList();
+                    updateStoryboardStats();
+                } else {
+                    alert(`Failed to generate scene: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                alert(`Error generating scene: ${error.message}`);
+            }
+        }
+
+        // Generate All Scenes
+        document.getElementById('generate-all-btn').addEventListener('click', async () => {
+            const ungeneratedScenes = currentStoryboard.scenes.filter(s => !s.generated);
+
+            if (ungeneratedScenes.length === 0) {
+                alert('All scenes are already generated!');
+                return;
+            }
+
+            const confirmMsg = `This will generate ${ungeneratedScenes.length} scene(s) for approximately $${(ungeneratedScenes.reduce((sum, s) => sum + s.duration, 0) * PRICING.video.perSecond).toFixed(2)}. Continue?`;
+            if (!confirm(confirmMsg)) return;
+
+            // Show loading
+            const loadingDiv = document.getElementById('storyboard-loading');
+            const loadingText = document.getElementById('storyboard-loading-text');
+            loadingDiv.classList.add('active');
+
+            for (let i = 0; i < ungeneratedScenes.length; i++) {
+                const scene = ungeneratedScenes[i];
+                loadingText.textContent = `Generating scene ${i + 1} of ${ungeneratedScenes.length}...`;
+
+                try {
+                    await generateScene(scene.id);
+                } catch (error) {
+                    console.error(`Error generating scene ${scene.id}:`, error);
+                }
+            }
+
+            loadingDiv.classList.remove('active');
+            alert('All scenes generated successfully!');
+        });
+
+        // Combine Storyboard into Final Video
+        document.getElementById('combine-storyboard-btn').addEventListener('click', async () => {
+            const allGenerated = currentStoryboard.scenes.every(s => s.generated);
+
+            if (!allGenerated) {
+                alert('Please generate all scenes before combining.');
+                return;
+            }
+
+            if (currentStoryboard.scenes.length === 0) {
+                alert('No scenes to combine!');
+                return;
+            }
+
+            try {
+                // Show loading
+                const loadingDiv = document.getElementById('storyboard-loading');
+                const loadingText = document.getElementById('storyboard-loading-text');
+                loadingDiv.classList.add('active');
+                loadingText.textContent = 'Combining scenes into final video...';
+
+                // Prepare scene data
+                const scenesData = currentStoryboard.scenes.map(scene => ({
+                    id: scene.id,
+                    prompt: scene.prompt,
+                    duration: scene.duration,
+                    resolution: scene.resolution,
+                    aspect_ratio: scene.aspect_ratio,
+                    video_path: scene.video_path,
+                    video_data: scene.video_data,
+                    generated: scene.generated
+                }));
+
+                const response = await fetch('/api/storyboard/combine', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        storyboard_id: currentStoryboard.id,
+                        title: currentStoryboard.title,
+                        scenes: scenesData
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show result
+                    document.getElementById('storyboard-video-container').innerHTML = `
+                        <video controls autoplay style="max-width: 100%; border-radius: 10px;">
+                            <source src="data:video/mp4;base64,${data.video}" type="video/mp4">
+                        </video>
+                        <p style="margin-top: 10px; color: #666;">
+                            Combined ${currentStoryboard.scenes.length} scenes • Total duration: ${currentStoryboard.scenes.reduce((sum, s) => sum + s.duration, 0)}s
+                        </p>
+                    `;
+                    document.getElementById('storyboard-results').classList.add('active');
+                } else {
+                    throw new Error(data.error || 'Failed to combine storyboard');
+                }
+            } catch (error) {
+                const errorDiv = document.getElementById('storyboard-error');
+                errorDiv.textContent = `Error: ${error.message}`;
+                errorDiv.classList.add('active');
+            } finally {
+                document.getElementById('storyboard-loading').classList.remove('active');
+            }
+        });
+
+        // Update title handler
+        document.getElementById('storyboard-title').addEventListener('change', (e) => {
+            currentStoryboard.title = e.target.value || 'Untitled Storyboard';
+        });
+
+        // Initialize storyboard stats
+        updateStoryboardStats();
     </script>
 </body>
 </html>

@@ -5,6 +5,7 @@ from flask import Flask, render_template, request, jsonify, send_file
 from dotenv import load_dotenv
 from video_editor import VideoEditor
 from pricing import estimate_image_cost, estimate_video_cost, VertexAIPricing
+from storyboard import Storyboard, Scene, StoryboardRenderer, create_scene, estimate_storyboard_cost
 
 # Load environment variables
 load_dotenv()
@@ -37,6 +38,9 @@ else:
 
 # Initialize video editor
 video_editor = VideoEditor(mock_mode=mock_mode)
+
+# Initialize storyboard renderer
+storyboard_renderer = StoryboardRenderer(mock_mode=mock_mode)
 
 
 @app.route('/')
@@ -464,6 +468,193 @@ def api_pricing_info():
             'pricing': pricing_info
         })
     except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/storyboard/save', methods=['POST'])
+def save_storyboard():
+    """Save a storyboard"""
+    try:
+        data = request.get_json()
+
+        # Create or load existing storyboard
+        storyboard_id = data.get('id')
+        if storyboard_id:
+            storyboard = Storyboard.load(storyboard_id) or Storyboard(storyboard_id=storyboard_id)
+        else:
+            storyboard = Storyboard()
+
+        storyboard.title = data.get('title', storyboard.title)
+
+        # Add scenes
+        storyboard.scenes = []
+        for scene_data in data.get('scenes', []):
+            scene = Scene(
+                scene_id=scene_data.get('id', f"scene_{int(time.time() * 1000)}"),
+                prompt=scene_data['prompt'],
+                duration=scene_data.get('duration', 8),
+                resolution=scene_data.get('resolution', '720p'),
+                aspect_ratio=scene_data.get('aspect_ratio', '16:9')
+            )
+            storyboard.add_scene(scene)
+
+        # Save to file
+        filepath = storyboard.save()
+
+        return jsonify({
+            'success': True,
+            'storyboard': storyboard.to_dict(),
+            'filepath': filepath
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/storyboard/load/<storyboard_id>')
+def load_storyboard(storyboard_id):
+    """Load a storyboard"""
+    try:
+        storyboard = Storyboard.load(storyboard_id)
+
+        if not storyboard:
+            return jsonify({
+                'success': False,
+                'error': 'Storyboard not found'
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'storyboard': storyboard.to_dict()
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/storyboard/estimate-cost', methods=['POST'])
+def estimate_storyboard_cost_api():
+    """Estimate cost for a storyboard"""
+    try:
+        data = request.get_json()
+        scenes_data = data.get('scenes', [])
+
+        # Create scene objects
+        scenes = []
+        for scene_data in scenes_data:
+            scene = Scene(
+                scene_id=scene_data.get('id', f"scene_{int(time.time() * 1000)}"),
+                prompt=scene_data['prompt'],
+                duration=scene_data.get('duration', 8)
+            )
+            scenes.append(scene)
+
+        cost_info = estimate_storyboard_cost(scenes)
+
+        return jsonify({
+            'success': True,
+            'cost': cost_info
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/storyboard/combine', methods=['POST'])
+def combine_storyboard():
+    """Combine storyboard scenes into final video"""
+    try:
+        data = request.get_json()
+        storyboard_id = data.get('storyboard_id')
+        title = data.get('title', 'Untitled Storyboard')
+        scenes = data.get('scenes', [])
+
+        if not scenes:
+            return jsonify({
+                'success': False,
+                'error': 'No scenes provided'
+            }), 400
+
+        # Create temporary video files from base64 data for scenes that need it
+        import time as time_module
+        import tempfile
+        import shutil
+
+        video_paths = []
+        temp_files = []
+
+        for i, scene in enumerate(scenes):
+            if not scene.get('generated'):
+                continue
+
+            # If scene has video_path and file exists, use it
+            if scene.get('video_path') and os.path.exists(scene['video_path']):
+                video_paths.append(scene['video_path'])
+            # Otherwise, create temp file from base64 data
+            elif scene.get('video_data'):
+                # Create temporary file
+                temp_fd, temp_path = tempfile.mkstemp(suffix='.mp4', dir='generated_media')
+                os.close(temp_fd)
+
+                # Decode and write video data
+                video_bytes = base64.b64decode(scene['video_data'])
+                with open(temp_path, 'wb') as f:
+                    f.write(video_bytes)
+
+                video_paths.append(temp_path)
+                temp_files.append(temp_path)
+
+        if not video_paths:
+            return jsonify({
+                'success': False,
+                'error': 'No generated scenes to combine'
+            }), 400
+
+        # Use video editor to combine
+        timestamp = int(time_module.time())
+        output_path = f"generated_media/storyboard_{storyboard_id or timestamp}.mp4"
+
+        combined_path = video_editor.combine_videos(video_paths, output_path)
+
+        # Clean up temporary files
+        for temp_file in temp_files:
+            try:
+                os.remove(temp_file)
+            except:
+                pass
+
+        # Read combined video and convert to base64
+        with open(combined_path, 'rb') as f:
+            video_data = base64.b64encode(f.read()).decode()
+
+        return jsonify({
+            'success': True,
+            'video': video_data,
+            'path': combined_path,
+            'message': f'Combined {len(video_paths)} scenes successfully'
+        })
+
+    except Exception as e:
+        # Clean up temp files on error
+        if 'temp_files' in locals():
+            for temp_file in temp_files:
+                try:
+                    os.remove(temp_file)
+                except:
+                    pass
+
         return jsonify({
             'success': False,
             'error': str(e)
