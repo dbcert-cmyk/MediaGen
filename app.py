@@ -133,12 +133,21 @@ def generate_video():
 
         # Optional parameters
         model = data.get('model', 'veo-3.1-generate-001')
+        # Ensure model is a string (in case form sends wrong type)
+        if not isinstance(model, str):
+            model = 'veo-3.1-generate-001'
+
         aspect_ratio = data.get('aspect_ratio', '16:9')
         duration_seconds = int(data.get('duration_seconds', 8))
         resolution = data.get('resolution', '720p')
         compression_quality = data.get('compression_quality', 'optimized')
-        enhance_prompt = data.get('enhance_prompt', 'true').lower() == 'true'
-        generate_audio = data.get('generate_audio', 'false').lower() == 'true'
+
+        # Convert string booleans to actual booleans
+        enhance_prompt_val = data.get('enhance_prompt', 'true')
+        enhance_prompt = enhance_prompt_val if isinstance(enhance_prompt_val, bool) else (str(enhance_prompt_val).lower() == 'true')
+
+        generate_audio_val = data.get('generate_audio', 'false')
+        generate_audio = generate_audio_val if isinstance(generate_audio_val, bool) else (str(generate_audio_val).lower() == 'true')
         negative_prompt = data.get('negative_prompt', '')
         person_generation = data.get('person_generation', 'allow_adult')
         sample_count = int(data.get('sample_count', 1))
