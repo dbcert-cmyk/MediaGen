@@ -87,7 +87,7 @@ class VertexAIMediaGenerator:
             # Add text prompt
             content_parts.append(prompt)
 
-            # Configure generation parameters
+            # Configure generation parameters (minimal config for compatibility)
             generation_config = {
                 "temperature": temperature,
                 "top_p": top_p,
@@ -95,10 +95,6 @@ class VertexAIMediaGenerator:
                 "candidate_count": number_of_images,
                 "response_modalities": ["TEXT", "IMAGE"]
             }
-
-            # Add aspect ratio to generation_config (newer SDK version)
-            if aspect_ratio:
-                generation_config["aspect_ratio"] = aspect_ratio
 
             # Build request parameters
             generate_params = {
@@ -111,6 +107,8 @@ class VertexAIMediaGenerator:
                 generate_params["safety_settings"] = safety_settings
 
             # Generate images
+            # Note: aspect_ratio is not directly supported in newer SDK versions for Gemini
+            # The model will generate images in a suitable aspect ratio based on the prompt
             response = image_model.generate_content(**generate_params)
 
             # Extract images from response
