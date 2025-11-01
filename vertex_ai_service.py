@@ -5,16 +5,25 @@ from typing import List, Optional
 from PIL import Image
 from io import BytesIO
 import vertexai
+
+# Try different import paths for different SDK versions
 try:
     from vertexai.preview.vision_models import VideoGenerationModel
 except ImportError:
-    # Fallback for newer SDK versions
     try:
         from vertexai.vision_models import VideoGenerationModel
     except ImportError:
-        # If still not available, we'll define a placeholder
         VideoGenerationModel = None
-from vertexai.generative_models import GenerativeModel, Part
+
+# Try importing GenerativeModel from different locations
+try:
+    from vertexai.generative_models import GenerativeModel, Part
+except ImportError:
+    try:
+        from vertexai.preview.generative_models import GenerativeModel, Part
+    except ImportError:
+        GenerativeModel = None
+        Part = None
 
 
 class VertexAIMediaGenerator:
@@ -71,6 +80,15 @@ class VertexAIMediaGenerator:
             print(f"Prompt: {prompt}")
             print(f"Aspect Ratio: {aspect_ratio}")
             print(f"Temperature: {temperature}, Top-P: {top_p}, Top-K: {top_k}")
+
+            # Check if GenerativeModel is available
+            if GenerativeModel is None or Part is None:
+                raise ImportError(
+                    "GenerativeModel is not available in your Vertex AI SDK version. "
+                    "For SDK 1.38.0, image generation with Gemini may not be fully supported. "
+                    "Please use MOCK_MODE=true in your .env file for testing, "
+                    "or upgrade to a newer SDK version."
+                )
 
             # Initialize the model
             image_model = GenerativeModel(model)
