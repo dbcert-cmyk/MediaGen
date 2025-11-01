@@ -5,7 +5,15 @@ from typing import List, Optional
 from PIL import Image
 from io import BytesIO
 import vertexai
-from vertexai.preview.vision_models import VideoGenerationModel
+try:
+    from vertexai.preview.vision_models import VideoGenerationModel
+except ImportError:
+    # Fallback for newer SDK versions
+    try:
+        from vertexai.vision_models import VideoGenerationModel
+    except ImportError:
+        # If still not available, we'll define a placeholder
+        VideoGenerationModel = None
 from vertexai.generative_models import GenerativeModel, Part
 
 
@@ -225,6 +233,13 @@ class VertexAIMediaGenerator:
             print(f"Resolution: {resolution}")
 
             # Initialize video generation model
+            if VideoGenerationModel is None:
+                raise ImportError(
+                    "VideoGenerationModel is not available in your version of the Vertex AI SDK. "
+                    "This may be due to SDK version incompatibility. "
+                    "Please try: pip install google-cloud-aiplatform==1.38.0\n"
+                    "Or use MOCK_MODE=true in your .env file for testing without GCP."
+                )
             video_model = VideoGenerationModel.from_pretrained(model)
 
             # Build parameters dict
