@@ -661,6 +661,106 @@ def combine_storyboard():
         }), 500
 
 
+@app.route('/api/storyboard/suggest-prompt', methods=['POST'])
+def suggest_scene_prompt():
+    """AI-powered scene prompt suggestions using Gemini"""
+    try:
+        data = request.get_json()
+        previous_scenes = data.get('previous_scenes', [])
+        partial_prompt = data.get('partial_prompt', '')
+        scene_position = data.get('scene_position', 'middle')  # beginning, middle, end
+
+        # Build context from previous scenes
+        context = ""
+        if previous_scenes:
+            context = "Previous scenes:\n"
+            for i, scene in enumerate(previous_scenes[-3:], 1):  # Last 3 scenes for context
+                context += f"{i}. {scene.get('prompt', '')}\n"
+
+        # Build the prompt for Gemini
+        system_instruction = f"""You are a creative video production assistant helping users create compelling video storyboards.
+
+Context: The user is creating a multi-scene video. {context if context else "This is the first scene."}
+
+Task: Suggest 3 creative, specific, and cinematic scene prompts for a {scene_position} scene.
+{"The user has started with: '" + partial_prompt + "'" if partial_prompt else ""}
+
+Requirements:
+- Each prompt should be 1-2 sentences
+- Be specific about camera angles, lighting, mood, and action
+- Ensure continuity with previous scenes if provided
+- Make suggestions cinematic and vivid
+- Vary the suggestions (different styles/approaches)
+
+Format your response as a simple numbered list:
+1. [First suggestion]
+2. [Second suggestion]
+3. [Third suggestion]"""
+
+        # Use the media generator's text generation capability
+        if mock_mode:
+            # Mock suggestions
+            suggestions = [
+                f"A wide establishing shot showing a bustling city street at golden hour, people walking past modern storefronts with warm ambient lighting.",
+                f"Close-up of hands working on a laptop in a cozy coffee shop, shallow depth of field, soft natural light filtering through windows.",
+                f"Drone shot slowly rising above a misty forest at dawn, revealing layers of mountains in the distance, cinematic color grading."
+            ]
+        else:
+            # Use Gemini to generate suggestions
+            try:
+                import vertexai
+                from vertexai.generative_models import GenerativeModel
+
+                model = GenerativeModel("gemini-2.0-flash-exp")
+                response = model.generate_content(system_instruction)
+
+                # Parse the response into individual suggestions
+                suggestions_text = response.text.strip()
+                suggestions = []
+                for line in suggestions_text.split('\n'):
+                    line = line.strip()
+                    # Remove number and period from start
+                    if line and (line[0].isdigit() or line.startswith('-') or line.startswith('•')):
+                        # Remove leading number, period, dash, or bullet
+                        cleaned = line.lstrip('0123456789.-•) ').strip()
+                        if cleaned:
+                            suggestions.append(cleaned)
+
+                # Ensure we have exactly 3 suggestions
+                if len(suggestions) < 3:
+                    suggestions = [
+                        "A wide establishing shot showing the location, golden hour lighting with cinematic color grading.",
+                        "Medium shot focusing on the main subject with shallow depth of field, natural lighting.",
+                        "Close-up detail shot capturing emotion or action, dramatic lighting from the side."
+                    ]
+                suggestions = suggestions[:3]  # Take only first 3
+
+            except Exception as e:
+                print(f"Error generating AI suggestions: {e}")
+                # Fallback suggestions
+                suggestions = [
+                    "A wide establishing shot showing the location, golden hour lighting with cinematic color grading.",
+                    "Medium shot focusing on the main subject with shallow depth of field, natural lighting.",
+                    "Close-up detail shot capturing emotion or action, dramatic lighting from the side."
+                ]
+
+        return jsonify({
+            'success': True,
+            'suggestions': suggestions
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'suggestions': [
+                "A cinematic wide shot establishing the scene with dramatic lighting.",
+                "A medium shot capturing the main action with shallow depth of field.",
+                "A close-up shot highlighting important details with soft focus background."
+            ]
+        }), 500
+
+
 @app.route('/health')
 def health():
     """Health check endpoint"""

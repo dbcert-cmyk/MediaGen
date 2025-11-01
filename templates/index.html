@@ -801,8 +801,37 @@
                     <h3 style="color: #667eea; margin-bottom: 15px;">➕ Add New Scene</h3>
                     <form id="add-scene-form">
                         <div class="form-group">
-                            <label for="scene-prompt">Scene Prompt</label>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <label for="scene-prompt">Scene Prompt</label>
+                                <button type="button" id="ai-suggest-btn" style="
+                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    color: white;
+                                    border: none;
+                                    padding: 6px 12px;
+                                    border-radius: 5px;
+                                    cursor: pointer;
+                                    font-size: 0.85em;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 5px;
+                                ">
+                                    <span>✨</span> AI Suggest
+                                </button>
+                            </div>
                             <textarea id="scene-prompt" placeholder="Describe what happens in this scene..." required style="min-height: 60px;"></textarea>
+
+                            <!-- AI Suggestions Panel -->
+                            <div id="ai-suggestions-panel" style="display: none; margin-top: 10px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px solid #667eea50;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <strong style="color: #667eea;">💡 AI Suggestions:</strong>
+                                    <button type="button" id="close-suggestions-btn" style="background: none; border: none; font-size: 1.2em; cursor: pointer; color: #999;">×</button>
+                                </div>
+                                <div id="ai-suggestions-loading" style="display: none; text-align: center; padding: 20px;">
+                                    <div style="font-size: 24px;">⏳</div>
+                                    <div style="color: #666; margin-top: 5px;">Generating creative suggestions...</div>
+                                </div>
+                                <div id="ai-suggestions-list"></div>
+                            </div>
                         </div>
 
                         <div class="row">
@@ -856,6 +885,255 @@
                     <button id="combine-storyboard-btn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" disabled>
                         🔗 Combine into Final Video
                     </button>
+                </div>
+
+                <!-- Post-Production Section -->
+                <div id="post-production-section" style="margin-bottom: 30px; opacity: 0.6; pointer-events: none;">
+                    <div style="background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%); border-radius: 10px; border: 2px solid #667eea30; overflow: hidden;">
+                        <!-- Header -->
+                        <div id="post-production-header" style="
+                            padding: 20px;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            cursor: pointer;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            user-select: none;
+                        ">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.5em;">🎬</span>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.2em;">Post-Production Studio</h3>
+                                    <p style="margin: 5px 0 0 0; font-size: 0.85em; opacity: 0.9;">Add music, titles, effects, and polish your final video</p>
+                                </div>
+                            </div>
+                            <div id="post-production-toggle" style="font-size: 1.5em; transition: transform 0.3s;">▼</div>
+                        </div>
+
+                        <!-- Content (Collapsed by default) -->
+                        <div id="post-production-content" style="display: none; padding: 25px;">
+
+                            <!-- Audio Section -->
+                            <div class="post-production-category" style="margin-bottom: 25px;">
+                                <h4 style="color: #667eea; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                    <span>🎵</span> Audio & Music
+                                </h4>
+                                <div style="display: grid; gap: 15px;">
+                                    <div class="form-group">
+                                        <label for="background-music">Background Music</label>
+                                        <input type="file" id="background-music" accept="audio/*" style="padding: 10px;">
+                                        <small style="color: #666; display: block; margin-top: 5px;">Upload MP3, WAV, or AAC file</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="music-volume">Music Volume</label>
+                                        <input type="range" id="music-volume" min="0" max="100" value="70" style="width: 100%;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.85em; color: #666;">
+                                            <span>0%</span>
+                                            <span id="music-volume-value">70%</span>
+                                            <span>100%</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="voiceover">Voiceover/Narration</label>
+                                        <input type="file" id="voiceover" accept="audio/*" style="padding: 10px;">
+                                        <small style="color: #666; display: block; margin-top: 5px;">Add narration track</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Text & Titles Section -->
+                            <div class="post-production-category" style="margin-bottom: 25px;">
+                                <h4 style="color: #667eea; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                    <span>📝</span> Text & Titles
+                                </h4>
+                                <div style="display: grid; gap: 15px;">
+                                    <div class="form-group">
+                                        <label for="opening-title">Opening Title</label>
+                                        <input type="text" id="opening-title" placeholder="Enter title text..." maxlength="100">
+                                    </div>
+                                    <div class="row">
+                                        <div class="form-group">
+                                            <label for="title-duration">Title Duration (seconds)</label>
+                                            <input type="number" id="title-duration" min="1" max="10" value="3">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="title-style">Title Style</label>
+                                            <select id="title-style">
+                                                <option value="classic">Classic Fade</option>
+                                                <option value="modern">Modern Slide</option>
+                                                <option value="bold">Bold Center</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="end-credits">End Credits</label>
+                                        <textarea id="end-credits" placeholder="Created by..." style="min-height: 80px;"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="add-subtitles">
+                                            Generate Auto-Subtitles
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Visual Effects Section -->
+                            <div class="post-production-category" style="margin-bottom: 25px;">
+                                <h4 style="color: #667eea; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                    <span>🎨</span> Visual Effects
+                                </h4>
+                                <div style="display: grid; gap: 15px;">
+                                    <div class="form-group">
+                                        <label for="color-filter">Color Grading</label>
+                                        <select id="color-filter">
+                                            <option value="none">None (Original)</option>
+                                            <option value="cinematic">Cinematic</option>
+                                            <option value="warm">Warm Tone</option>
+                                            <option value="cool">Cool Tone</option>
+                                            <option value="vintage">Vintage</option>
+                                            <option value="bw">Black & White</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <div class="form-group">
+                                            <label for="brightness">Brightness</label>
+                                            <input type="range" id="brightness" min="-50" max="50" value="0">
+                                            <div style="text-align: center; font-size: 0.85em; color: #666;">
+                                                <span id="brightness-value">0</span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="contrast">Contrast</label>
+                                            <input type="range" id="contrast" min="-50" max="50" value="0">
+                                            <div style="text-align: center; font-size: 0.85em; color: #666;">
+                                                <span id="contrast-value">0</span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="saturation">Saturation</label>
+                                            <input type="range" id="saturation" min="-50" max="50" value="0">
+                                            <div style="text-align: center; font-size: 0.85em; color: #666;">
+                                                <span id="saturation-value">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="transition-style">Scene Transitions</label>
+                                        <select id="transition-style">
+                                            <option value="cut">Cut (No Transition)</option>
+                                            <option value="fade">Fade</option>
+                                            <option value="dissolve">Dissolve</option>
+                                            <option value="slide">Slide</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" id="transition-duration-group" style="display: none;">
+                                        <label for="transition-duration">Transition Duration (seconds)</label>
+                                        <input type="number" id="transition-duration" min="0.1" max="2" step="0.1" value="0.5">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Branding Section -->
+                            <div class="post-production-category" style="margin-bottom: 25px;">
+                                <h4 style="color: #667eea; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                    <span>🏷️</span> Branding
+                                </h4>
+                                <div style="display: grid; gap: 15px;">
+                                    <div class="form-group">
+                                        <label for="watermark">Watermark/Logo</label>
+                                        <input type="file" id="watermark" accept="image/*" style="padding: 10px;">
+                                        <small style="color: #666; display: block; margin-top: 5px;">PNG with transparency recommended</small>
+                                    </div>
+                                    <div class="row">
+                                        <div class="form-group">
+                                            <label for="watermark-position">Position</label>
+                                            <select id="watermark-position">
+                                                <option value="top-left">Top Left</option>
+                                                <option value="top-right">Top Right</option>
+                                                <option value="bottom-left">Bottom Left</option>
+                                                <option value="bottom-right" selected>Bottom Right</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="watermark-opacity">Opacity</label>
+                                            <input type="range" id="watermark-opacity" min="0" max="100" value="70">
+                                            <div style="text-align: center; font-size: 0.85em; color: #666;">
+                                                <span id="watermark-opacity-value">70%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Export Options Section -->
+                            <div class="post-production-category">
+                                <h4 style="color: #667eea; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                    <span>📤</span> Export Options
+                                </h4>
+                                <div style="display: grid; gap: 15px;">
+                                    <div class="form-group">
+                                        <label for="export-preset">Platform Preset</label>
+                                        <select id="export-preset">
+                                            <option value="custom">Custom</option>
+                                            <option value="youtube">YouTube (1920x1080, 16:9)</option>
+                                            <option value="instagram">Instagram (1080x1080, 1:1)</option>
+                                            <option value="instagram-story">Instagram Story (1080x1920, 9:16)</option>
+                                            <option value="tiktok">TikTok (1080x1920, 9:16)</option>
+                                            <option value="twitter">Twitter (1280x720, 16:9)</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <div class="form-group">
+                                            <label for="export-quality">Quality</label>
+                                            <select id="export-quality">
+                                                <option value="high" selected>High (Recommended)</option>
+                                                <option value="medium">Medium (Faster)</option>
+                                                <option value="low">Low (Quick Preview)</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="export-format">Format</label>
+                                            <select id="export-format">
+                                                <option value="mp4" selected>MP4 (H.264)</option>
+                                                <option value="webm">WebM (VP9)</option>
+                                                <option value="mov">MOV (ProRes)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Apply Button -->
+                            <div style="margin-top: 30px; text-align: center;">
+                                <button id="apply-post-production-btn" style="
+                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    color: white;
+                                    border: none;
+                                    padding: 15px 40px;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    font-size: 1.1em;
+                                    font-weight: bold;
+                                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                                ">
+                                    ✨ Apply Post-Production & Export
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Info Message when disabled -->
+                    <div id="post-production-disabled-msg" style="
+                        text-align: center;
+                        padding: 15px;
+                        color: #999;
+                        font-size: 0.9em;
+                        font-style: italic;
+                    ">
+                        💡 Post-production features will be available after all scenes are generated
+                    </div>
                 </div>
 
                 <!-- Loading/Error/Results -->
@@ -1765,6 +2043,256 @@
 
         // Initialize storyboard stats
         updateStoryboardStats();
+
+        // ============================
+        // AI PROMPT ASSISTANT
+        // ============================
+
+        document.getElementById('ai-suggest-btn').addEventListener('click', async () => {
+            const panel = document.getElementById('ai-suggestions-panel');
+            const loading = document.getElementById('ai-suggestions-loading');
+            const listContainer = document.getElementById('ai-suggestions-list');
+            const partialPrompt = document.getElementById('scene-prompt').value.trim();
+
+            // Show panel and loading
+            panel.style.display = 'block';
+            loading.style.display = 'block';
+            listContainer.innerHTML = '';
+
+            try {
+                // Determine scene position
+                const sceneCount = currentStoryboard.scenes.length;
+                let scenePosition = 'middle';
+                if (sceneCount === 0) scenePosition = 'beginning';
+                else if (sceneCount > 5) scenePosition = 'end';
+
+                // Call AI suggestion API
+                const response = await fetch('/api/storyboard/suggest-prompt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        previous_scenes: currentStoryboard.scenes,
+                        partial_prompt: partialPrompt,
+                        scene_position: scenePosition
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.suggestions) {
+                    // Display suggestions
+                    listContainer.innerHTML = data.suggestions.map((suggestion, index) => `
+                        <div style="
+                            padding: 12px;
+                            margin-bottom: 10px;
+                            background: white;
+                            border-radius: 6px;
+                            border: 2px solid #e5e7eb;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        "
+                        onmouseover="this.style.borderColor='#667eea'; this.style.background='#f8f9fa';"
+                        onmouseout="this.style.borderColor='#e5e7eb'; this.style.background='white';"
+                        onclick="useSuggestion('${suggestion.replace(/'/g, "\\'")}')">
+                            <div style="font-weight: 600; color: #667eea; margin-bottom: 4px;">Option ${index + 1}</div>
+                            <div style="color: #333;">${suggestion}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    listContainer.innerHTML = '<p style="color: #999; text-align: center;">No suggestions available. Try again!</p>';
+                }
+            } catch (error) {
+                listContainer.innerHTML = `<p style="color: #dc3545;">Error: ${error.message}</p>`;
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        // Use AI suggestion
+        function useSuggestion(suggestion) {
+            document.getElementById('scene-prompt').value = suggestion;
+            document.getElementById('ai-suggestions-panel').style.display = 'none';
+        }
+
+        // Close suggestions panel
+        document.getElementById('close-suggestions-btn').addEventListener('click', () => {
+            document.getElementById('ai-suggestions-panel').style.display = 'none';
+        });
+
+        // ============================
+        // POST-PRODUCTION SECTION
+        // ============================
+
+        // Toggle collapse/expand
+        document.getElementById('post-production-header').addEventListener('click', () => {
+            const content = document.getElementById('post-production-content');
+            const toggle = document.getElementById('post-production-toggle');
+            const section = document.getElementById('post-production-section');
+
+            // Only allow toggle if section is enabled
+            if (section.style.pointerEvents === 'none') return;
+
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.style.transform = 'rotate(180deg)';
+            } else {
+                content.style.display = 'none';
+                toggle.style.transform = 'rotate(0deg)';
+            }
+        });
+
+        // Update slider value displays
+        document.getElementById('music-volume').addEventListener('input', (e) => {
+            document.getElementById('music-volume-value').textContent = e.target.value + '%';
+        });
+
+        document.getElementById('brightness').addEventListener('input', (e) => {
+            document.getElementById('brightness-value').textContent = e.target.value;
+        });
+
+        document.getElementById('contrast').addEventListener('input', (e) => {
+            document.getElementById('contrast-value').textContent = e.target.value;
+        });
+
+        document.getElementById('saturation').addEventListener('input', (e) => {
+            document.getElementById('saturation-value').textContent = e.target.value;
+        });
+
+        document.getElementById('watermark-opacity').addEventListener('input', (e) => {
+            document.getElementById('watermark-opacity-value').textContent = e.target.value + '%';
+        });
+
+        // Show/hide transition duration based on transition style
+        document.getElementById('transition-style').addEventListener('change', (e) => {
+            const durationGroup = document.getElementById('transition-duration-group');
+            if (e.target.value !== 'cut') {
+                durationGroup.style.display = 'block';
+            } else {
+                durationGroup.style.display = 'none';
+            }
+        });
+
+        // Enable post-production section when all scenes are generated
+        function updatePostProductionAvailability() {
+            const section = document.getElementById('post-production-section');
+            const message = document.getElementById('post-production-disabled-msg');
+            const allGenerated = currentStoryboard.scenes.length > 0 &&
+                                 currentStoryboard.scenes.every(s => s.generated);
+
+            if (allGenerated) {
+                section.style.opacity = '1';
+                section.style.pointerEvents = 'auto';
+                message.style.display = 'none';
+            } else {
+                section.style.opacity = '0.6';
+                section.style.pointerEvents = 'none';
+                message.style.display = 'block';
+            }
+        }
+
+        // Update the updateStoryboardStats function to also check post-production availability
+        const originalUpdateStats = updateStoryboardStats;
+        updateStoryboardStats = function() {
+            originalUpdateStats();
+            updatePostProductionAvailability();
+        };
+
+        // Apply Post-Production button handler
+        document.getElementById('apply-post-production-btn').addEventListener('click', async () => {
+            // Collect all post-production settings
+            const postProductionSettings = {
+                audio: {
+                    backgroundMusic: document.getElementById('background-music').files[0],
+                    musicVolume: document.getElementById('music-volume').value,
+                    voiceover: document.getElementById('voiceover').files[0]
+                },
+                text: {
+                    openingTitle: document.getElementById('opening-title').value,
+                    titleDuration: document.getElementById('title-duration').value,
+                    titleStyle: document.getElementById('title-style').value,
+                    endCredits: document.getElementById('end-credits').value,
+                    addSubtitles: document.getElementById('add-subtitles').checked
+                },
+                visual: {
+                    colorFilter: document.getElementById('color-filter').value,
+                    brightness: document.getElementById('brightness').value,
+                    contrast: document.getElementById('contrast').value,
+                    saturation: document.getElementById('saturation').value,
+                    transitionStyle: document.getElementById('transition-style').value,
+                    transitionDuration: document.getElementById('transition-duration').value
+                },
+                branding: {
+                    watermark: document.getElementById('watermark').files[0],
+                    watermarkPosition: document.getElementById('watermark-position').value,
+                    watermarkOpacity: document.getElementById('watermark-opacity').value
+                },
+                export: {
+                    preset: document.getElementById('export-preset').value,
+                    quality: document.getElementById('export-quality').value,
+                    format: document.getElementById('export-format').value
+                }
+            };
+
+            // Show loading
+            const loadingDiv = document.getElementById('storyboard-loading');
+            const loadingText = document.getElementById('storyboard-loading-text');
+            loadingDiv.classList.add('active');
+            loadingText.textContent = 'Applying post-production effects and exporting...';
+
+            try {
+                // First, combine the storyboard with basic settings
+                const scenesData = currentStoryboard.scenes.map(scene => ({
+                    id: scene.id,
+                    prompt: scene.prompt,
+                    duration: scene.duration,
+                    resolution: scene.resolution,
+                    aspect_ratio: scene.aspect_ratio,
+                    video_path: scene.video_path,
+                    video_data: scene.video_data,
+                    generated: scene.generated
+                }));
+
+                // For now, we'll use the existing combine endpoint
+                // TODO: Create a new endpoint that handles all post-production features
+                const response = await fetch('/api/storyboard/combine', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        storyboard_id: currentStoryboard.id,
+                        title: currentStoryboard.title,
+                        scenes: scenesData,
+                        post_production: postProductionSettings
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show result
+                    document.getElementById('storyboard-video-container').innerHTML = `
+                        <video controls autoplay style="max-width: 100%; border-radius: 10px;">
+                            <source src="data:video/mp4;base64,${data.video}" type="video/mp4">
+                        </video>
+                        <p style="margin-top: 10px; color: #666;">
+                            ✨ Post-production applied • ${currentStoryboard.scenes.length} scenes • ${currentStoryboard.scenes.reduce((sum, s) => sum + s.duration, 0)}s total
+                        </p>
+                    `;
+                    document.getElementById('storyboard-results').classList.add('active');
+
+                    alert('✨ Video exported with post-production effects!');
+                } else {
+                    throw new Error(data.error || 'Failed to apply post-production');
+                }
+            } catch (error) {
+                const errorDiv = document.getElementById('storyboard-error');
+                errorDiv.textContent = `Error: ${error.message}`;
+                errorDiv.classList.add('active');
+            } finally {
+                loadingDiv.classList.remove('active');
+            }
+        });
     </script>
 </body>
 </html>
