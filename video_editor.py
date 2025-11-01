@@ -68,20 +68,30 @@ class VideoEditor:
         # Calculate duration
         duration = end_time - start_time
 
-        # FFmpeg command to trim video
+        # FFmpeg command to trim video (using re-encoding for reliability)
         cmd = [
             'ffmpeg',
+            '-ss', str(start_time),  # Seek to start time
             '-i', input_path,
-            '-ss', str(start_time),
-            '-t', str(duration),
-            '-c', 'copy',  # Copy without re-encoding (fast)
+            '-t', str(duration),  # Duration to extract
+            '-c:v', 'libx264',  # Re-encode video (more reliable than copy)
+            '-c:a', 'aac',  # Re-encode audio
+            '-strict', 'experimental',
             '-y',  # Overwrite output file
             output_path
         ]
 
         print(f"✂️  Trimming video: {start_time}s to {end_time}s")
-        subprocess.run(cmd, capture_output=True, check=True)
-        print(f"💾 Saved trimmed video to: {output_path}")
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            print(f"💾 Saved trimmed video to: {output_path}")
+        except subprocess.CalledProcessError as e:
+            print(f"❌ FFmpeg error: {e.stderr}")
+            raise Exception(f"FFmpeg failed to trim video: {e.stderr}")
+
+        # Verify output file exists
+        if not os.path.exists(output_path):
+            raise Exception(f"Trimmed video was not created at {output_path}")
 
         return output_path
 
