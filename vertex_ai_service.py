@@ -340,20 +340,32 @@ class VertexAIMediaGenerator:
             if not operation.response:
                 raise Exception("Video generation failed - no response from API")
 
-            # Get the video URI from response
+            # Get all video URIs from response
             result = operation.result
             if not result.generated_videos or len(result.generated_videos) == 0:
                 raise Exception("No videos were generated")
 
-            video_gcs_uri = result.generated_videos[0].video.uri
-            print(f"✅ Video generated: {video_gcs_uri}")
+            print(f"✅ Generated {len(result.generated_videos)} video(s)")
 
-            # Download video from Cloud Storage
-            print("⬇️  Downloading video from Cloud Storage...")
-            local_path = self._download_from_gcs(video_gcs_uri, output_path, timestamp)
+            # Download all videos from Cloud Storage
+            local_paths = []
+            for idx, generated_video in enumerate(result.generated_videos):
+                video_gcs_uri = generated_video.video.uri
+                print(f"⬇️  Downloading video {idx + 1}/{len(result.generated_videos)} from Cloud Storage...")
 
-            print(f"💾 Saved video to: {local_path}")
-            return local_path
+                # Create unique output path for each video
+                if output_path and len(result.generated_videos) == 1:
+                    video_output_path = output_path
+                else:
+                    video_output_path = f"generated_media/video_{timestamp}_{idx}.mp4"
+
+                local_path = self._download_from_gcs(video_gcs_uri, video_output_path, timestamp)
+                local_paths.append(local_path)
+                print(f"💾 Saved video to: {local_path}")
+
+            # Return single path for backwards compatibility if only 1 video, otherwise return first path
+            # (app.py will need to be updated to handle multiple videos properly)
+            return local_paths[0] if len(local_paths) == 1 else local_paths
 
         except Exception as e:
             print(f"❌ Error generating video: {str(e)}")

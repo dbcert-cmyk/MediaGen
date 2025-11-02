@@ -1558,14 +1558,41 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    // Display video
+                    // Display all videos
                     const container = document.getElementById('video-container');
-                    container.innerHTML = `
-                        <video controls autoplay>
-                            <source src="data:video/mp4;base64,${data.video}" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                    `;
+                    container.innerHTML = '';
+
+                    // Use videos array if available, otherwise fall back to single video
+                    const videosToDisplay = data.videos || [data.video];
+
+                    videosToDisplay.forEach((videoData, index) => {
+                        const videoDiv = document.createElement('div');
+                        videoDiv.className = 'video-item';
+                        videoDiv.style.marginBottom = '20px';
+
+                        // Add title if multiple videos
+                        if (videosToDisplay.length > 1) {
+                            const title = document.createElement('h4');
+                            title.textContent = `Video ${index + 1} of ${videosToDisplay.length}`;
+                            title.style.marginBottom = '10px';
+                            title.style.color = '#667eea';
+                            videoDiv.appendChild(title);
+                        }
+
+                        const video = document.createElement('video');
+                        video.controls = true;
+                        if (index === 0) video.autoplay = true; // Only autoplay the first video
+
+                        const source = document.createElement('source');
+                        source.src = `data:video/mp4;base64,${videoData}`;
+                        source.type = 'video/mp4';
+
+                        video.appendChild(source);
+                        video.appendChild(document.createTextNode('Your browser does not support the video tag.'));
+                        videoDiv.appendChild(video);
+
+                        container.appendChild(videoDiv);
+                    });
 
                     document.getElementById('video-results').classList.add('active');
                 } else {

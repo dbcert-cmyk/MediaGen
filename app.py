@@ -211,15 +211,21 @@ def generate_video():
             reference_images=reference_images
         )
 
-        # Read video file and convert to base64
-        with open(video_path, 'rb') as video_file:
-            video_data = base64.b64encode(video_file.read()).decode()
+        # Handle both single path (string) and multiple paths (list)
+        video_paths = video_path if isinstance(video_path, list) else [video_path]
+
+        # Read all video files and convert to base64
+        videos_data = []
+        for path in video_paths:
+            with open(path, 'rb') as video_file:
+                video_data = base64.b64encode(video_file.read()).decode()
+                videos_data.append(video_data)
 
         return jsonify({
             'success': True,
-            'video': video_data,  # For backward compatibility
-            'videos': [video_data],  # Array format for Storyboard Mode
-            'file_paths': [video_path],  # File path for scene tracking
+            'video': videos_data[0],  # For backward compatibility (first video)
+            'videos': videos_data,  # Array format for multiple videos
+            'file_paths': video_paths,  # File paths for scene tracking
             'prompt': prompt
         })
 
