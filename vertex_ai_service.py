@@ -111,65 +111,71 @@ class VertexAIMediaGenerator:
             # Initialize the model
             image_model = GenerativeModel(model)
 
-            # Build the content parts
-            content_parts = []
-
-            # Add input images if provided (up to 3)
-            if input_images:
-                for idx, img_bytes in enumerate(input_images[:3]):
-                    content_parts.append(Part.from_data(img_bytes, mime_type="image/png"))
-                print(f"📷 Using {len(input_images[:3])} input image(s)")
-
-            # Add text prompt
-            content_parts.append(prompt)
-
-            # Configure generation parameters (minimal config for compatibility)
-            generation_config = {
-                "temperature": temperature,
-                "top_p": top_p,
-                "top_k": top_k,
-                "candidate_count": number_of_images,
-                "response_modalities": ["TEXT", "IMAGE"]
-            }
-
-            # Build request parameters
-            generate_params = {
-                "contents": content_parts,
-                "generation_config": generation_config
-            }
-
-            # Add safety settings if provided
-            if safety_settings:
-                generate_params["safety_settings"] = safety_settings
-
-            # Generate images
-            # Note: aspect_ratio is not directly supported in newer SDK versions for Gemini
-            # The model will generate images in a suitable aspect ratio based on the prompt
-            response = image_model.generate_content(**generate_params)
-
-            # Extract images from response
+            # Gemini image generation only supports 1 candidate at a time
+            # So we'll generate images in a loop if multiple are requested
             images = []
             timestamp = int(time.time())
 
-            for idx, candidate in enumerate(response.candidates):
-                for part in candidate.content.parts:
-                    # Check if this part contains image data
-                    if hasattr(part, 'inline_data') and part.inline_data:
-                        img_bytes = part.inline_data.data
+            for img_num in range(number_of_images):
+                print(f"Generating image {img_num + 1}/{number_of_images}...")
 
-                        # Convert to PIL Image
-                        pil_image = Image.open(BytesIO(img_bytes))
-                        images.append(pil_image)
+                # Build the content parts
+                content_parts = []
 
-                        # Save locally for reference
-                        file_ext = "png" if output_mime_type == "image/png" else "jpg"
-                        output_path = f"generated_media/image_{timestamp}_{idx}.{file_ext}"
+                # Add input images if provided (up to 3)
+                if input_images:
+                    for idx, img_bytes in enumerate(input_images[:3]):
+                        content_parts.append(Part.from_data(img_bytes, mime_type="image/png"))
+                    if img_num == 0:  # Only print once
+                        print(f"📷 Using {len(input_images[:3])} input image(s)")
 
-                        # Ensure directory exists
-                        os.makedirs("generated_media", exist_ok=True)
+                # Add text prompt
+                content_parts.append(prompt)
 
-                        pil_image.save(output_path)
-                        print(f"Saved image to: {output_path}")
+                # Configure generation parameters (minimal config for compatibility)
+                generation_config = {
+                    "temperature": temperature,
+                    "top_p": top_p,
+                    "top_k": top_k,
+                    "candidate_count": 1,  # Only 1 candidate supported for image generation
+                    "response_modalities": ["TEXT", "IMAGE"]
+                }
+
+                # Build request parameters
+                generate_params = {
+                    "contents": content_parts,
+                    "generation_config": generation_config
+                }
+
+                # Add safety settings if provided
+                if safety_settings:
+                    generate_params["safety_settings"] = safety_settings
+
+                # Generate image
+                # Note: aspect_ratio is not directly supported in newer SDK versions for Gemini
+                # The model will generate images in a suitable aspect ratio based on the prompt
+                response = image_model.generate_content(**generate_params)
+
+                # Extract images from response
+                for idx, candidate in enumerate(response.candidates):
+                    for part in candidate.content.parts:
+                        # Check if this part contains image data
+                        if hasattr(part, 'inline_data') and part.inline_data:
+                            img_bytes = part.inline_data.data
+
+                            # Convert to PIL Image
+                            pil_image = Image.open(BytesIO(img_bytes))
+                            images.append(pil_image)
+
+                            # Save locally for reference
+                            file_ext = "png" if output_mime_type == "image/png" else "jpg"
+                            output_path = f"generated_media/image_{timestamp}_{img_num}.{file_ext}"
+
+                            # Ensure directory exists
+                            os.makedirs("generated_media", exist_ok=True)
+
+                            pil_image.save(output_path)
+                            print(f"💾 Saved image to: {output_path}")
 
             if not images:
                 raise Exception("No images were generated in the response")
