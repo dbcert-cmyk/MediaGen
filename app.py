@@ -850,7 +850,6 @@ def generate_storyboard_from_concept():
         num_scenes = data.get('num_scenes', 5)
         style = data.get('style', 'cinematic')
         pacing = data.get('pacing', 'medium')
-        existing_scenes = data.get('existing_scenes', [])
 
         if not concept:
             return jsonify({
