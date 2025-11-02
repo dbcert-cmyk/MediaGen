@@ -969,9 +969,10 @@ Generate the analysis now:"""
         print("🎨 Step 2: Generating reference images using Imagen...")
 
         reference_images = []
-        for i, ref_prompt in enumerate(reference_prompts[:3]):  # Max 3 images
+        # Generate only 1 reference image to reduce payload size (was causing 413 errors with 3)
+        for i, ref_prompt in enumerate(reference_prompts[:1]):  # Only 1 image to avoid 413 errors
             try:
-                print(f"   Generating reference image {i+1}/3...")
+                print(f"   Generating reference image {i+1}/1...")
 
                 # Generate image using existing media_generator
                 # Note: generate_image returns list of PIL Images, need to save first
@@ -981,11 +982,16 @@ Generate the analysis now:"""
                     aspect_ratio="1:1"  # Square for reference images
                 )
 
-                # Save the image and get path
+                # Resize image to reduce payload size (256x256 for reference to avoid 413 errors)
+                from PIL import Image
+                img = images[0]
+                img.thumbnail((256, 256), Image.Resampling.LANCZOS)
+
+                # Save the compressed image as JPEG for smaller size
                 timestamp = int(time.time())
-                image_path = f"generated_media/reference_{timestamp}_{i}.png"
+                image_path = f"generated_media/reference_{timestamp}_{i}.jpg"
                 os.makedirs('generated_media', exist_ok=True)
-                images[0].save(image_path)
+                img.convert('RGB').save(image_path, 'JPEG', optimize=True, quality=80)
 
                 # Read image and convert to base64
                 with open(image_path, 'rb') as img_file:
