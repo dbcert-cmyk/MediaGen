@@ -1276,7 +1276,7 @@
             const duration = parseInt(document.getElementById('video-duration').value) || 8;
             const sampleCount = parseInt(document.getElementById('video-sample-count').value) || 1;
 
-            // Calculate cost: duration × $0.040 per second × number of videos
+            // Calculate cost: duration × $0.40 per second × number of videos
             const costPerVideo = duration * PRICING.video.perSecond;
             const totalCost = (sampleCount * costPerVideo).toFixed(2);
 
