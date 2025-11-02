@@ -268,51 +268,60 @@ class VideoEditor:
         time.sleep(1)
 
         # Create a placeholder video frame
-        self._create_mock_video_frame(
+        actual_output = self._create_mock_video_frame(
+            input_path,
             output_path,
             f"Trimmed Video\n{start_time}s - {end_time}s\nDuration: {end_time - start_time}s"
         )
 
-        return output_path
+        return actual_output
 
     def _mock_add_text_overlay(self, input_path: str, text: str, output_path: str) -> str:
         """Mock implementation of text overlay"""
         print(f"🎭 MOCK: Adding text overlay: '{text}'")
         time.sleep(1)
 
-        self._create_mock_video_frame(
+        actual_output = self._create_mock_video_frame(
+            input_path,
             output_path,
             f"Video with Text Overlay\n\n'{text}'"
         )
 
-        return output_path
+        return actual_output
 
     def _mock_combine_videos(self, video_paths: List[str], output_path: str) -> str:
         """Mock implementation of combine videos"""
         print(f"🎭 MOCK: Combining {len(video_paths)} videos")
         time.sleep(1)
 
-        self._create_mock_video_frame(
+        # Use first video as input
+        input_path = video_paths[0] if video_paths else ""
+        actual_output = self._create_mock_video_frame(
+            input_path,
             output_path,
             f"Combined Video\n{len(video_paths)} clips merged"
         )
 
-        return output_path
+        return actual_output
 
     def _mock_change_speed(self, input_path: str, speed: float, output_path: str) -> str:
         """Mock implementation of speed change"""
         print(f"🎭 MOCK: Changing speed to {speed}x")
         time.sleep(1)
 
-        self._create_mock_video_frame(
+        actual_output = self._create_mock_video_frame(
+            input_path,
             output_path,
             f"Speed Adjusted Video\n{speed}x speed"
         )
 
-        return output_path
+        return actual_output
 
-    def _create_mock_video_frame(self, output_path: str, text: str):
-        """Create a mock video frame as a placeholder"""
+    def _create_mock_video_frame(self, input_path: str, output_path: str, text: str) -> str:
+        """Create a mock video frame as a placeholder. Returns the actual output path."""
+        # Ensure output directory exists
+        os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
+
         # Try to create with opencv if available
         try:
             import cv2
@@ -351,30 +360,22 @@ class VideoEditor:
 
             out.release()
             print(f"💾 Saved mock video to: {output_path}")
+            return output_path
 
         except ImportError:
-            # Fallback to image if opencv not available
-            print("⚠️  OpenCV not installed - creating static image placeholder")
-            output_path = output_path.replace('.mp4', '.png')
+            # If opencv not available, just copy the input file or create a minimal placeholder
+            print("⚠️  OpenCV not installed - Video editing in mock mode requires opencv-python")
+            print("     Install with: pip install opencv-python")
 
-            img = Image.new('RGB', (768, 432))
-            draw = ImageDraw.Draw(img)
+            # Try to copy input file as output if it exists
+            if os.path.exists(input_path):
+                import shutil
+                shutil.copy(input_path, output_path)
+                print(f"💾 Copied input to output: {output_path}")
+                return output_path
 
-            # Gradient
-            for y in range(432):
-                ratio = y / 432
-                r = int(80 + 100 * ratio)
-                g = int(120 - 50 * ratio)
-                b = int(180 - 80 * ratio)
-                draw.line([(0, y), (768, y)], fill=(r, g, b))
-
-            # Text
-            font = ImageFont.load_default()
-            y_pos = 60
-            for line in text.split('\n'):
-                draw.text((30, y_pos), line, fill='white', font=font)
-                y_pos += 30
-
-            draw.text((30, 400), "MOCK MODE - Edited Video", fill='lightgray', font=font)
-            img.save(output_path)
-            print(f"💾 Saved mock image to: {output_path}")
+            # Otherwise return error
+            raise RuntimeError(
+                "Mock mode video editing requires opencv-python. "
+                "Install with: pip install opencv-python"
+            )
