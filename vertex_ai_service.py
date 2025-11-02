@@ -7,23 +7,36 @@ from io import BytesIO
 import vertexai
 
 # Try different import paths for different SDK versions
+VideoGenerationModel = None
 try:
     from vertexai.preview.vision_models import VideoGenerationModel
-except ImportError:
+    print("✅ VideoGenerationModel imported from vertexai.preview.vision_models")
+except ImportError as e:
+    print(f"⚠️  Cannot import from vertexai.preview.vision_models: {e}")
     try:
         from vertexai.vision_models import VideoGenerationModel
-    except ImportError:
+        print("✅ VideoGenerationModel imported from vertexai.vision_models")
+    except ImportError as e2:
+        print(f"⚠️  Cannot import from vertexai.vision_models: {e2}")
         VideoGenerationModel = None
+        print("❌ VideoGenerationModel is not available")
 
 # Try importing GenerativeModel from different locations
+GenerativeModel = None
+Part = None
 try:
     from vertexai.generative_models import GenerativeModel, Part
-except ImportError:
+    print("✅ GenerativeModel imported from vertexai.generative_models")
+except ImportError as e:
+    print(f"⚠️  Cannot import from vertexai.generative_models: {e}")
     try:
         from vertexai.preview.generative_models import GenerativeModel, Part
-    except ImportError:
+        print("✅ GenerativeModel imported from vertexai.preview.generative_models")
+    except ImportError as e2:
+        print(f"⚠️  Cannot import from vertexai.preview.generative_models: {e2}")
         GenerativeModel = None
         Part = None
+        print("❌ GenerativeModel is not available")
 
 
 class VertexAIMediaGenerator:
