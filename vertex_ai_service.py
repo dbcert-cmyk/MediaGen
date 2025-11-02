@@ -334,6 +334,29 @@ class VertexAIMediaGenerator:
                 )
                 print("🎞️  Added last frame to config")
 
+            # Add reference images to config (Veo 3.1 "Ingredients to Video" feature)
+            if reference_images and len(reference_images) > 0:
+                ref_image_list = []
+                for i, ref_img in enumerate(reference_images[:3]):  # Max 3 reference images
+                    ref_bytes = ref_img.get('bytes')
+                    if ref_bytes:
+                        # Convert bytes to PIL Image to ensure proper format
+                        ref_pil_image = Image.open(BytesIO(ref_bytes))
+                        ref_byte_arr = BytesIO()
+                        ref_pil_image.save(ref_byte_arr, format='PNG')
+                        ref_image_bytes = ref_byte_arr.getvalue()
+
+                        # Create GenAIImage object for reference image
+                        ref_image_list.append(GenAIImage(
+                            image_bytes=ref_image_bytes,
+                            mime_type="image/png"
+                        ))
+                        print(f"🎭 Added reference image {i+1} to config for character consistency")
+
+                if ref_image_list:
+                    config_params["reference_images"] = ref_image_list
+                    print(f"✅ {len(ref_image_list)} reference image(s) added to GenerateVideosConfig")
+
             print(f"📊 Config: {sample_count} video(s), {duration_seconds}s duration, {resolution} resolution")
 
             generation_config = GenerateVideosConfig(**config_params)
@@ -359,12 +382,6 @@ class VertexAIMediaGenerator:
                     mime_type="image/png"
                 )
                 print("📷 Added first frame image to request")
-
-            # Note: Reference images are not currently supported by Veo 3.1 generate_videos() API
-            # Character consistency is achieved through detailed character descriptions in prompts
-            if reference_images and len(reference_images) > 0:
-                print(f"ℹ️  Reference images provided ({len(reference_images)}) but not used by API")
-                print("   Character consistency achieved through detailed prompts instead")
 
             # Generate video (async operation)
             print("⏳ Starting video generation (this may take 1-3 minutes)...")
