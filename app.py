@@ -974,13 +974,18 @@ Generate the analysis now:"""
                 print(f"   Generating reference image {i+1}/3...")
 
                 # Generate image using existing media_generator
-                image_path = media_generator.generate_image(
+                # Note: generate_image returns list of PIL Images, need to save first
+                images = media_generator.generate_image(
                     prompt=ref_prompt,
                     number_of_images=1,
-                    aspect_ratio="1:1",  # Square for reference images
-                    safety_filter_level="block_some",
-                    person_generation="allow_adult"
+                    aspect_ratio="1:1"  # Square for reference images
                 )
+
+                # Save the image and get path
+                timestamp = int(time.time())
+                image_path = f"generated_media/reference_{timestamp}_{i}.png"
+                os.makedirs('generated_media', exist_ok=True)
+                images[0].save(image_path)
 
                 # Read image and convert to base64
                 with open(image_path, 'rb') as img_file:
@@ -1005,26 +1010,17 @@ Generate the analysis now:"""
 
         shot_rotation = ['wide', 'medium', 'close-up'] * ((num_scenes // 3) + 1)
 
-        storyboard_generation_prompt = f"""Create {num_scenes} cinematic video scenes for: {concept}
+        storyboard_generation_prompt = f"""Create {num_scenes} video scene prompts for: {concept}
 
-MANDATORY CHARACTER CONSISTENCY: Include these EXACT details in EVERY scene prompt:
-{character_description}
+Character: {character_description}
 
 Style: {style}. Pacing: {pacing}.
+Shots: {', '.join([f"{i+1}={shot_rotation[i]}" for i in range(num_scenes)])}
 
-VEO 3.1 BEST PRACTICES:
-- Formula: [Camera Movement] + [Shot Type] + [Subject with FULL character description] + [Action] + [Lighting] + [Mood]
-- Shot rotation: {', '.join([f"Scene {i+1}={shot_rotation[i]}" for i in range(num_scenes)])}
-- Camera: dolly, tracking, crane, aerial, POV, handheld, steadicam
-- Lighting: golden hour, dramatic shadows, soft diffused, rim lighting, natural light
-- One clear action per scene
-- 80-150 words per prompt
-- Story continuity and flow
+Include character description in EVERY prompt. Use camera movements and lighting.
 
-CRITICAL: Every scene must include the full character description for consistency!
-
-Return JSON:
-[{{"prompt": "...", "shot_type": "wide/medium/close-up", "duration": 8, "resolution": "720p", "aspect_ratio": "16:9"}}, ...]"""
+Return ONLY valid JSON array (no markdown):
+[{{"prompt": "scene description", "shot_type": "wide", "duration": 8, "resolution": "720p", "aspect_ratio": "16:9"}}, ...]"""
 
         if mock_mode:
             scenes = []
@@ -1051,25 +1047,11 @@ Return JSON:
 
             response_text = response.text.strip()
 
-            print(f"📄 Storyboard AI Response (first 500 chars): {response_text[:500]}")
+            print(f"📄 Storyboard AI Response (first 500 chars): {response_text[:500] if response_text else '(empty response)'}")
 
-            json_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', response_text, re.DOTALL)
-            if json_match:
-                response_text = json_match.group(1)
-                print("✅ Found JSON array in code block")
-            else:
-                print("⚠️  No code block found, trying to parse response directly")
-
-            # Try to parse JSON
-            try:
-                scenes = json.loads(response_text)
-                print(f"✅ JSON parsed successfully - {len(scenes)} scenes")
-            except json.JSONDecodeError as e:
-                print(f"❌ JSON parsing failed: {e}")
-                print(f"📄 Response text: {response_text}")
-
-                # Fallback: Create basic scenes from character description
-                print("🔄 Using fallback scene creation...")
+            # If response is empty, use fallback immediately
+            if not response_text:
+                print("❌ Empty response from AI, using fallback")
                 scenes = []
                 for i in range(num_scenes):
                     scenes.append({
@@ -1079,6 +1061,40 @@ Return JSON:
                         'resolution': '720p',
                         'aspect_ratio': '16:9'
                     })
+            else:
+                # Try to extract JSON from markdown code blocks or parse directly
+                json_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', response_text, re.DOTALL)
+                if json_match:
+                    response_text = json_match.group(1)
+                    print("✅ Found JSON array in code block")
+                else:
+                    # Try to find JSON array directly
+                    json_array_match = re.search(r'(\[.*?\])', response_text, re.DOTALL)
+                    if json_array_match:
+                        response_text = json_array_match.group(1)
+                        print("✅ Found JSON array in response")
+                    else:
+                        print("⚠️  No JSON array found, trying to parse response directly")
+
+                # Try to parse JSON
+                try:
+                    scenes = json.loads(response_text)
+                    print(f"✅ JSON parsed successfully - {len(scenes)} scenes")
+                except json.JSONDecodeError as e:
+                    print(f"❌ JSON parsing failed: {e}")
+                    print(f"📄 Response text (full): {response_text}")
+
+                    # Fallback: Create basic scenes from character description
+                    print("🔄 Using fallback scene creation...")
+                    scenes = []
+                    for i in range(num_scenes):
+                        scenes.append({
+                            'prompt': f"Scene {i+1}: {shot_rotation[i]} cinematic shot of {character_description}, professional lighting and composition, {style} style with {pacing} pacing",
+                            'shot_type': shot_rotation[i],
+                            'duration': 8,
+                            'resolution': '720p',
+                            'aspect_ratio': '16:9'
+                        })
 
             # Validate and set defaults
             for i, scene in enumerate(scenes):
