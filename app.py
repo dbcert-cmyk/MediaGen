@@ -684,47 +684,85 @@ def combine_storyboard():
 
 @app.route('/api/storyboard/suggest-prompt', methods=['POST'])
 def suggest_scene_prompt():
-    """AI-powered scene prompt suggestions using Gemini"""
+    """AI-powered scene prompt suggestions using Gemini with advanced context analysis"""
     try:
         data = request.get_json()
         previous_scenes = data.get('previous_scenes', [])
         partial_prompt = data.get('partial_prompt', '')
         scene_position = data.get('scene_position', 'middle')  # beginning, middle, end
 
-        # Build context from previous scenes
-        context = ""
+        # Analyze ALL existing scenes for better context
+        context_analysis = ""
         if previous_scenes:
-            context = "Previous scenes:\n"
-            for i, scene in enumerate(previous_scenes[-3:], 1):  # Last 3 scenes for context
-                context += f"{i}. {scene.get('prompt', '')}\n"
+            # Build comprehensive context
+            context_analysis = f"Existing storyboard ({len(previous_scenes)} scenes):\n"
+            for i, scene in enumerate(previous_scenes, 1):
+                context_analysis += f"{i}. {scene.get('prompt', '')}\n"
+        else:
+            context_analysis = "This is the FIRST scene. Set the tone and establish the story."
 
-        # Build the prompt for Gemini
-        system_instruction = f"""You are a creative video production assistant helping users create compelling video storyboards.
+        # Determine what kind of shots are needed
+        shot_guidance = ""
+        if previous_scenes:
+            # Count shot types in existing scenes
+            prompts_lower = ' '.join([s.get('prompt', '').lower() for s in previous_scenes])
 
-Context: The user is creating a multi-scene video. {context if context else "This is the first scene."}
+            # Suggest varied shots
+            if len(previous_scenes) % 3 == 0:
+                shot_guidance = "Suggest a WIDE or ESTABLISHING shot to reset the scene."
+            elif len(previous_scenes) % 3 == 1:
+                shot_guidance = "Suggest a MEDIUM shot to show action or interaction."
+            else:
+                shot_guidance = "Suggest a CLOSE-UP or DETAIL shot for emotional impact."
+        else:
+            shot_guidance = "First scene should be a WIDE ESTABLISHING SHOT to set the scene and mood."
 
-Task: Suggest 3 creative, specific, and cinematic scene prompts for a {scene_position} scene.
-{"The user has started with: '" + partial_prompt + "'" if partial_prompt else ""}
+        # Build the enhanced prompt for Gemini
+        system_instruction = f"""You are an expert cinematographer and creative director helping create compelling video storyboards.
+
+{context_analysis}
+
+{shot_guidance}
+
+{"User's idea: '" + partial_prompt + "'" if partial_prompt else ""}
+
+Task: Suggest 3 CREATIVE, SPECIFIC, and VISUALLY COMPELLING scene prompts.
 
 Requirements:
-- Each prompt should be 1-2 sentences
-- Be specific about camera angles, lighting, mood, and action
-- Ensure continuity with previous scenes if provided
-- Make suggestions cinematic and vivid
-- Vary the suggestions (different styles/approaches)
+✓ BE SPECIFIC about camera angles, movements, lighting, and mood
+✓ VARY the shot types (wide, medium, close-up, tracking, dolly, crane, etc.)
+✓ Include CINEMATIC DETAILS (golden hour, dramatic shadows, bokeh, lens flare, etc.)
+✓ Ensure STORY CONTINUITY with previous scenes
+✓ Make each suggestion VISUALLY DISTINCT from others
+✓ Use VIVID, DESCRIPTIVE language
+✓ Consider pacing: {scene_position} scene should {"establish tone and setting" if scene_position == "beginning" else "build energy and transitions" if scene_position == "middle" else "provide resolution or climax"}
 
-Format your response as a simple numbered list:
+Shot Type Examples:
+- Wide: "Aerial drone shot rising above...", "Wide establishing shot of..."
+- Medium: "Medium tracking shot following...", "Over-the-shoulder view of..."
+- Close-up: "Extreme close-up on...", "Macro shot revealing..."
+- Movement: "Slow dolly push into...", "Smooth crane shot descending from..."
+
+Lighting Examples:
+- "Golden hour sunlight streaming through..."
+- "Dramatic side lighting with deep shadows..."
+- "Soft diffused morning light..."
+- "Neon glow reflecting off..."
+
+IMPORTANT: Each suggestion should feel like a real film scene, not generic descriptions.
+
+Format as numbered list:
 1. [First suggestion]
 2. [Second suggestion]
 3. [Third suggestion]"""
 
         # Use the media generator's text generation capability
         if mock_mode:
-            # Mock suggestions
+            # Enhanced mock suggestions with variety
             suggestions = [
-                f"A wide establishing shot showing a bustling city street at golden hour, people walking past modern storefronts with warm ambient lighting.",
-                f"Close-up of hands working on a laptop in a cozy coffee shop, shallow depth of field, soft natural light filtering through windows.",
-                f"Drone shot slowly rising above a misty forest at dawn, revealing layers of mountains in the distance, cinematic color grading."
+                f"Aerial drone shot slowly circling a secluded mountain lake at sunrise, morning mist hovering over glassy water, soft golden light illuminating distant peaks, cinematic color grading with teal and orange tones.",
+                f"Medium tracking shot following a person's silhouette walking through a rain-soaked city street at night, neon signs reflecting in puddles, bokeh lights in background, moody cyberpunk atmosphere.",
+                f"Extreme close-up macro shot of dewdrops on a spider web, early morning sunlight creating rainbow refractions, shallow depth of field with dreamy background, slow motion as a gentle breeze causes the web to shimmer."
             ]
         else:
             # Use Gemini to generate suggestions
@@ -749,21 +787,42 @@ Format your response as a simple numbered list:
 
                 # Ensure we have exactly 3 suggestions
                 if len(suggestions) < 3:
-                    suggestions = [
-                        "A wide establishing shot showing the location, golden hour lighting with cinematic color grading.",
-                        "Medium shot focusing on the main subject with shallow depth of field, natural lighting.",
-                        "Close-up detail shot capturing emotion or action, dramatic lighting from the side."
-                    ]
+                    # Intelligent fallback based on scene count
+                    if len(previous_scenes) == 0:
+                        suggestions = [
+                            "Wide aerial establishing shot of the location at golden hour, cinematic color grading with warm tones, slow reveal of the landscape.",
+                            "Medium shot introducing the main subject with natural lighting, shallow depth of field, smooth camera movement following the action.",
+                            "Close-up detail shot capturing an important object or emotion, dramatic side lighting with soft shadows."
+                        ]
+                    elif len(previous_scenes) < 3:
+                        suggestions = [
+                            "Tracking medium shot following the subject's movement, dynamic camera work with natural lighting and cinematic framing.",
+                            "Wide shot revealing new environment or context, establishing spatial relationships, golden hour or dramatic lighting.",
+                            "Extreme close-up on facial expression or detail, shallow depth of field, emotionally resonant moment."
+                        ]
+                    else:
+                        suggestions = [
+                            "Dramatic wide shot showing conflict or climax, dynamic camera movement, high contrast lighting with deep shadows.",
+                            "Intimate close-up capturing resolution or emotion, soft focus background, gentle natural lighting.",
+                            "Sweeping crane or dolly shot providing visual conclusion, cinematic composition with balanced elements."
+                        ]
                 suggestions = suggestions[:3]  # Take only first 3
 
             except Exception as e:
                 print(f"Error generating AI suggestions: {e}")
-                # Fallback suggestions
-                suggestions = [
-                    "A wide establishing shot showing the location, golden hour lighting with cinematic color grading.",
-                    "Medium shot focusing on the main subject with shallow depth of field, natural lighting.",
-                    "Close-up detail shot capturing emotion or action, dramatic lighting from the side."
-                ]
+                # Context-aware fallback suggestions
+                if len(previous_scenes) == 0:
+                    suggestions = [
+                        "Wide aerial establishing shot of a misty valley at sunrise, golden light breaking through clouds, cinematic reveal of the landscape with smooth drone movement.",
+                        "Medium tracking shot following a lone figure walking through tall grass, shallow depth of field with bokeh in background, warm natural lighting.",
+                        "Close-up detail shot of hands reaching out to touch morning dew on leaves, macro focus with soft blur, peaceful morning atmosphere."
+                    ]
+                else:
+                    suggestions = [
+                        "Dynamic tracking shot following the action with fluid camera movement, natural lighting with cinematic color grading, medium frame composition.",
+                        "Wide establishing shot showing change in location or time, dramatic lighting shift, smooth transition from previous scene.",
+                        "Intimate close-up capturing emotional beat, shallow focus with dreamy bokeh, soft directional lighting highlighting the subject."
+                    ]
 
         return jsonify({
             'success': True,
@@ -775,9 +834,9 @@ Format your response as a simple numbered list:
             'success': False,
             'error': str(e),
             'suggestions': [
-                "A cinematic wide shot establishing the scene with dramatic lighting.",
-                "A medium shot capturing the main action with shallow depth of field.",
-                "A close-up shot highlighting important details with soft focus background."
+                "A cinematic wide aerial shot establishing the location at golden hour, smooth drone movement revealing the landscape with dramatic lighting.",
+                "A dynamic medium tracking shot following the subject with natural lighting, shallow depth of field, and fluid camera movement.",
+                "An intimate extreme close-up highlighting emotion or detail, soft focus background with cinematic bokeh, dramatic side lighting."
             ]
         }), 500
 
