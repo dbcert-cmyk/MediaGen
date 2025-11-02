@@ -1289,10 +1289,31 @@
                     const grid = document.getElementById('image-grid');
                     grid.innerHTML = '';
 
-                    data.images.forEach(imgData => {
+                    data.images.forEach((imgData, index) => {
                         const div = document.createElement('div');
                         div.className = 'image-item';
-                        div.innerHTML = `<img src="data:image/png;base64,${imgData}" alt="Generated image">`;
+
+                        // Create image element
+                        const img = document.createElement('img');
+                        img.src = `data:image/png;base64,${imgData}`;
+                        img.alt = 'Generated image';
+
+                        // Create download button
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.textContent = '⬇️ Download PNG';
+                        downloadBtn.className = 'download-btn';
+                        downloadBtn.style.cssText = 'margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9em;';
+
+                        downloadBtn.addEventListener('click', () => {
+                            // Create download link
+                            const link = document.createElement('a');
+                            link.href = `data:image/png;base64,${imgData}`;
+                            link.download = `generated_image_${Date.now()}_${index + 1}.png`;
+                            link.click();
+                        });
+
+                        div.appendChild(img);
+                        div.appendChild(downloadBtn);
                         grid.appendChild(div);
                     });
 
