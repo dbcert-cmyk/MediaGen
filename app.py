@@ -133,10 +133,13 @@ def generate_video():
             return jsonify({'error': 'Either prompt or input image is required'}), 400
 
         # Optional parameters
-        model = data.get('model', 'veo-3.1-generate-001')
+        model = data.get('model', 'veo-3.1-generate-preview')
         # Ensure model is a string (in case form sends wrong type)
         if not isinstance(model, str):
-            model = 'veo-3.1-generate-001'
+            model = 'veo-3.1-generate-preview'
+        # Map legacy model names
+        if model == 'veo-3.1-generate-001':
+            model = 'veo-3.1-generate-preview'
 
         aspect_ratio = data.get('aspect_ratio', '16:9')
         duration_seconds = int(data.get('duration_seconds', 8))

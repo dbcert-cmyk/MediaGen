@@ -1,8 +1,10 @@
 flask>=3.0.0
-google-cloud-aiplatform==1.38.0
+google-cloud-aiplatform>=1.124.0
+google-genai>=1.47.0
 Pillow>=10.4.0
 python-dotenv>=1.0.0
 gunicorn>=21.2.0
+google-cloud-storage>=2.10.0
 
 # Video editing (requires FFmpeg to be installed on system)
 # Install FFmpeg: sudo apt-get install ffmpeg (Linux) or brew install ffmpeg (Mac)

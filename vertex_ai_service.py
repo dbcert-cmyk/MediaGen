@@ -6,22 +6,27 @@ from PIL import Image
 from io import BytesIO
 import vertexai
 
-# Try different import paths for different SDK versions
-VideoGenerationModel = None
+# New Google GenAI SDK for video generation (Veo 3.1)
 try:
-    from vertexai.preview.vision_models import VideoGenerationModel
-    print("✅ VideoGenerationModel imported from vertexai.preview.vision_models")
+    from google import genai
+    from google.genai.types import GenerateVideosConfig, Image as GenAIImage
+    print("✅ Google GenAI SDK imported (for Veo 3.1 video generation)")
+    VIDEO_GEN_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️  Cannot import from vertexai.preview.vision_models: {e}")
-    try:
-        from vertexai.vision_models import VideoGenerationModel
-        print("✅ VideoGenerationModel imported from vertexai.vision_models")
-    except ImportError as e2:
-        print(f"⚠️  Cannot import from vertexai.vision_models: {e2}")
-        VideoGenerationModel = None
-        print("❌ VideoGenerationModel is not available")
+    print(f"⚠️  Google GenAI SDK not available: {e}")
+    print("   Install with: pip install google-genai")
+    VIDEO_GEN_AVAILABLE = False
 
-# Try importing GenerativeModel from different locations
+# Cloud Storage for video downloads
+try:
+    from google.cloud import storage
+    print("✅ Google Cloud Storage SDK imported")
+    STORAGE_AVAILABLE = True
+except ImportError:
+    print("⚠️  Google Cloud Storage SDK not available")
+    STORAGE_AVAILABLE = False
+
+# Try importing GenerativeModel from different locations (for image generation)
 GenerativeModel = None
 Part = None
 try:
@@ -178,7 +183,7 @@ class VertexAIMediaGenerator:
     def generate_video(
         self,
         prompt: str = "",
-        model: str = "veo-3.1-generate-001",
+        model: str = "veo-3.1-generate-preview",
         aspect_ratio: str = "16:9",
         duration_seconds: int = 8,
         resolution: str = "720p",
@@ -202,11 +207,11 @@ class VertexAIMediaGenerator:
         output_path: Optional[str] = None
     ) -> str:
         """
-        Generate a video using Vertex AI Veo (Video Generation)
+        Generate a video using Vertex AI Veo (Video Generation) via Google GenAI SDK
 
         Args:
             prompt: Text description of the video to generate (required for text-to-video, optional with image input)
-            model: Model to use (veo-3.1-generate-001, veo-2.0-generate-001, or veo-001)
+            model: Model to use (veo-3.1-generate-preview, veo-3.1-fast-generate-preview)
             aspect_ratio: Aspect ratio (16:9, 9:16)
             duration_seconds: Duration in seconds (4, 6, or 8)
             resolution: Video resolution (720p, 1080p) - Veo 3 only
@@ -232,8 +237,30 @@ class VertexAIMediaGenerator:
             Path to the generated video file
         """
         try:
-            print(f"Generating video with Veo")
+            print(f"🎬 Generating video with Veo (New GenAI SDK)")
             print(f"Model: {model}")
+
+            # Check if video generation is available
+            if not VIDEO_GEN_AVAILABLE:
+                raise ImportError(
+                    "Google GenAI SDK is not available. "
+                    "Install with: pip install google-genai\n"
+                    "Or use MOCK_MODE=true in your .env file for testing without GCP."
+                )
+
+            if not STORAGE_AVAILABLE:
+                raise ImportError(
+                    "Google Cloud Storage SDK is not available. "
+                    "Install with: pip install google-cloud-storage"
+                )
+
+            # Set up environment variables for Vertex AI
+            os.environ['GOOGLE_CLOUD_PROJECT'] = self.project_id
+            os.environ['GOOGLE_CLOUD_LOCATION'] = 'global'  # Veo requires 'global' location
+            os.environ['GOOGLE_GENAI_USE_VERTEXAI'] = 'True'
+
+            # Initialize GenAI client
+            client = genai.Client()
 
             # Handle image input
             input_image = None
@@ -244,117 +271,122 @@ class VertexAIMediaGenerator:
                 input_image = Image.open(image_path)
                 print(f"📷 Using image from: {image_path}")
 
-            # Handle last frame
-            last_frame_image = None
-            if last_frame_bytes:
-                last_frame_image = Image.open(BytesIO(last_frame_bytes))
-                print("🎞️  Using provided last frame")
-            elif last_frame_path:
-                last_frame_image = Image.open(last_frame_path)
-                print(f"🎞️  Using last frame from: {last_frame_path}")
-
             if prompt:
                 print(f"Prompt: {prompt}")
             print(f"Aspect Ratio: {aspect_ratio}")
             print(f"Duration: {duration_seconds}s")
-            print(f"Resolution: {resolution}")
 
-            # Initialize video generation model
-            if VideoGenerationModel is None:
-                raise ImportError(
-                    "VideoGenerationModel is not available in your version of the Vertex AI SDK. "
-                    "This may be due to SDK version incompatibility. "
-                    "Please try: pip install google-cloud-aiplatform==1.38.0\n"
-                    "Or use MOCK_MODE=true in your .env file for testing without GCP."
-                )
-            video_model = VideoGenerationModel.from_pretrained(model)
+            # Create temporary Cloud Storage path for output
+            timestamp = int(time.time())
+            bucket_name = os.environ.get('GCS_BUCKET_NAME', f"{self.project_id}-mediagen")
+            if not storage_uri:
+                storage_uri = f"gs://{bucket_name}/generated_videos/video_{timestamp}/"
 
-            # Build parameters dict
-            generation_params = {
-                "aspect_ratio": aspect_ratio
+            print(f"Output GCS URI: {storage_uri}")
+
+            # Build generation config
+            config_params = {
+                "aspect_ratio": aspect_ratio,
+                "output_gcs_uri": storage_uri
             }
 
-            # Add prompt (required for text-to-video, optional for image-to-video)
+            generation_config = GenerateVideosConfig(**config_params)
+
+            # Build request parameters
+            request_params = {
+                "model": model,
+                "config": generation_config
+            }
+
+            # Add prompt if provided
             if prompt:
-                generation_params["prompt"] = prompt
+                request_params["prompt"] = prompt
 
-            # Add Veo 3 specific parameters
-            if "veo-3" in model.lower() or "veo-2" in model.lower():
-                generation_params["duration_seconds"] = duration_seconds
-                generation_params["compression_quality"] = compression_quality
-                generation_params["enhance_prompt"] = enhance_prompt
-                generation_params["person_generation"] = person_generation
-                generation_params["sample_count"] = sample_count
-
-                if "veo-3" in model.lower():
-                    generation_params["resolution"] = resolution
-                    generation_params["generate_audio"] = generate_audio
-
-                    # Veo 3 image-to-video specific
-                    if input_image:
-                        generation_params["resize_mode"] = resize_mode
-
-                if negative_prompt:
-                    generation_params["negative_prompt"] = negative_prompt
-
-                if seed is not None:
-                    generation_params["seed"] = seed
-
-                if storage_uri:
-                    generation_params["storage_uri"] = storage_uri
-
-            # Add image input if provided
+            # Add image if provided (for image-to-video)
             if input_image:
+                # Convert PIL Image to bytes
                 img_byte_arr = BytesIO()
                 input_image.save(img_byte_arr, format='PNG')
-                generation_params["image_bytes"] = img_byte_arr.getvalue()
+                img_bytes = img_byte_arr.getvalue()
+                request_params["image"] = GenAIImage(image_bytes=img_bytes)
+                print("📷 Added image to request")
 
-            # Add last frame if provided
-            if last_frame_image:
-                last_frame_byte_arr = BytesIO()
-                last_frame_image.save(last_frame_byte_arr, format='PNG')
-                generation_params["last_frame_bytes"] = last_frame_byte_arr.getvalue()
+            # Generate video (async operation)
+            print("⏳ Starting video generation (this may take 1-3 minutes)...")
+            operation = client.models.generate_videos(**request_params)
 
-            # Add reference images if provided
-            if reference_images:
-                generation_params["reference_images"] = reference_images
-                print(f"🖼️  Using {len(reference_images)} reference image(s)")
+            # Poll for completion
+            poll_count = 0
+            max_polls = 60  # 15 minutes max (60 * 15 seconds)
+            while not operation.done:
+                poll_count += 1
+                if poll_count > max_polls:
+                    raise TimeoutError("Video generation timed out after 15 minutes")
 
-            # Generate video
-            response = video_model.generate_video(**generation_params)
+                time.sleep(15)  # Poll every 15 seconds
+                operation = client.operations.get(operation)
+                print(f"⏳ Polling... ({poll_count * 15}s elapsed)")
 
-            # Save video
-            timestamp = int(time.time())
+            # Check if generation succeeded
+            if not operation.response:
+                raise Exception("Video generation failed - no response from API")
+
+            # Get the video URI from response
+            result = operation.result
+            if not result.generated_videos or len(result.generated_videos) == 0:
+                raise Exception("No videos were generated")
+
+            video_gcs_uri = result.generated_videos[0].video.uri
+            print(f"✅ Video generated: {video_gcs_uri}")
+
+            # Download video from Cloud Storage
+            print("⬇️  Downloading video from Cloud Storage...")
+            local_path = self._download_from_gcs(video_gcs_uri, output_path, timestamp)
+
+            print(f"💾 Saved video to: {local_path}")
+            return local_path
+
+        except Exception as e:
+            print(f"❌ Error generating video: {str(e)}")
+            raise
+
+    def _download_from_gcs(self, gcs_uri: str, output_path: Optional[str], timestamp: int) -> str:
+        """Download a file from Google Cloud Storage to local path"""
+        try:
+            # Parse GCS URI (gs://bucket/path)
+            if not gcs_uri.startswith('gs://'):
+                raise ValueError(f"Invalid GCS URI: {gcs_uri}")
+
+            uri_parts = gcs_uri[5:].split('/', 1)  # Remove 'gs://' and split
+            bucket_name = uri_parts[0]
+            blob_name = uri_parts[1] if len(uri_parts) > 1 else ''
+
+            # Initialize storage client
+            storage_client = storage.Client(project=self.project_id)
+            bucket = storage_client.bucket(bucket_name)
+            blob = bucket.blob(blob_name)
+
+            # Determine local output path
             if output_path is None:
                 output_path = f"generated_media/video_{timestamp}.mp4"
 
             # Ensure directory exists
             os.makedirs(os.path.dirname(output_path) or "generated_media", exist_ok=True)
 
-            # Get video bytes and save
-            video_bytes = response.video_bytes
-            with open(output_path, 'wb') as f:
-                f.write(video_bytes)
+            # Download the file
+            blob.download_to_filename(output_path)
 
-            print(f"Saved video to: {output_path}")
             return output_path
 
-        except AttributeError as e:
-            # Video generation may not be available in all regions/accounts
-            print(f"Video generation not available: {str(e)}")
-            raise Exception(
-                "Video generation is currently in preview and may not be available "
-                "in your project/region. Please check Vertex AI documentation for availability."
-            )
         except Exception as e:
-            print(f"Error generating video: {str(e)}")
+            print(f"❌ Error downloading from GCS: {str(e)}")
             raise
 
     def generate_video_from_image(
         self,
         prompt: str,
         image: Image.Image,
-        model: str = "veo-3.1-generate-001",
+        model: str = "veo-3.1-generate-preview",
         aspect_ratio: str = "16:9",
         output_path: Optional[str] = None
     ) -> str:
@@ -364,49 +396,22 @@ class VertexAIMediaGenerator:
         Args:
             prompt: Text description for video generation
             image: Base PIL Image to animate
-            model: Model to use (veo-3.1-generate-001 for Veo 3.1, veo-2.0-generate-001 for Veo 2)
-            aspect_ratio: Aspect ratio (16:9, 9:16, 1:1)
+            model: Model to use (veo-3.1-generate-preview, veo-3.1-fast-generate-preview)
+            aspect_ratio: Aspect ratio (16:9, 9:16)
             output_path: Optional custom output path
 
         Returns:
             Path to the generated video file
         """
-        try:
-            print(f"Generating video from image with Veo")
-            print(f"Model: {model}")
-            print(f"Prompt: {prompt}")
+        # Use the main generate_video method with image input
+        img_byte_arr = BytesIO()
+        image.save(img_byte_arr, format='PNG')
+        img_bytes = img_byte_arr.getvalue()
 
-            # Initialize video generation model
-            video_model = VideoGenerationModel.from_pretrained(model)
-
-            # Convert PIL Image to bytes
-            img_byte_arr = BytesIO()
-            image.save(img_byte_arr, format='PNG')
-            img_bytes = img_byte_arr.getvalue()
-
-            # Generate video from image
-            response = video_model.generate_video(
-                prompt=prompt,
-                image_bytes=img_bytes,
-                aspect_ratio=aspect_ratio
-            )
-
-            # Save video
-            timestamp = int(time.time())
-            if output_path is None:
-                output_path = f"generated_media/video_from_image_{timestamp}.mp4"
-
-            # Ensure directory exists
-            os.makedirs(os.path.dirname(output_path) or "generated_media", exist_ok=True)
-
-            # Get video bytes and save
-            video_bytes = response.video_bytes
-            with open(output_path, 'wb') as f:
-                f.write(video_bytes)
-
-            print(f"Saved video to: {output_path}")
-            return output_path
-
-        except Exception as e:
-            print(f"Error generating video from image: {str(e)}")
-            raise
+        return self.generate_video(
+            prompt=prompt,
+            model=model,
+            aspect_ratio=aspect_ratio,
+            image_bytes=img_bytes,
+            output_path=output_path
+        )

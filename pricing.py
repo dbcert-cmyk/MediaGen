@@ -89,7 +89,7 @@ class VertexAIPricing:
             "sample_count": sample_count,
             "duration": duration_seconds,
             "resolution": resolution,
-            "model": "veo-3.1-generate-001",
+            "model": "veo-3.1-generate-preview",
             "breakdown": f"{sample_count} video(s) × ${per_video_cost:.2f} ({duration_seconds}s @ ${cls.VEO_PRICE_PER_SECOND}/sec) = ${total_cost:.2f}"
         }
 
@@ -109,7 +109,7 @@ class VertexAIPricing:
                 "notes": "Price per image generated"
             },
             "video": {
-                "model": "veo-3.1-generate-001",
+                "model": "veo-3.1-generate-preview",
                 "per_second": cls.VEO_PRICE_PER_SECOND,
                 "pricing_examples": cls.VEO_PRICING,
                 "description": "Veo 3.1 Video Generation",

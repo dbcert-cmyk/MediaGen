@@ -156,7 +156,7 @@ class MockMediaGenerator:
     def generate_video(
         self,
         prompt: str,
-        model: str = "veo-3.1-generate-001",
+        model: str = "veo-3.1-generate-preview",
         aspect_ratio: str = "16:9",
         output_path: str = None,
         **kwargs
@@ -300,7 +300,7 @@ class MockMediaGenerator:
         self,
         prompt: str,
         image: Image.Image,
-        model: str = "veo-3.1-generate-001",
+        model: str = "veo-3.1-generate-preview",
         aspect_ratio: str = "16:9",
         output_path: str = None,
         **kwargs
