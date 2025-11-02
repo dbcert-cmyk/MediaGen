@@ -177,16 +177,28 @@ def generate_video():
 
         # Handle reference images (up to 3)
         ref_imgs = []
-        for i in range(1, 4):
-            field_name = f'reference_image_{i}'
-            if field_name in request.files:
-                file = request.files[field_name]
+        # Try both file upload format and base64 format
+        for i in range(3):
+            # Try file upload format (reference_image_1, reference_image_2, reference_image_3)
+            field_name_file = f'reference_image_{i+1}'
+            if field_name_file in request.files:
+                file = request.files[field_name_file]
                 if file.filename:
-                    ref_type = data.get(f'reference_type_{i}', 'asset')
+                    ref_type = data.get(f'reference_type_{i+1}', 'asset')
                     ref_imgs.append({
                         'bytes': file.read(),
                         'type': ref_type
                     })
+            # Try base64 format from storyboard (reference_image_0, reference_image_1, reference_image_2)
+            field_name_base64 = f'reference_image_{i}'
+            if field_name_base64 in data:
+                import base64
+                base64_data = data.get(field_name_base64)
+                ref_type = data.get(f'reference_image_{i}_type', 'asset')
+                ref_imgs.append({
+                    'bytes': base64.b64decode(base64_data),
+                    'type': ref_type
+                })
         if ref_imgs:
             reference_images = ref_imgs
 
@@ -847,6 +859,7 @@ def generate_storyboard_from_concept():
     try:
         data = request.get_json()
         concept = data.get('concept', '')
+        character_description = data.get('character_description', '')
         num_scenes = data.get('num_scenes', 5)
         style = data.get('style', 'cinematic')
         pacing = data.get('pacing', 'medium')
@@ -862,9 +875,14 @@ def generate_storyboard_from_concept():
         # Veo 3.1 Best Practices System Instruction (Concise)
         shot_rotation = ['wide', 'medium', 'close-up'] * ((num_scenes // 3) + 1)
 
+        # Add character description for consistency (Solution 3)
+        character_section = ""
+        if character_description:
+            character_section = f"\n\nCHARACTER CONSISTENCY: Include these exact details in EVERY scene prompt: {character_description}"
+
         system_instruction = f"""Create {num_scenes} cinematic video scenes for: {concept}
 
-Style: {style}. Pacing: {pacing}.
+Style: {style}. Pacing: {pacing}.{character_section}
 
 Each scene formula: [Camera] + [Subject] + [Action] + [Context] + [Lighting/Mood]
 
@@ -876,6 +894,7 @@ Guidelines:
 - One clear action per scene
 - 50-150 words per prompt
 - Ensure story continuity
+{"- CRITICAL: Include the exact character description in every scene prompt" if character_description else ""}
 
 Return JSON:
 [{{"prompt": "...", "shot_type": "wide/medium/close-up", "duration": 8, "resolution": "720p", "aspect_ratio": "16:9"}}, ...]"""

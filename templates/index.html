@@ -897,6 +897,27 @@
                             <small style="color: #666;">Describe the overall story, mood, setting, and key moments you want to capture</small>
                         </div>
 
+                        <!-- Character Description for Consistency (Solution 3) -->
+                        <div class="form-group">
+                            <label for="character-description">Character Description (Optional - For Consistency)</label>
+                            <textarea id="character-description" placeholder="Example: A 35-year-old male chef with short dark hair, trimmed beard, white chef's jacket with black buttons, black apron, friendly expression..." style="min-height: 60px;"></textarea>
+                            <small style="color: #666;">🎭 Describe main characters in detail (appearance, clothing, age, features). This will be included in ALL scene prompts for consistency.</small>
+                        </div>
+
+                        <!-- Reference Images for Character Consistency (Solution 1) -->
+                        <div class="form-group" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 2px dashed #667eea;">
+                            <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <span>📸 Reference Images (1-3 images for character/object consistency)</span>
+                            </label>
+                            <input type="file" id="reference-images-input" accept="image/png,image/jpeg,image/jpg" multiple style="margin-bottom: 10px;">
+                            <small style="color: #666; display: block; margin-bottom: 10px;">
+                                🎯 Upload 1-3 images of your characters, objects, or scenes. Veo 3.1 will use these to maintain visual consistency across ALL generated videos.
+                            </small>
+                            <div id="reference-images-preview" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                                <!-- Preview thumbnails will appear here -->
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="form-group">
                                 <label for="concept-num-scenes">Number of Scenes</label>
@@ -1948,7 +1969,9 @@
         let currentStoryboard = {
             id: `storyboard_${Date.now()}`,
             title: 'Untitled Storyboard',
-            scenes: []
+            scenes: [],
+            referenceImages: [],  // Store reference images for character consistency
+            characterDescription: ''  // Store character description for prompt consistency
         };
 
         // Add Scene Form Handler
@@ -2143,6 +2166,15 @@
                 formData.append('aspect_ratio', scene.aspect_ratio);
                 formData.append('sample_count', 1);
 
+                // Add reference images for character consistency (Solution 1)
+                if (currentStoryboard.referenceImages && currentStoryboard.referenceImages.length > 0) {
+                    currentStoryboard.referenceImages.forEach((refImg, index) => {
+                        formData.append(`reference_image_${index}`, refImg.data);
+                        formData.append(`reference_image_${index}_type`, refImg.type);
+                    });
+                    console.log(`🎭 Using ${currentStoryboard.referenceImages.length} reference image(s) for character consistency`);
+                }
+
                 // Call video generation API
                 const response = await fetch('/api/generate-video', {
                     method: 'POST',
@@ -2282,10 +2314,47 @@
         // CONCEPT TO STORYBOARD GENERATOR
         // ============================
 
+        // Reference Images Handler
+        document.getElementById('reference-images-input').addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files).slice(0, 3); // Max 3 images
+            const previewContainer = document.getElementById('reference-images-preview');
+            previewContainer.innerHTML = '';
+
+            currentStoryboard.referenceImages = [];
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+
+                // Read file as base64
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const base64Data = event.target.result.split(',')[1];
+                    currentStoryboard.referenceImages.push({
+                        data: base64Data,
+                        filename: file.name,
+                        type: 'asset'  // Veo 3.1 supports 'asset' or 'style'
+                    });
+
+                    // Create preview thumbnail
+                    const thumbnail = document.createElement('div');
+                    thumbnail.style.cssText = 'position: relative; width: 100px; height: 100px; border-radius: 8px; overflow: hidden; border: 2px solid #667eea;';
+                    thumbnail.innerHTML = `
+                        <img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 4px; font-size: 0.7em; text-align: center;">
+                            Ref ${i + 1}
+                        </div>
+                    `;
+                    previewContainer.appendChild(thumbnail);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
         document.getElementById('concept-to-storyboard-form').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const concept = document.getElementById('video-concept').value.trim();
+            const characterDescription = document.getElementById('character-description').value.trim();
             const numScenes = parseInt(document.getElementById('concept-num-scenes').value);
             const style = document.getElementById('concept-style').value;
             const pacing = document.getElementById('concept-pacing').value;
@@ -2295,18 +2364,22 @@
                 return;
             }
 
+            // Store character description in storyboard
+            currentStoryboard.characterDescription = characterDescription;
+
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn.innerHTML;
             submitBtn.disabled = true;
             submitBtn.innerHTML = '🎬 Generating storyboard...';
 
             try {
-                // Call concept-to-storyboard API
+                // Call concept-to-storyboard API with character description
                 const response = await fetch('/api/storyboard/generate-from-concept', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         concept: concept,
+                        character_description: characterDescription,
                         num_scenes: numScenes,
                         style: style,
                         pacing: pacing
