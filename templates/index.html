@@ -1910,7 +1910,7 @@
                 formData.append('sample_count', 1);
 
                 // Call video generation API
-                const response = await fetch('/generate-video', {
+                const response = await fetch('/api/generate-video', {
                     method: 'POST',
                     body: formData
                 });
