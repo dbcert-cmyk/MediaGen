@@ -277,6 +277,15 @@ class VertexAIMediaGenerator:
                 input_image = Image.open(image_path)
                 print(f"📷 Using image from: {image_path}")
 
+            # Handle last frame
+            last_frame_image = None
+            if last_frame_bytes:
+                last_frame_image = Image.open(BytesIO(last_frame_bytes))
+                print("🎞️  Using provided last frame")
+            elif last_frame_path:
+                last_frame_image = Image.open(last_frame_path)
+                print(f"🎞️  Using last frame from: {last_frame_path}")
+
             if prompt:
                 print(f"Prompt: {prompt}")
             print(f"Aspect Ratio: {aspect_ratio}")
@@ -337,7 +346,19 @@ class VertexAIMediaGenerator:
                     image_bytes=img_bytes,
                     mime_type="image/png"
                 )
-                print("📷 Added image to request")
+                print("📷 Added first frame image to request")
+
+            # Add last frame if provided (for first+last frame video generation)
+            if last_frame_image:
+                # Convert PIL Image to bytes
+                last_frame_byte_arr = BytesIO()
+                last_frame_image.save(last_frame_byte_arr, format='PNG')
+                last_frame_img_bytes = last_frame_byte_arr.getvalue()
+                request_params["ending_image"] = GenAIImage(
+                    image_bytes=last_frame_img_bytes,
+                    mime_type="image/png"
+                )
+                print("🎞️  Added last frame image to request")
 
             # Generate video (async operation)
             print("⏳ Starting video generation (this may take 1-3 minutes)...")
