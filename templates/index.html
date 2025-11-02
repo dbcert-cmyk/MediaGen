@@ -885,6 +885,68 @@
                     </div>
                 </div>
 
+                <!-- Concept to Storyboard Generator (NEW!) -->
+                <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #764ba215 0%, #667eea15 100%); border-radius: 10px; border: 2px solid #764ba230;">
+                    <h3 style="color: #764ba2; margin-bottom: 10px;">🎯 Concept to Storyboard Generator</h3>
+                    <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">Describe your video concept and let AI build a complete storyboard using Veo 3.1 best practices</p>
+
+                    <form id="concept-to-storyboard-form">
+                        <div class="form-group">
+                            <label for="video-concept">Video Concept</label>
+                            <textarea id="video-concept" placeholder="Example: A peaceful journey through a misty forest at dawn, discovering wildlife and ending at a beautiful waterfall..." style="min-height: 80px;"></textarea>
+                            <small style="color: #666;">Describe the overall story, mood, setting, and key moments you want to capture</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="form-group">
+                                <label for="concept-num-scenes">Number of Scenes</label>
+                                <select id="concept-num-scenes">
+                                    <option value="3">3 scenes (Quick)</option>
+                                    <option value="5" selected>5 scenes (Balanced)</option>
+                                    <option value="8">8 scenes (Detailed)</option>
+                                    <option value="10">10 scenes (Epic)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="concept-style">Video Style</label>
+                                <select id="concept-style">
+                                    <option value="cinematic">Cinematic (Film-like)</option>
+                                    <option value="documentary">Documentary (Natural)</option>
+                                    <option value="commercial">Commercial (Polished)</option>
+                                    <option value="artistic">Artistic (Creative)</option>
+                                    <option value="action">Action (Dynamic)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="concept-pacing">Pacing</label>
+                                <select id="concept-pacing">
+                                    <option value="slow">Slow & Contemplative</option>
+                                    <option value="medium" selected>Medium & Balanced</option>
+                                    <option value="fast">Fast & Energetic</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" style="
+                            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+                            color: white;
+                            padding: 12px 24px;
+                            font-size: 1em;
+                            font-weight: 600;
+                        ">
+                            🎬 Generate Complete Storyboard
+                        </button>
+                    </form>
+
+                    <div id="concept-loading" style="display: none; margin-top: 15px; padding: 20px; text-align: center; background: white; border-radius: 8px;">
+                        <div style="font-size: 32px; margin-bottom: 10px;">🎬</div>
+                        <div style="color: #667eea; font-weight: 600;">Creating your storyboard...</div>
+                        <div style="color: #666; font-size: 0.9em; margin-top: 5px;">Applying Veo 3.1 best practices</div>
+                    </div>
+                </div>
+
                 <!-- Add Scene Section -->
                 <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-radius: 10px; border: 2px solid #667eea30;">
                     <h3 style="color: #667eea; margin-bottom: 15px;">➕ Add New Scene</h3>
@@ -2215,6 +2277,84 @@
 
         // Initialize storyboard stats
         updateStoryboardStats();
+
+        // ============================
+        // CONCEPT TO STORYBOARD GENERATOR
+        // ============================
+
+        document.getElementById('concept-to-storyboard-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const concept = document.getElementById('video-concept').value.trim();
+            const numScenes = parseInt(document.getElementById('concept-num-scenes').value);
+            const style = document.getElementById('concept-style').value;
+            const pacing = document.getElementById('concept-pacing').value;
+
+            if (!concept) {
+                alert('Please describe your video concept');
+                return;
+            }
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '🎬 Generating storyboard...';
+
+            try {
+                // Call concept-to-storyboard API
+                const response = await fetch('/api/storyboard/generate-from-concept', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        concept: concept,
+                        num_scenes: numScenes,
+                        style: style,
+                        pacing: pacing,
+                        existing_scenes: currentStoryboard.scenes
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.scenes) {
+                    // Add all generated scenes to the storyboard
+                    data.scenes.forEach(sceneData => {
+                        const scene = {
+                            id: `scene_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                            prompt: sceneData.prompt,
+                            duration: sceneData.duration || 8,
+                            resolution: sceneData.resolution || '720p',
+                            aspect_ratio: sceneData.aspect_ratio || '16:9',
+                            generated: false,
+                            video_path: null,
+                            video_data: null
+                        };
+                        currentStoryboard.scenes.push(scene);
+                    });
+
+                    // Update UI
+                    renderScenesList();
+                    updateStoryboardStats();
+
+                    // Clear form
+                    document.getElementById('video-concept').value = '';
+
+                    // Show success message
+                    alert(`✅ Successfully generated ${data.scenes.length} scenes!\n\nYour storyboard is ready. Click "🎥 Generate" on each scene to create videos.`);
+
+                    // Scroll to scenes list
+                    document.getElementById('scenes-list').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert(`Error: ${data.error || 'Failed to generate storyboard'}`);
+                }
+            } catch (error) {
+                console.error('Error generating storyboard:', error);
+                alert(`Error: ${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        });
 
         // ============================
         // AI PROMPT ASSISTANT

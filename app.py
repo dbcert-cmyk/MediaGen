@@ -841,6 +841,195 @@ Format as numbered list:
         }), 500
 
 
+@app.route('/api/storyboard/generate-from-concept', methods=['POST'])
+def generate_storyboard_from_concept():
+    """Generate complete storyboard from a high-level concept using Veo 3.1 best practices"""
+    try:
+        data = request.get_json()
+        concept = data.get('concept', '')
+        num_scenes = data.get('num_scenes', 5)
+        style = data.get('style', 'cinematic')
+        pacing = data.get('pacing', 'medium')
+        existing_scenes = data.get('existing_scenes', [])
+
+        if not concept:
+            return jsonify({
+                'success': False,
+                'error': 'Concept description is required'
+            }), 400
+
+        # Build comprehensive prompt for Gemini based on Veo 3.1 best practices
+        style_guidance = {
+            'cinematic': 'Create film-like scenes with dramatic lighting, composed shots, and emotional depth. Use cinematic camera movements (dolly, crane, tracking) and professional color grading.',
+            'documentary': 'Create natural, observational scenes with realistic lighting and minimal stylization. Use handheld or steady camera movements that feel authentic.',
+            'commercial': 'Create polished, high-energy scenes with perfect lighting and dynamic framing. Use smooth, professional camera movements and vibrant colors.',
+            'artistic': 'Create visually creative scenes with unique perspectives, experimental lighting, and artistic composition. Use unconventional camera angles and movements.',
+            'action': 'Create dynamic, fast-paced scenes with dramatic camera movements, high contrast lighting, and intense energy. Use tracking shots, quick pans, and dramatic angles.'
+        }
+
+        pacing_guidance = {
+            'slow': 'Use slow, contemplative pacing with gentle camera movements, longer holds, and peaceful transitions. Emphasize mood and atmosphere.',
+            'medium': 'Use balanced pacing with steady camera movements and natural transitions. Mix establishing shots with action and detail shots.',
+            'fast': 'Use energetic pacing with dynamic camera movements, quick cuts between angles, and high-energy transitions. Keep action flowing.'
+        }
+
+        # Veo 3.1 Best Practices System Instruction
+        system_instruction = f"""You are an expert cinematographer creating a video storyboard using Veo 3.1 best practices.
+
+CONCEPT: {concept}
+
+STYLE: {style_guidance.get(style, style_guidance['cinematic'])}
+PACING: {pacing_guidance.get(pacing, pacing_guidance['medium'])}
+
+Generate {num_scenes} scenes that tell this story visually.
+
+VEO 3.1 BEST PRACTICES:
+✓ Each scene MUST follow this formula: [Cinematography] + [Subject] + [Action] + [Context] + [Style]
+✓ Shot Variety: Rotate between WIDE → MEDIUM → CLOSE-UP shots for visual interest
+✓ Duration: 8 seconds is optimal for each scene (DO NOT mention duration in prompt)
+✓ One Major Action Per Shot: Each scene should focus on ONE clear action or moment
+✓ Camera Movements: dolly push/pull, tracking shot, crane shot, aerial drone, slow pan, handheld, POV
+✓ Lighting: golden hour, dramatic side lighting, soft diffused light, neon glow, natural sunlight, dramatic shadows
+✓ Specific Details: Include exact camera angles, lighting direction, mood, colors, and atmosphere
+
+SHOT TYPE ROTATION (for {num_scenes} scenes):
+""" + '\n'.join([
+    f"Scene {i+1}: {'WIDE/ESTABLISHING' if i % 3 == 0 else 'MEDIUM' if i % 3 == 1 else 'CLOSE-UP/DETAIL'} shot"
+    for i in range(num_scenes)
+]) + f"""
+
+REQUIREMENTS:
+• Each prompt must be highly specific and descriptive (50-150 words)
+• Include exact camera type (dolly, tracking, crane, aerial, POV, etc.)
+• Specify lighting conditions (golden hour, dramatic shadows, soft diffused, etc.)
+• Describe subject clearly and their action
+• Set the context and environment
+• Define the visual style/mood
+• Ensure story flows logically from scene to scene
+• Make each scene visually distinct
+
+Example of GOOD prompt:
+"Wide aerial drone shot slowly rising above a misty mountain valley at sunrise, revealing a winding river cutting through dense pine forests, golden morning light breaking through low-hanging clouds, dramatic shadows across the landscape, cinematic color grading with teal and orange tones, peaceful and epic atmosphere"
+
+Example of BAD prompt (too generic):
+"A mountain valley"
+
+Format your response as JSON array:
+[
+  {{"prompt": "Scene 1 description...", "shot_type": "wide", "duration": 8, "resolution": "720p", "aspect_ratio": "16:9"}},
+  {{"prompt": "Scene 2 description...", "shot_type": "medium", "duration": 8, "resolution": "720p", "aspect_ratio": "16:9"}},
+  ...
+]
+
+Generate {num_scenes} complete scenes now."""
+
+        # Use Gemini to generate the storyboard
+        if mock_mode:
+            # Mock scenes for testing
+            shot_types = ['wide', 'medium', 'close-up'] * ((num_scenes // 3) + 1)
+            scenes = []
+            for i in range(num_scenes):
+                scenes.append({
+                    'prompt': f"Scene {i+1}: Cinematic {shot_types[i]} shot with dramatic lighting and smooth camera movement, capturing the essence of the story concept with professional framing and composition.",
+                    'shot_type': shot_types[i],
+                    'duration': 8,
+                    'resolution': '720p',
+                    'aspect_ratio': '16:9'
+                })
+        else:
+            try:
+                import vertexai
+                from vertexai.generative_models import GenerativeModel
+                import json
+                import re
+
+                model = GenerativeModel("gemini-2.0-flash-exp")
+
+                # Configure for JSON output
+                generation_config = {
+                    "temperature": 0.9,  # Higher creativity for varied scenes
+                    "top_p": 0.95,
+                    "max_output_tokens": 8192,
+                }
+
+                response = model.generate_content(
+                    system_instruction,
+                    generation_config=generation_config
+                )
+
+                # Parse JSON response
+                response_text = response.text.strip()
+
+                # Extract JSON from markdown code blocks if present
+                json_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', response_text, re.DOTALL)
+                if json_match:
+                    response_text = json_match.group(1)
+
+                # Parse JSON
+                scenes = json.loads(response_text)
+
+                # Validate and ensure all required fields
+                for i, scene in enumerate(scenes):
+                    if 'prompt' not in scene:
+                        raise ValueError(f"Scene {i+1} missing 'prompt' field")
+                    # Set defaults for optional fields
+                    scene.setdefault('duration', 8)
+                    scene.setdefault('resolution', '720p')
+                    scene.setdefault('aspect_ratio', '16:9')
+                    scene.setdefault('shot_type', ['wide', 'medium', 'close-up'][i % 3])
+
+            except json.JSONDecodeError as e:
+                print(f"JSON parsing error: {e}")
+                print(f"Response text: {response_text}")
+                # Fallback: Create scenes from text
+                scenes = []
+                shot_types = ['wide', 'medium', 'close-up'] * ((num_scenes // 3) + 1)
+                lines = [line.strip() for line in response_text.split('\n') if line.strip()]
+                for i in range(min(num_scenes, len(lines))):
+                    prompt = lines[i].lstrip('0123456789.-•) ').strip()
+                    if prompt:
+                        scenes.append({
+                            'prompt': prompt,
+                            'shot_type': shot_types[i],
+                            'duration': 8,
+                            'resolution': '720p',
+                            'aspect_ratio': '16:9'
+                        })
+
+            except Exception as e:
+                print(f"Error generating storyboard: {e}")
+                # Generate fallback scenes based on concept
+                shot_types = ['wide', 'medium', 'close-up'] * ((num_scenes // 3) + 1)
+                camera_movements = ['Aerial drone shot', 'Tracking shot', 'Close-up', 'Dolly push', 'Crane shot', 'POV shot']
+                lighting = ['golden hour sunlight', 'dramatic side lighting', 'soft diffused light', 'neon glow', 'natural daylight']
+
+                scenes = []
+                for i in range(num_scenes):
+                    scenes.append({
+                        'prompt': f"{camera_movements[i % len(camera_movements)]} capturing {concept}, {lighting[i % len(lighting)]}, cinematic composition with {shot_types[i]} framing, smooth camera movement, professional color grading",
+                        'shot_type': shot_types[i],
+                        'duration': 8,
+                        'resolution': '720p',
+                        'aspect_ratio': '16:9'
+                    })
+
+        return jsonify({
+            'success': True,
+            'scenes': scenes,
+            'concept': concept,
+            'num_scenes': len(scenes),
+            'style': style,
+            'pacing': pacing
+        })
+
+    except Exception as e:
+        print(f"Error in generate_storyboard_from_concept: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.route('/health')
 def health():
     """Health check endpoint"""
