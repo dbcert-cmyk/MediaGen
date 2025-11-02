@@ -339,6 +339,8 @@ class VertexAIMediaGenerator:
                 ref_image_list = []
                 for i, ref_img in enumerate(reference_images[:3]):  # Max 3 reference images
                     ref_bytes = ref_img.get('bytes')
+                    ref_type = ref_img.get('type', 'asset')  # 'asset' or 'style'
+
                     if ref_bytes:
                         # Convert bytes to PIL Image to ensure proper format
                         ref_pil_image = Image.open(BytesIO(ref_bytes))
@@ -346,12 +348,16 @@ class VertexAIMediaGenerator:
                         ref_pil_image.save(ref_byte_arr, format='PNG')
                         ref_image_bytes = ref_byte_arr.getvalue()
 
-                        # Create GenAIImage object for reference image
-                        ref_image_list.append(GenAIImage(
-                            image_bytes=ref_image_bytes,
-                            mime_type="image/png"
-                        ))
-                        print(f"🎭 Added reference image {i+1} to config for character consistency")
+                        # Each reference image must be a dict with 'image' field
+                        ref_image_obj = {
+                            "image": GenAIImage(
+                                image_bytes=ref_image_bytes,
+                                mime_type="image/png"
+                            )
+                        }
+
+                        ref_image_list.append(ref_image_obj)
+                        print(f"🎭 Added reference image {i+1} (type: {ref_type}) to config for character consistency")
 
                 if ref_image_list:
                     config_params["reference_images"] = ref_image_list
