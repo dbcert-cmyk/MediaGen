@@ -322,6 +322,18 @@ class VertexAIMediaGenerator:
             if negative_prompt:
                 config_params["negative_prompt"] = negative_prompt
 
+            # Add last frame to config if provided (for first+last frame video generation)
+            if last_frame_image:
+                # Convert PIL Image to bytes
+                last_frame_byte_arr = BytesIO()
+                last_frame_image.save(last_frame_byte_arr, format='PNG')
+                last_frame_img_bytes = last_frame_byte_arr.getvalue()
+                config_params["last_frame"] = GenAIImage(
+                    image_bytes=last_frame_img_bytes,
+                    mime_type="image/png"
+                )
+                print("🎞️  Added last frame to config")
+
             print(f"📊 Config: {sample_count} video(s), {duration_seconds}s duration, {resolution} resolution")
 
             generation_config = GenerateVideosConfig(**config_params)
@@ -336,7 +348,7 @@ class VertexAIMediaGenerator:
             if prompt:
                 request_params["prompt"] = prompt
 
-            # Add image if provided (for image-to-video)
+            # Add image if provided (for image-to-video - first frame)
             if input_image:
                 # Convert PIL Image to bytes
                 img_byte_arr = BytesIO()
@@ -347,18 +359,6 @@ class VertexAIMediaGenerator:
                     mime_type="image/png"
                 )
                 print("📷 Added first frame image to request")
-
-            # Add last frame if provided (for first+last frame video generation)
-            if last_frame_image:
-                # Convert PIL Image to bytes
-                last_frame_byte_arr = BytesIO()
-                last_frame_image.save(last_frame_byte_arr, format='PNG')
-                last_frame_img_bytes = last_frame_byte_arr.getvalue()
-                request_params["last_frame"] = GenAIImage(
-                    image_bytes=last_frame_img_bytes,
-                    mime_type="image/png"
-                )
-                print("🎞️  Added last frame image to request")
 
             # Generate video (async operation)
             print("⏳ Starting video generation (this may take 1-3 minutes)...")
