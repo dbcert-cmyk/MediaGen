@@ -354,7 +354,7 @@ class VertexAIMediaGenerator:
                 last_frame_byte_arr = BytesIO()
                 last_frame_image.save(last_frame_byte_arr, format='PNG')
                 last_frame_img_bytes = last_frame_byte_arr.getvalue()
-                request_params["ending_image"] = GenAIImage(
+                request_params["last_frame"] = GenAIImage(
                     image_bytes=last_frame_img_bytes,
                     mime_type="image/png"
                 )
