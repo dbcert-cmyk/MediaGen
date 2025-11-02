@@ -217,7 +217,9 @@ def generate_video():
 
         return jsonify({
             'success': True,
-            'video': video_data,
+            'video': video_data,  # For backward compatibility
+            'videos': [video_data],  # Array format for Storyboard Mode
+            'file_paths': [video_path],  # File path for scene tracking
             'prompt': prompt
         })
 
