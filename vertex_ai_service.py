@@ -290,11 +290,30 @@ class VertexAIMediaGenerator:
 
             print(f"Output GCS URI: {storage_uri}")
 
-            # Build generation config
+            # Build generation config with all supported parameters
             config_params = {
                 "aspect_ratio": aspect_ratio,
-                "output_gcs_uri": storage_uri
+                "output_gcs_uri": storage_uri,
+                "number_of_videos": sample_count,  # Key parameter for multiple videos!
             }
+
+            # Add optional parameters for Veo 3.1
+            if duration_seconds:
+                config_params["duration_seconds"] = duration_seconds
+
+            if resolution:
+                config_params["resolution"] = resolution
+
+            if enhance_prompt is not None:
+                config_params["enhance_prompt"] = enhance_prompt
+
+            if person_generation:
+                config_params["person_generation"] = person_generation
+
+            if negative_prompt:
+                config_params["negative_prompt"] = negative_prompt
+
+            print(f"📊 Config: {sample_count} video(s), {duration_seconds}s duration, {resolution} resolution")
 
             generation_config = GenerateVideosConfig(**config_params)
 
