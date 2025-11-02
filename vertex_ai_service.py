@@ -348,16 +348,17 @@ class VertexAIMediaGenerator:
                         ref_pil_image.save(ref_byte_arr, format='PNG')
                         ref_image_bytes = ref_byte_arr.getvalue()
 
-                        # Each reference image must be a dict with 'image' field
+                        # Each reference image must be a dict with 'image' and 'referenceType' fields
                         ref_image_obj = {
                             "image": GenAIImage(
                                 image_bytes=ref_image_bytes,
                                 mime_type="image/png"
-                            )
+                            ),
+                            "referenceType": ref_type.upper()  # Must be uppercase: ASSET or STYLE
                         }
 
                         ref_image_list.append(ref_image_obj)
-                        print(f"🎭 Added reference image {i+1} (type: {ref_type}) to config for character consistency")
+                        print(f"🎭 Added reference image {i+1} (referenceType: {ref_type.upper()}) to config for character consistency")
 
                 if ref_image_list:
                     config_params["reference_images"] = ref_image_list
