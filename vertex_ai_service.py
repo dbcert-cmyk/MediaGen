@@ -314,7 +314,10 @@ class VertexAIMediaGenerator:
                 img_byte_arr = BytesIO()
                 input_image.save(img_byte_arr, format='PNG')
                 img_bytes = img_byte_arr.getvalue()
-                request_params["image"] = GenAIImage(image_bytes=img_bytes)
+                request_params["image"] = GenAIImage(
+                    image_bytes=img_bytes,
+                    mime_type="image/png"
+                )
                 print("📷 Added image to request")
 
             # Generate video (async operation)
