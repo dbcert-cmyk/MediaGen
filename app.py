@@ -853,6 +853,220 @@ Format as numbered list:
         }), 500
 
 
+@app.route('/api/storyboard/auto-generate-complete', methods=['POST'])
+def auto_generate_complete_storyboard():
+    """
+    FULL AUTOMATION: AI generates everything from just a concept
+    - Analyzes concept and identifies characters/subjects
+    - Generates detailed character descriptions
+    - Creates 1-3 reference images using Imagen
+    - Generates complete storyboard with Veo 3.1 best practices
+    - Returns complete package ready for video generation
+    """
+    try:
+        data = request.get_json()
+        concept = data.get('concept', '')
+        num_scenes = data.get('num_scenes', 5)
+        style = data.get('style', 'cinematic')
+        pacing = data.get('pacing', 'medium')
+
+        if not concept:
+            return jsonify({
+                'success': False,
+                'error': 'Concept description is required'
+            }), 400
+
+        # Step 1: AI Character Analysis & Description Generation
+        print("🤖 Step 1: Analyzing concept and generating character descriptions...")
+
+        character_analysis_prompt = f"""Analyze this video concept and create detailed character descriptions:
+
+CONCEPT: {concept}
+
+TASK: Identify the main character(s) or subject(s) and create a highly detailed description.
+
+OUTPUT FORMAT (JSON):
+{{
+  "has_characters": true/false,
+  "character_description": "Detailed description of main character (age, gender, ethnicity, hair, clothing, accessories, personality, features) OR subject/object description if no human character",
+  "character_type": "human" / "animal" / "object" / "abstract",
+  "reference_image_prompts": [
+    "Prompt for reference image 1 (front view/portrait)",
+    "Prompt for reference image 2 (side profile/different angle)",
+    "Prompt for reference image 3 (in action/context)"
+  ]
+}}
+
+GUIDELINES:
+- If human: Include age, gender, ethnicity, hair (color, length, style), facial features, clothing (specific colors and items), accessories (jewelry, watches, glasses), personality traits
+- If animal: Species, breed, size, color, markings, personality
+- If object: Type, material, color, style, condition
+- Be EXTREMELY specific - this ensures consistency across all scenes
+- Reference image prompts should be detailed and photorealistic
+- Each reference image should show the same character from different angles
+
+Generate the analysis now:"""
+
+        if mock_mode:
+            # Mock response for testing
+            character_data = {
+                "has_characters": True,
+                "character_description": "A 35-year-old male chef with short dark hair, white chef's jacket, black apron",
+                "character_type": "human",
+                "reference_image_prompts": [
+                    "Professional portrait of a chef",
+                    "Side profile of a chef in kitchen",
+                    "Chef cooking in action"
+                ]
+            }
+        else:
+            import vertexai
+            from vertexai.generative_models import GenerativeModel
+            import json
+            import re
+
+            model = GenerativeModel("gemini-2.0-flash-exp")
+            response = model.generate_content(character_analysis_prompt)
+            response_text = response.text.strip()
+
+            # Extract JSON from markdown code blocks if present
+            json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
+            if json_match:
+                response_text = json_match.group(1)
+
+            character_data = json.loads(response_text)
+
+        character_description = character_data.get('character_description', '')
+        reference_prompts = character_data.get('reference_image_prompts', [])
+
+        print(f"✅ Character Description: {character_description[:100]}...")
+
+        # Step 2: Generate Reference Images using Imagen
+        print("🎨 Step 2: Generating reference images using Imagen...")
+
+        reference_images = []
+        for i, ref_prompt in enumerate(reference_prompts[:3]):  # Max 3 images
+            try:
+                print(f"   Generating reference image {i+1}/3...")
+
+                # Generate image using existing media_generator
+                image_path = media_generator.generate_image(
+                    prompt=ref_prompt,
+                    number_of_images=1,
+                    aspect_ratio="1:1",  # Square for reference images
+                    safety_filter_level="block_some",
+                    person_generation="allow_adult"
+                )
+
+                # Read image and convert to base64
+                with open(image_path, 'rb') as img_file:
+                    image_data = base64.b64encode(img_file.read()).decode()
+                    reference_images.append({
+                        'data': image_data,
+                        'filename': f'reference_{i+1}.png',
+                        'type': 'asset',
+                        'prompt': ref_prompt
+                    })
+
+                print(f"   ✅ Reference image {i+1} generated")
+
+            except Exception as e:
+                print(f"   ⚠️  Failed to generate reference image {i+1}: {e}")
+                # Continue even if one image fails
+
+        print(f"✅ Generated {len(reference_images)} reference image(s)")
+
+        # Step 3: Generate Complete Storyboard with Character Consistency
+        print("📝 Step 3: Generating storyboard scenes with Veo 3.1 best practices...")
+
+        shot_rotation = ['wide', 'medium', 'close-up'] * ((num_scenes // 3) + 1)
+
+        storyboard_generation_prompt = f"""Create {num_scenes} cinematic video scenes for: {concept}
+
+MANDATORY CHARACTER CONSISTENCY: Include these EXACT details in EVERY scene prompt:
+{character_description}
+
+Style: {style}. Pacing: {pacing}.
+
+VEO 3.1 BEST PRACTICES:
+- Formula: [Camera Movement] + [Shot Type] + [Subject with FULL character description] + [Action] + [Lighting] + [Mood]
+- Shot rotation: {', '.join([f"Scene {i+1}={shot_rotation[i]}" for i in range(num_scenes)])}
+- Camera: dolly, tracking, crane, aerial, POV, handheld, steadicam
+- Lighting: golden hour, dramatic shadows, soft diffused, rim lighting, natural light
+- One clear action per scene
+- 80-150 words per prompt
+- Story continuity and flow
+
+CRITICAL: Every scene must include the full character description for consistency!
+
+Return JSON:
+[{{"prompt": "...", "shot_type": "wide/medium/close-up", "duration": 8, "resolution": "720p", "aspect_ratio": "16:9"}}, ...]"""
+
+        if mock_mode:
+            scenes = []
+            for i in range(num_scenes):
+                scenes.append({
+                    'prompt': f"Scene {i+1}: {shot_rotation[i]} shot featuring {character_description}, cinematic lighting and composition",
+                    'shot_type': shot_rotation[i],
+                    'duration': 8,
+                    'resolution': '720p',
+                    'aspect_ratio': '16:9'
+                })
+        else:
+            model = GenerativeModel("gemini-2.0-flash-exp")
+            generation_config = {
+                "temperature": 0.9,
+                "top_p": 0.95,
+                "max_output_tokens": 8192,
+            }
+
+            response = model.generate_content(
+                storyboard_generation_prompt,
+                generation_config=generation_config
+            )
+
+            response_text = response.text.strip()
+            json_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', response_text, re.DOTALL)
+            if json_match:
+                response_text = json_match.group(1)
+
+            scenes = json.loads(response_text)
+
+            # Validate and set defaults
+            for i, scene in enumerate(scenes):
+                if 'prompt' not in scene:
+                    raise ValueError(f"Scene {i+1} missing 'prompt' field")
+                scene.setdefault('duration', 8)
+                scene.setdefault('resolution', '720p')
+                scene.setdefault('aspect_ratio', '16:9')
+                scene.setdefault('shot_type', shot_rotation[i % len(shot_rotation)])
+
+        print(f"✅ Generated {len(scenes)} scene(s)")
+
+        # Return complete package
+        return jsonify({
+            'success': True,
+            'concept': concept,
+            'character_description': character_description,
+            'character_data': character_data,
+            'reference_images': reference_images,
+            'scenes': scenes,
+            'num_scenes': len(scenes),
+            'style': style,
+            'pacing': pacing,
+            'message': f'🤖 AI generated complete storyboard: {len(reference_images)} reference images + {len(scenes)} scenes'
+        })
+
+    except Exception as e:
+        print(f"❌ Error in auto_generate_complete_storyboard: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.route('/api/storyboard/generate-from-concept', methods=['POST'])
 def generate_storyboard_from_concept():
     """Generate complete storyboard from a high-level concept using Veo 3.1 best practices"""

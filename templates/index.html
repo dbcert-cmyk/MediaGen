@@ -885,7 +885,91 @@
                     </div>
                 </div>
 
-                <!-- Concept to Storyboard Generator (NEW!) -->
+                <!-- AI AUTO-GENERATE EVERYTHING (PRIMARY FEATURE) -->
+                <div style="margin-bottom: 30px; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; border: 3px solid #667eea; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h2 style="color: white; margin-bottom: 10px; font-size: 1.8em;">🤖 AI Auto-Generate Everything</h2>
+                        <p style="color: rgba(255,255,255,0.95); font-size: 1.1em; font-weight: 500; margin-bottom: 5px;">Just describe your concept - AI does the rest!</p>
+                        <p style="color: rgba(255,255,255,0.85); font-size: 0.95em;">
+                            ✨ Creates character descriptions • 🎨 Generates reference images • 📝 Builds complete storyboard • 🎬 Applies Veo 3.1 best practices
+                        </p>
+                    </div>
+
+                    <form id="auto-generate-form" style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; backdrop-filter: blur(10px);">
+                        <div class="form-group">
+                            <label for="auto-concept" style="color: white; font-weight: 600;">Video Concept</label>
+                            <textarea id="auto-concept" placeholder="Example: A chef preparing homemade pasta in a rustic Italian kitchen" style="min-height: 100px; font-size: 1.05em;"></textarea>
+                            <small style="color: rgba(255,255,255,0.9);">💡 Just describe what you want - AI will create characters, reference images, scenes, camera angles, and everything else!</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="form-group">
+                                <label for="auto-num-scenes" style="color: white; font-weight: 600;">Number of Scenes</label>
+                                <select id="auto-num-scenes">
+                                    <option value="3">3 scenes (Quick - 1 min)</option>
+                                    <option value="5" selected>5 scenes (Balanced - 2 min)</option>
+                                    <option value="8">8 scenes (Detailed - 3 min)</option>
+                                    <option value="10">10 scenes (Epic - 4 min)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="auto-style" style="color: white; font-weight: 600;">Video Style</label>
+                                <select id="auto-style">
+                                    <option value="cinematic">Cinematic (Film-like)</option>
+                                    <option value="documentary">Documentary (Natural)</option>
+                                    <option value="commercial">Commercial (Polished)</option>
+                                    <option value="artistic">Artistic (Creative)</option>
+                                    <option value="action">Action (Dynamic)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="auto-pacing" style="color: white; font-weight: 600;">Pacing</label>
+                                <select id="auto-pacing">
+                                    <option value="slow">Slow & Contemplative</option>
+                                    <option value="medium" selected>Medium & Balanced</option>
+                                    <option value="fast">Fast & Energetic</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" style="
+                            background: white;
+                            color: #667eea;
+                            padding: 16px 32px;
+                            font-size: 1.2em;
+                            font-weight: 700;
+                            border-radius: 8px;
+                            width: 100%;
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                            transition: all 0.3s;
+                        " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                            🤖 AI Generate Complete Storyboard
+                        </button>
+                    </form>
+
+                    <!-- Auto-Generate Progress Indicator -->
+                    <div id="auto-generate-progress" style="display: none; margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.15); border-radius: 8px; backdrop-filter: blur(10px);">
+                        <div style="text-align: center; color: white;">
+                            <div style="font-size: 48px; margin-bottom: 15px;" id="progress-emoji">🤖</div>
+                            <div style="font-size: 1.3em; font-weight: 600; margin-bottom: 8px;" id="progress-title">AI is working...</div>
+                            <div style="font-size: 1em; margin-bottom: 15px;" id="progress-message">Starting automation...</div>
+                            <div style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 8px; overflow: hidden; margin-bottom: 10px;">
+                                <div id="progress-bar" style="background: white; height: 100%; width: 0%; transition: width 0.5s;"></div>
+                            </div>
+                            <div style="font-size: 0.9em; color: rgba(255,255,255,0.8);" id="progress-substep"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Mode (Advanced Users) -->
+                <details style="margin-bottom: 30px;">
+                    <summary style="cursor: pointer; padding: 15px; background: #f8f9fa; border-radius: 8px; font-weight: 600; color: #667eea;">
+                        ⚙️ Advanced: Manual Mode (Create your own character descriptions and reference images)
+                    </summary>
+
+                <!-- Concept to Storyboard Generator (MANUAL) -->
                 <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #764ba215 0%, #667eea15 100%); border-radius: 10px; border: 2px solid #764ba230;">
                     <h3 style="color: #764ba2; margin-bottom: 10px;">🎯 Concept to Storyboard Generator</h3>
                     <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">Describe your video concept and let AI build a complete storyboard using Veo 3.1 best practices</p>
@@ -967,6 +1051,7 @@
                         <div style="color: #666; font-size: 0.9em; margin-top: 5px;">Applying Veo 3.1 best practices</div>
                     </div>
                 </div>
+                </details>
 
                 <!-- Add Scene Section -->
                 <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-radius: 10px; border: 2px solid #667eea30;">
@@ -2311,7 +2396,166 @@
         updateStoryboardStats();
 
         // ============================
-        // CONCEPT TO STORYBOARD GENERATOR
+        // AI AUTO-GENERATE EVERYTHING
+        // ============================
+
+        document.getElementById('auto-generate-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const concept = document.getElementById('auto-concept').value.trim();
+            const numScenes = parseInt(document.getElementById('auto-num-scenes').value);
+            const style = document.getElementById('auto-style').value;
+            const pacing = document.getElementById('auto-pacing').value;
+
+            if (!concept) {
+                alert('Please describe your video concept');
+                return;
+            }
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            const progressDiv = document.getElementById('auto-generate-progress');
+            const progressBar = document.getElementById('progress-bar');
+            const progressEmoji = document.getElementById('progress-emoji');
+            const progressTitle = document.getElementById('progress-title');
+            const progressMessage = document.getElementById('progress-message');
+            const progressSubstep = document.getElementById('progress-substep');
+
+            // Show progress
+            submitBtn.disabled = true;
+            progressDiv.style.display = 'block';
+
+            try {
+                // Step 1: Character Analysis
+                progressBar.style.width = '10%';
+                progressEmoji.textContent = '🧠';
+                progressTitle.textContent = 'Step 1: Analyzing Concept';
+                progressMessage.textContent = 'AI is identifying characters and creating detailed descriptions...';
+                progressSubstep.textContent = 'Analyzing your concept...';
+
+                await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for UX
+
+                // Step 2: Call API
+                progressBar.style.width = '30%';
+                progressSubstep.textContent = 'Sending request to AI...';
+
+                const response = await fetch('/api/storyboard/auto-generate-complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        concept: concept,
+                        num_scenes: numScenes,
+                        style: style,
+                        pacing: pacing
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to generate storyboard');
+                }
+
+                // Step 2: Reference Images Generated
+                progressBar.style.width = '60%';
+                progressEmoji.textContent = '🎨';
+                progressTitle.textContent = 'Step 2: Creating Reference Images';
+                progressMessage.textContent = `Generating ${data.reference_images.length} reference images using Imagen...`;
+                progressSubstep.textContent = 'Reference images created!';
+
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                // Step 3: Storyboard Generated
+                progressBar.style.width = '90%';
+                progressEmoji.textContent = '📝';
+                progressTitle.textContent = 'Step 3: Building Storyboard';
+                progressMessage.textContent = `Creating ${data.scenes.length} scenes with Veo 3.1 best practices...`;
+                progressSubstep.textContent = 'Applying camera angles, lighting, and character consistency...';
+
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                // Step 4: Complete
+                progressBar.style.width = '100%';
+                progressEmoji.textContent = '✅';
+                progressTitle.textContent = 'Complete!';
+                progressMessage.textContent = `Storyboard ready: ${data.reference_images.length} reference images + ${data.scenes.length} scenes`;
+                progressSubstep.textContent = 'Loading into storyboard...';
+
+                // Store reference images in storyboard
+                currentStoryboard.referenceImages = data.reference_images || [];
+                currentStoryboard.characterDescription = data.character_description || '';
+
+                // Show reference images preview
+                const previewContainer = document.getElementById('reference-images-preview');
+                previewContainer.innerHTML = '';
+                data.reference_images.forEach((refImg, i) => {
+                    const thumbnail = document.createElement('div');
+                    thumbnail.style.cssText = 'position: relative; width: 100px; height: 100px; border-radius: 8px; overflow: hidden; border: 2px solid #667eea;';
+                    thumbnail.innerHTML = `
+                        <img src="data:image/png;base64,${refImg.data}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 4px; font-size: 0.7em; text-align: center;">
+                            Ref ${i + 1}
+                        </div>
+                    `;
+                    previewContainer.appendChild(thumbnail);
+                });
+
+                // Add all scenes to storyboard
+                data.scenes.forEach(sceneData => {
+                    const scene = {
+                        id: `scene_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        prompt: sceneData.prompt,
+                        duration: sceneData.duration || 8,
+                        resolution: sceneData.resolution || '720p',
+                        aspect_ratio: sceneData.aspect_ratio || '16:9',
+                        generated: false,
+                        video_path: null,
+                        video_data: null
+                    };
+                    currentStoryboard.scenes.push(scene);
+                });
+
+                // Update UI
+                renderScenesList();
+                updateStoryboardStats();
+
+                // Clear form
+                document.getElementById('auto-concept').value = '';
+
+                // Show completion message
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                alert(`🎉 AI Auto-Generate Complete!
+
+✅ Character Description Created
+✅ ${data.reference_images.length} Reference Images Generated
+✅ ${data.scenes.length} Scenes with Perfect Consistency
+✅ Veo 3.1 Best Practices Applied
+
+Your storyboard is ready! Click "🎥 Generate" on each scene to create videos with character consistency.`);
+
+                // Scroll to scenes
+                document.getElementById('scenes-list').scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                console.error('Error in auto-generate:', error);
+                progressEmoji.textContent = '❌';
+                progressTitle.textContent = 'Error';
+                progressMessage.textContent = error.message;
+                progressSubstep.textContent = 'Please try again or use manual mode';
+                alert(`Error: ${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                // Hide progress after delay
+                setTimeout(() => {
+                    progressDiv.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 3000);
+            }
+        });
+
+        // ============================
+        // CONCEPT TO STORYBOARD GENERATOR (MANUAL MODE)
         // ============================
 
         // Reference Images Handler
