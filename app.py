@@ -929,12 +929,36 @@ Generate the analysis now:"""
             response = model.generate_content(character_analysis_prompt)
             response_text = response.text.strip()
 
-            # Extract JSON from markdown code blocks if present
+            print(f"📄 Raw AI Response (first 500 chars): {response_text[:500]}")
+
+            # Try to extract JSON from markdown code blocks
             json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
             if json_match:
                 response_text = json_match.group(1)
+                print("✅ Found JSON in code block")
+            else:
+                print("⚠️  No code block found, trying to parse response directly")
 
-            character_data = json.loads(response_text)
+            # Try to parse JSON
+            try:
+                character_data = json.loads(response_text)
+                print("✅ JSON parsed successfully")
+            except json.JSONDecodeError as e:
+                print(f"❌ JSON parsing failed: {e}")
+                print(f"📄 Response text: {response_text}")
+
+                # Fallback: Create character data from concept
+                print("🔄 Using fallback character creation...")
+                character_data = {
+                    "has_characters": True,
+                    "character_description": f"Main subject from the concept: {concept}",
+                    "character_type": "human",
+                    "reference_image_prompts": [
+                        f"Professional portrait photograph of the main character from: {concept}, photorealistic, high quality, studio lighting",
+                        f"Side profile photograph of the character from: {concept}, natural lighting, detailed",
+                        f"Action shot of the character from: {concept}, in motion, dynamic composition"
+                    ]
+                }
 
         character_description = character_data.get('character_description', '')
         reference_prompts = character_data.get('reference_image_prompts', [])
@@ -1026,11 +1050,35 @@ Return JSON:
             )
 
             response_text = response.text.strip()
+
+            print(f"📄 Storyboard AI Response (first 500 chars): {response_text[:500]}")
+
             json_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', response_text, re.DOTALL)
             if json_match:
                 response_text = json_match.group(1)
+                print("✅ Found JSON array in code block")
+            else:
+                print("⚠️  No code block found, trying to parse response directly")
 
-            scenes = json.loads(response_text)
+            # Try to parse JSON
+            try:
+                scenes = json.loads(response_text)
+                print(f"✅ JSON parsed successfully - {len(scenes)} scenes")
+            except json.JSONDecodeError as e:
+                print(f"❌ JSON parsing failed: {e}")
+                print(f"📄 Response text: {response_text}")
+
+                # Fallback: Create basic scenes from character description
+                print("🔄 Using fallback scene creation...")
+                scenes = []
+                for i in range(num_scenes):
+                    scenes.append({
+                        'prompt': f"Scene {i+1}: {shot_rotation[i]} cinematic shot of {character_description}, professional lighting and composition, {style} style with {pacing} pacing",
+                        'shot_type': shot_rotation[i],
+                        'duration': 8,
+                        'resolution': '720p',
+                        'aspect_ratio': '16:9'
+                    })
 
             # Validate and set defaults
             for i, scene in enumerate(scenes):
