@@ -858,70 +858,28 @@ def generate_storyboard_from_concept():
                 'error': 'Concept description is required'
             }), 400
 
-        # Build comprehensive prompt for Gemini based on Veo 3.1 best practices
-        style_guidance = {
-            'cinematic': 'Create film-like scenes with dramatic lighting, composed shots, and emotional depth. Use cinematic camera movements (dolly, crane, tracking) and professional color grading.',
-            'documentary': 'Create natural, observational scenes with realistic lighting and minimal stylization. Use handheld or steady camera movements that feel authentic.',
-            'commercial': 'Create polished, high-energy scenes with perfect lighting and dynamic framing. Use smooth, professional camera movements and vibrant colors.',
-            'artistic': 'Create visually creative scenes with unique perspectives, experimental lighting, and artistic composition. Use unconventional camera angles and movements.',
-            'action': 'Create dynamic, fast-paced scenes with dramatic camera movements, high contrast lighting, and intense energy. Use tracking shots, quick pans, and dramatic angles.'
-        }
+        # Note: style and pacing are passed directly to keep prompt concise
 
-        pacing_guidance = {
-            'slow': 'Use slow, contemplative pacing with gentle camera movements, longer holds, and peaceful transitions. Emphasize mood and atmosphere.',
-            'medium': 'Use balanced pacing with steady camera movements and natural transitions. Mix establishing shots with action and detail shots.',
-            'fast': 'Use energetic pacing with dynamic camera movements, quick cuts between angles, and high-energy transitions. Keep action flowing.'
-        }
+        # Veo 3.1 Best Practices System Instruction (Concise)
+        shot_rotation = ['wide', 'medium', 'close-up'] * ((num_scenes // 3) + 1)
 
-        # Veo 3.1 Best Practices System Instruction
-        system_instruction = f"""You are an expert cinematographer creating a video storyboard using Veo 3.1 best practices.
+        system_instruction = f"""Create {num_scenes} cinematic video scenes for: {concept}
 
-CONCEPT: {concept}
+Style: {style}. Pacing: {pacing}.
 
-STYLE: {style_guidance.get(style, style_guidance['cinematic'])}
-PACING: {pacing_guidance.get(pacing, pacing_guidance['medium'])}
+Each scene formula: [Camera] + [Subject] + [Action] + [Context] + [Lighting/Mood]
 
-Generate {num_scenes} scenes that tell this story visually.
+Rotate shots: {', '.join([f"Scene {i+1}={shot_rotation[i]}" for i in range(num_scenes)])}
 
-VEO 3.1 BEST PRACTICES:
-✓ Each scene MUST follow this formula: [Cinematography] + [Subject] + [Action] + [Context] + [Style]
-✓ Shot Variety: Rotate between WIDE → MEDIUM → CLOSE-UP shots for visual interest
-✓ Duration: 8 seconds is optimal for each scene (DO NOT mention duration in prompt)
-✓ One Major Action Per Shot: Each scene should focus on ONE clear action or moment
-✓ Camera Movements: dolly push/pull, tracking shot, crane shot, aerial drone, slow pan, handheld, POV
-✓ Lighting: golden hour, dramatic side lighting, soft diffused light, neon glow, natural sunlight, dramatic shadows
-✓ Specific Details: Include exact camera angles, lighting direction, mood, colors, and atmosphere
+Guidelines:
+- Specific camera movements (dolly, tracking, crane, aerial, POV)
+- Detailed lighting (golden hour, dramatic shadows, soft diffused)
+- One clear action per scene
+- 50-150 words per prompt
+- Ensure story continuity
 
-SHOT TYPE ROTATION (for {num_scenes} scenes):
-""" + '\n'.join([
-    f"Scene {i+1}: {'WIDE/ESTABLISHING' if i % 3 == 0 else 'MEDIUM' if i % 3 == 1 else 'CLOSE-UP/DETAIL'} shot"
-    for i in range(num_scenes)
-]) + f"""
-
-REQUIREMENTS:
-• Each prompt must be highly specific and descriptive (50-150 words)
-• Include exact camera type (dolly, tracking, crane, aerial, POV, etc.)
-• Specify lighting conditions (golden hour, dramatic shadows, soft diffused, etc.)
-• Describe subject clearly and their action
-• Set the context and environment
-• Define the visual style/mood
-• Ensure story flows logically from scene to scene
-• Make each scene visually distinct
-
-Example of GOOD prompt:
-"Wide aerial drone shot slowly rising above a misty mountain valley at sunrise, revealing a winding river cutting through dense pine forests, golden morning light breaking through low-hanging clouds, dramatic shadows across the landscape, cinematic color grading with teal and orange tones, peaceful and epic atmosphere"
-
-Example of BAD prompt (too generic):
-"A mountain valley"
-
-Format your response as JSON array:
-[
-  {{"prompt": "Scene 1 description...", "shot_type": "wide", "duration": 8, "resolution": "720p", "aspect_ratio": "16:9"}},
-  {{"prompt": "Scene 2 description...", "shot_type": "medium", "duration": 8, "resolution": "720p", "aspect_ratio": "16:9"}},
-  ...
-]
-
-Generate {num_scenes} complete scenes now."""
+Return JSON:
+[{{"prompt": "...", "shot_type": "wide/medium/close-up", "duration": 8, "resolution": "720p", "aspect_ratio": "16:9"}}, ...]"""
 
         # Use Gemini to generate the storyboard
         if mock_mode:
