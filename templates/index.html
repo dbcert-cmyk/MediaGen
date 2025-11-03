@@ -2111,11 +2111,14 @@
             const globalRefThumbnails = document.getElementById('global-reference-thumbnails');
 
             if (currentStoryboard.referenceImages && currentStoryboard.referenceImages.length > 0) {
-                globalRefThumbnails.innerHTML = currentStoryboard.referenceImages.map((refImg, index) => `
-                    <div onclick="viewReferenceImage('global', ${index})" style="position: relative; width: 40px; height: 40px; border-radius: 6px; overflow: hidden; border: 2px solid #ffc107; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" title="Global reference image ${index + 1} - Click to view larger">
-                        <img src="data:image/png;base64,${refImg.data}" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                `).join('');
+                globalRefThumbnails.innerHTML = `
+                    <span style="font-size: 0.9em; color: #856404; font-weight: 500; margin-right: 6px;">Global Reference Images:</span>
+                    ${currentStoryboard.referenceImages.map((refImg, index) => `
+                        <div onclick="viewReferenceImage('global', ${index})" style="position: relative; width: 28px; height: 28px; border-radius: 4px; overflow: hidden; border: 2px solid #ffc107; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" title="Global reference image ${index + 1} - Click to view larger">
+                            <img src="data:image/png;base64,${refImg.data}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                    `).join('')}
+                `;
             } else {
                 globalRefThumbnails.innerHTML = '';
             }
@@ -2155,7 +2158,7 @@
                                         font-size: 1em;
                                         padding: 0;
                                         width: 20px;
-                                    " title="Show/hide reference images">▼</button>
+                                    " title="Show/hide reference images">▶</button>
                                     <span style="font-size: 0.85em; color: #667eea; font-weight: 500;">📸 Reference Images</span>
                                     <button onclick="document.getElementById('ref-input-${scene.id}').click()" style="
                                         background: #667eea;
@@ -2168,7 +2171,7 @@
                                     ">+ Add</button>
                                     <input type="file" id="ref-input-${scene.id}" accept="image/png,image/jpeg,image/jpg" multiple style="display: none;" onchange="handleSceneReferenceUpload('${scene.id}', event)">
                                 </div>
-                                <div id="ref-section-${scene.id}" style="display: block;">
+                                <div id="ref-section-${scene.id}" style="display: none;">
                                     <div id="ref-preview-${scene.id}" style="display: flex; gap: 8px; flex-wrap: wrap;">
                                         ${scene.referenceImages && scene.referenceImages.length > 0 ? scene.referenceImages.map((refImg, refIndex) => `
                                             <div style="position: relative; width: 80px; height: 80px; border-radius: 6px; overflow: hidden; border: 2px solid #667eea;">
@@ -2199,18 +2202,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                            ${!scene.generated ? `
-                                <button onclick="generateScene('${scene.id}')" style="
-                                    background: #667eea;
-                                    color: white;
-                                    border: none;
-                                    padding: 8px 12px;
-                                    border-radius: 5px;
-                                    cursor: pointer;
-                                    font-size: 0.85em;
-                                ">🎥 Generate</button>
-                            ` : ''}
+                        <!-- Actions Section -->
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
                             <button onclick="toggleSceneActions('${scene.id}')" style="
                                 background: #6c757d;
                                 color: white;
@@ -2219,59 +2212,71 @@
                                 border-radius: 5px;
                                 cursor: pointer;
                                 font-size: 0.85em;
-                            " title="Show/hide more actions">⋯</button>
-                            <button onclick="moveSceneUp(${index})" ${index === 0 ? 'disabled' : ''} style="
-                                background: #6c757d;
-                                color: white;
-                                border: none;
-                                padding: 8px 12px;
-                                border-radius: 5px;
-                                cursor: ${index === 0 ? 'not-allowed' : 'pointer'};
-                                font-size: 0.85em;
-                                opacity: ${index === 0 ? '0.5' : '1'};
-                            ">↑</button>
-                            <button onclick="moveSceneDown(${index})" ${index === currentStoryboard.scenes.length - 1 ? 'disabled' : ''} style="
-                                background: #6c757d;
-                                color: white;
-                                border: none;
-                                padding: 8px 12px;
-                                border-radius: 5px;
-                                cursor: ${index === currentStoryboard.scenes.length - 1 ? 'not-allowed' : 'pointer'};
-                                font-size: 0.85em;
-                                opacity: ${index === currentStoryboard.scenes.length - 1 ? '0.5' : '1'};
-                            ">↓</button>
-                            <button onclick="removeScene('${scene.id}')" style="
-                                background: #dc3545;
-                                color: white;
-                                border: none;
-                                padding: 8px 12px;
-                                border-radius: 5px;
-                                cursor: pointer;
-                                font-size: 0.85em;
-                            ">🗑️</button>
-                        </div>
-                        <!-- Collapsible Actions -->
-                        <div id="actions-${scene.id}" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e5e7eb; gap: 8px; flex-wrap: wrap;">
-                            <button onclick="editScene('${scene.id}')" style="
-                                background: #17a2b8;
-                                color: white;
-                                border: none;
-                                padding: 8px 12px;
-                                border-radius: 5px;
-                                cursor: pointer;
-                                font-size: 0.85em;
-                            ">✏️ Edit</button>
-                            ${scene.generated ? `
-                                <button onclick="regenerateScene('${scene.id}')" style="
-                                    background: #28a745;
+                                margin-bottom: 10px;
+                            " title="Show/hide actions">⋯ Actions</button>
+                            <!-- Collapsible Actions -->
+                            <div id="actions-${scene.id}" style="display: none; margin-top: 10px; gap: 8px; flex-wrap: wrap;">
+                                ${!scene.generated ? `
+                                    <button onclick="generateScene('${scene.id}')" style="
+                                        background: #667eea;
+                                        color: white;
+                                        border: none;
+                                        padding: 8px 12px;
+                                        border-radius: 5px;
+                                        cursor: pointer;
+                                        font-size: 0.85em;
+                                    ">🎥 Generate</button>
+                                ` : ''}
+                                <button onclick="editScene('${scene.id}')" style="
+                                    background: #17a2b8;
                                     color: white;
                                     border: none;
                                     padding: 8px 12px;
                                     border-radius: 5px;
                                     cursor: pointer;
                                     font-size: 0.85em;
-                                ">🔄 Regenerate</button>
-                            ` : ''}
+                                ">✏️ Edit</button>
+                                ${scene.generated ? `
+                                    <button onclick="regenerateScene('${scene.id}')" style="
+                                        background: #28a745;
+                                        color: white;
+                                        border: none;
+                                        padding: 8px 12px;
+                                        border-radius: 5px;
+                                        cursor: pointer;
+                                        font-size: 0.85em;
+                                    ">🔄 Regenerate</button>
+                                ` : ''}
+                                <button onclick="moveSceneUp(${index})" ${index === 0 ? 'disabled' : ''} style="
+                                    background: #6c757d;
+                                    color: white;
+                                    border: none;
+                                    padding: 8px 12px;
+                                    border-radius: 5px;
+                                    cursor: ${index === 0 ? 'not-allowed' : 'pointer'};
+                                    font-size: 0.85em;
+                                    opacity: ${index === 0 ? '0.5' : '1'};
+                                ">↑</button>
+                                <button onclick="moveSceneDown(${index})" ${index === currentStoryboard.scenes.length - 1 ? 'disabled' : ''} style="
+                                    background: #6c757d;
+                                    color: white;
+                                    border: none;
+                                    padding: 8px 12px;
+                                    border-radius: 5px;
+                                    cursor: ${index === currentStoryboard.scenes.length - 1 ? 'not-allowed' : 'pointer'};
+                                    font-size: 0.85em;
+                                    opacity: ${index === currentStoryboard.scenes.length - 1 ? '0.5' : '1'};
+                                ">↓</button>
+                                <button onclick="removeScene('${scene.id}')" style="
+                                    background: #dc3545;
+                                    color: white;
+                                    border: none;
+                                    padding: 8px 12px;
+                                    border-radius: 5px;
+                                    cursor: pointer;
+                                    font-size: 0.85em;
+                                ">🗑️</button>
+                            </div>
                         </div>
                     </div>
                     ${scene.generated && scene.video_data ? `
