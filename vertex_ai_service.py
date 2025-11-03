@@ -9,7 +9,12 @@ import vertexai
 # New Google GenAI SDK for video generation (Veo 3.1)
 try:
     from google import genai
-    from google.genai.types import GenerateVideosConfig, Image as GenAIImage
+    from google.genai.types import (
+        GenerateVideosConfig,
+        Image as GenAIImage,
+        VideoGenerationReferenceImage,
+        VideoGenerationReferenceType
+    )
     print("✅ Google GenAI SDK imported (for Veo 3.1 video generation)")
     VIDEO_GEN_AVAILABLE = True
 except ImportError as e:
@@ -348,20 +353,20 @@ class VertexAIMediaGenerator:
                         ref_pil_image.save(ref_byte_arr, format='PNG')
                         ref_image_bytes = ref_byte_arr.getvalue()
 
-                        # Each reference image must be a dict with 'image' and 'referenceType' fields
-                        ref_image_obj = {
-                            "image": GenAIImage(
+                        # Create proper VideoGenerationReferenceImage object
+                        ref_image_obj = VideoGenerationReferenceImage(
+                            image=GenAIImage(
                                 image_bytes=ref_image_bytes,
                                 mime_type="image/png"
                             ),
-                            "referenceType": ref_type.upper()  # Must be uppercase: ASSET or STYLE
-                        }
+                            referenceType=VideoGenerationReferenceType.ASSET if ref_type.lower() == 'asset' else VideoGenerationReferenceType.STYLE
+                        )
 
                         ref_image_list.append(ref_image_obj)
                         print(f"🎭 Added reference image {i+1} (referenceType: {ref_type.upper()}) to config for character consistency")
 
                 if ref_image_list:
-                    config_params["reference_images"] = ref_image_list
+                    config_params["referenceImages"] = ref_image_list
                     print(f"✅ {len(ref_image_list)} reference image(s) added to GenerateVideosConfig")
 
             print(f"📊 Config: {sample_count} video(s), {duration_seconds}s duration, {resolution} resolution")
@@ -407,12 +412,20 @@ class VertexAIMediaGenerator:
                 print(f"⏳ Polling... ({poll_count * 15}s elapsed)")
 
             # Check if generation succeeded
+            if operation.error:
+                error_msg = f"Video generation failed with error: {operation.error}"
+                print(f"❌ {error_msg}")
+                raise Exception(error_msg)
+
             if not operation.response:
                 raise Exception("Video generation failed - no response from API")
 
             # Get all video URIs from response
             result = operation.result
             if not result.generated_videos or len(result.generated_videos) == 0:
+                # Try to get more error details
+                error_details = f"No videos were generated. Operation status: {operation}"
+                print(f"❌ Debug info: {error_details}")
                 raise Exception("No videos were generated")
 
             print(f"✅ Generated {len(result.generated_videos)} video(s)")
