@@ -2082,7 +2082,8 @@
                 aspect_ratio: aspectRatio,
                 generated: false,
                 video_path: null,
-                video_data: null
+                video_data: null,
+                referenceImages: []  // Per-scene reference images
             };
 
             // Add to storyboard
@@ -2122,6 +2123,50 @@
                             <p style="margin: 8px 0; color: #333;">${scene.prompt}</p>
                             <div style="font-size: 0.85em; color: #666; margin-top: 8px;">
                                 📐 ${scene.aspect_ratio} • ⏱️ ${scene.duration}s • 📺 ${scene.resolution} • 💰 $${(scene.duration * PRICING.video.perSecond).toFixed(2)}
+                            </div>
+
+                            <!-- Reference Images Section -->
+                            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                    <span style="font-size: 0.85em; color: #667eea; font-weight: 500;">📸 Reference Images:</span>
+                                    <button onclick="document.getElementById('ref-input-${scene.id}').click()" style="
+                                        background: #667eea;
+                                        color: white;
+                                        border: none;
+                                        padding: 4px 8px;
+                                        border-radius: 4px;
+                                        cursor: pointer;
+                                        font-size: 0.75em;
+                                    ">+ Add</button>
+                                    <input type="file" id="ref-input-${scene.id}" accept="image/png,image/jpeg,image/jpg" multiple style="display: none;" onchange="handleSceneReferenceUpload('${scene.id}', event)">
+                                </div>
+                                <div id="ref-preview-${scene.id}" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    ${scene.referenceImages && scene.referenceImages.length > 0 ? scene.referenceImages.map((refImg, refIndex) => `
+                                        <div style="position: relative; width: 80px; height: 80px; border-radius: 6px; overflow: hidden; border: 2px solid #667eea;">
+                                            <img src="data:image/png;base64,${refImg.data}" style="width: 100%; height: 100%; object-fit: cover;">
+                                            <button onclick="removeSceneReference('${scene.id}', ${refIndex})" style="
+                                                position: absolute;
+                                                top: 2px;
+                                                right: 2px;
+                                                background: rgba(220, 53, 69, 0.9);
+                                                color: white;
+                                                border: none;
+                                                width: 20px;
+                                                height: 20px;
+                                                border-radius: 50%;
+                                                cursor: pointer;
+                                                font-size: 0.7em;
+                                                display: flex;
+                                                align-items: center;
+                                                justify-content: center;
+                                                padding: 0;
+                                            ">×</button>
+                                            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 2px; font-size: 0.65em; text-align: center;">
+                                                Ref ${refIndex + 1}
+                                            </div>
+                                        </div>
+                                    `).join('') : '<span style="font-size: 0.8em; color: #999;">No reference images</span>'}
+                                </div>
                             </div>
                         </div>
                         <div style="display: flex; gap: 8px;">
@@ -2176,6 +2221,50 @@
                     ` : ''}
                 </div>
             `).join('');
+        }
+
+        // Handle Reference Image Upload for a Scene
+        async function handleSceneReferenceUpload(sceneId, event) {
+            const files = Array.from(event.target.files);
+            const scene = currentStoryboard.scenes.find(s => s.id === sceneId);
+            if (!scene) return;
+
+            // Limit to 3 reference images per scene
+            const remaining = 3 - (scene.referenceImages?.length || 0);
+            if (remaining <= 0) {
+                alert('Maximum 3 reference images per scene');
+                return;
+            }
+
+            const filesToProcess = files.slice(0, remaining);
+
+            for (const file of filesToProcess) {
+                if (!file.type.startsWith('image/')) continue;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const base64Data = e.target.result.split(',')[1];
+                    if (!scene.referenceImages) {
+                        scene.referenceImages = [];
+                    }
+                    scene.referenceImages.push({
+                        data: base64Data,
+                        filename: file.name,
+                        type: 'asset'  // Default to 'asset' for character consistency
+                    });
+                    renderScenesList();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Remove Reference Image from a Scene
+        function removeSceneReference(sceneId, refIndex) {
+            const scene = currentStoryboard.scenes.find(s => s.id === sceneId);
+            if (!scene || !scene.referenceImages) return;
+
+            scene.referenceImages.splice(refIndex, 1);
+            renderScenesList();
         }
 
         // Update Storyboard Stats
@@ -2251,13 +2340,19 @@
                 formData.append('aspect_ratio', scene.aspect_ratio);
                 formData.append('sample_count', 1);
 
-                // Add reference images for character consistency (Solution 1)
-                if (currentStoryboard.referenceImages && currentStoryboard.referenceImages.length > 0) {
-                    currentStoryboard.referenceImages.forEach((refImg, index) => {
+                // Add reference images for character consistency
+                // Use scene-specific reference images if available, otherwise fall back to global ones
+                const refImages = (scene.referenceImages && scene.referenceImages.length > 0)
+                    ? scene.referenceImages
+                    : currentStoryboard.referenceImages;
+
+                if (refImages && refImages.length > 0) {
+                    refImages.forEach((refImg, index) => {
                         formData.append(`reference_image_${index}`, refImg.data);
                         formData.append(`reference_image_${index}_type`, refImg.type);
                     });
-                    console.log(`🎭 Using ${currentStoryboard.referenceImages.length} reference image(s) for character consistency`);
+                    const source = (scene.referenceImages && scene.referenceImages.length > 0) ? 'scene-specific' : 'global';
+                    console.log(`🎭 Using ${refImages.length} ${source} reference image(s) for character consistency`);
                 }
 
                 // Call video generation API
@@ -2510,7 +2605,8 @@
                         aspect_ratio: sceneData.aspect_ratio || '16:9',
                         generated: false,
                         video_path: null,
-                        video_data: null
+                        video_data: null,
+                        referenceImages: []  // Per-scene reference images
                     };
                     currentStoryboard.scenes.push(scene);
                 });
