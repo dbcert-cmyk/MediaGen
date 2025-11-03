@@ -142,6 +142,15 @@ def generate_video():
             model = 'veo-3.1-generate-preview'
 
         aspect_ratio = data.get('aspect_ratio', '16:9')
+
+        # Validate aspect ratio - Veo 3.1 only supports 16:9 and 9:16
+        supported_aspect_ratios = ['16:9', '9:16']
+        if aspect_ratio not in supported_aspect_ratios:
+            return jsonify({
+                'success': False,
+                'error': f'Invalid aspect ratio: {aspect_ratio}. Veo 3.1 only supports {", ".join(supported_aspect_ratios)}'
+            }), 400
+
         duration_seconds = int(data.get('duration_seconds', 8))
         resolution = data.get('resolution', '720p')
         compression_quality = data.get('compression_quality', 'optimized')
