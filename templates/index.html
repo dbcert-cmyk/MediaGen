@@ -2165,8 +2165,25 @@
                                                 Ref ${refIndex + 1}
                                             </div>
                                         </div>
-                                    `).join('') : '<span style="font-size: 0.8em; color: #999;">No reference images</span>'}
+                                    `).join('') : '<span style="font-size: 0.8em; color: #999;">No scene-specific reference images</span>'}
                                 </div>
+
+                                <!-- Global Reference Images (shown when no scene-specific images) -->
+                                ${(!scene.referenceImages || scene.referenceImages.length === 0) && currentStoryboard.referenceImages && currentStoryboard.referenceImages.length > 0 ? `
+                                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e5e7eb;">
+                                        <div style="font-size: 0.75em; color: #888; margin-bottom: 6px;">📋 Using Global Reference Images:</div>
+                                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                            ${currentStoryboard.referenceImages.map((refImg, refIndex) => `
+                                                <div onclick="viewReferenceImage('global', ${refIndex})" style="position: relative; width: 60px; height: 60px; border-radius: 6px; overflow: hidden; border: 2px solid #ffc107; cursor: pointer;" title="Click to view larger">
+                                                    <img src="data:image/png;base64,${refImg.data}" style="width: 100%; height: 100%; object-fit: cover;">
+                                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(255, 193, 7, 0.8); color: #333; padding: 2px; font-size: 0.6em; text-align: center; font-weight: bold;">
+                                                        Global ${refIndex + 1}
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
                             </div>
                         </div>
                         <div style="display: flex; gap: 8px;">
@@ -2181,6 +2198,15 @@
                                     font-size: 0.85em;
                                 ">🎥 Generate</button>
                             ` : ''}
+                            <button onclick="editScene('${scene.id}')" style="
+                                background: #17a2b8;
+                                color: white;
+                                border: none;
+                                padding: 8px 12px;
+                                border-radius: 5px;
+                                cursor: pointer;
+                                font-size: 0.85em;
+                            ">✏️ Edit</button>
                             <button onclick="moveSceneUp(${index})" ${index === 0 ? 'disabled' : ''} style="
                                 background: #6c757d;
                                 color: white;
@@ -2321,6 +2347,68 @@
                 currentStoryboard.scenes[index + 1] = temp;
                 renderScenesList();
             }
+        }
+
+        // Edit Scene
+        function editScene(sceneId) {
+            const scene = currentStoryboard.scenes.find(s => s.id === sceneId);
+            if (!scene) return;
+
+            // Create a modal dialog for editing
+            const newPrompt = prompt('Edit scene description:', scene.prompt);
+            if (newPrompt === null) return; // User cancelled
+
+            if (newPrompt.trim()) {
+                scene.prompt = newPrompt.trim();
+
+                // Ask for duration
+                const newDuration = prompt('Edit duration (4, 6, or 8 seconds):', scene.duration);
+                if (newDuration !== null && ['4', '6', '8'].includes(newDuration)) {
+                    scene.duration = parseInt(newDuration);
+                }
+
+                // If already generated, mark as not generated since we changed it
+                if (scene.generated) {
+                    const regenerate = confirm('Scene has been edited. The generated video is no longer valid. Clear the generated video?');
+                    if (regenerate) {
+                        scene.generated = false;
+                        scene.video_data = null;
+                        scene.video_path = null;
+                    }
+                }
+
+                renderScenesList();
+                updateStoryboardStats();
+            }
+        }
+
+        // View Reference Image (enlarged)
+        function viewReferenceImage(type, index) {
+            const refImg = type === 'global'
+                ? currentStoryboard.referenceImages[index]
+                : null;
+
+            if (!refImg) return;
+
+            // Create modal to show larger image
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; cursor: pointer;';
+            modal.onclick = () => modal.remove();
+
+            modal.innerHTML = `
+                <div style="max-width: 90%; max-height: 90%; background: white; padding: 20px; border-radius: 10px;" onclick="event.stopPropagation()">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0;">Global Reference Image ${index + 1}</h3>
+                        <button onclick="this.closest('div').parentElement.parentElement.remove()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Close</button>
+                    </div>
+                    <img src="data:image/png;base64,${refImg.data}" style="max-width: 100%; max-height: 70vh; border-radius: 8px;">
+                    <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                        <strong>Type:</strong> ${refImg.type || 'asset'} | <strong>Filename:</strong> ${refImg.filename || 'N/A'}
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
         }
 
         // Generate Single Scene
