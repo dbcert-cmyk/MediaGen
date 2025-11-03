@@ -2112,12 +2112,12 @@
 
             if (currentStoryboard.referenceImages && currentStoryboard.referenceImages.length > 0) {
                 globalRefThumbnails.innerHTML = `
-                    <span style="font-size: 0.9em; color: #856404; font-weight: 500; margin-right: 6px;">Global Reference Images:</span>
                     ${currentStoryboard.referenceImages.map((refImg, index) => `
                         <div onclick="viewReferenceImage('global', ${index})" style="position: relative; width: 28px; height: 28px; border-radius: 4px; overflow: hidden; border: 2px solid #ffc107; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" title="Global reference image ${index + 1} - Click to view larger">
                             <img src="data:image/png;base64,${refImg.data}" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
                     `).join('')}
+                    <span style="font-size: 1.17em; color: #333; font-weight: bold; margin-left: 6px;">Global Reference Images</span>
                 `;
             } else {
                 globalRefThumbnails.innerHTML = '';
@@ -2215,66 +2215,72 @@
                                 margin-bottom: 10px;
                             " title="Show/hide actions">⋯ Actions</button>
                             <!-- Collapsible Actions -->
-                            <div id="actions-${scene.id}" style="display: none; margin-top: 10px; gap: 8px; flex-wrap: wrap;">
+                            <div id="actions-${scene.id}" style="display: none; margin-top: 10px; gap: 6px; flex-wrap: wrap;">
                                 ${!scene.generated ? `
                                     <button onclick="generateScene('${scene.id}')" style="
                                         background: #667eea;
                                         color: white;
                                         border: none;
-                                        padding: 8px 12px;
+                                        padding: 6px 10px;
                                         border-radius: 5px;
                                         cursor: pointer;
                                         font-size: 0.85em;
+                                        white-space: nowrap;
                                     ">🎥 Generate</button>
                                 ` : ''}
                                 <button onclick="editScene('${scene.id}')" style="
                                     background: #17a2b8;
                                     color: white;
                                     border: none;
-                                    padding: 8px 12px;
+                                    padding: 6px 10px;
                                     border-radius: 5px;
                                     cursor: pointer;
                                     font-size: 0.85em;
+                                    white-space: nowrap;
                                 ">✏️ Edit</button>
                                 ${scene.generated ? `
                                     <button onclick="regenerateScene('${scene.id}')" style="
                                         background: #28a745;
                                         color: white;
                                         border: none;
-                                        padding: 8px 12px;
+                                        padding: 6px 10px;
                                         border-radius: 5px;
                                         cursor: pointer;
                                         font-size: 0.85em;
+                                        white-space: nowrap;
                                     ">🔄 Regenerate</button>
                                 ` : ''}
                                 <button onclick="moveSceneUp(${index})" ${index === 0 ? 'disabled' : ''} style="
                                     background: #6c757d;
                                     color: white;
                                     border: none;
-                                    padding: 8px 12px;
+                                    padding: 6px 10px;
                                     border-radius: 5px;
                                     cursor: ${index === 0 ? 'not-allowed' : 'pointer'};
                                     font-size: 0.85em;
                                     opacity: ${index === 0 ? '0.5' : '1'};
+                                    white-space: nowrap;
                                 ">↑</button>
                                 <button onclick="moveSceneDown(${index})" ${index === currentStoryboard.scenes.length - 1 ? 'disabled' : ''} style="
                                     background: #6c757d;
                                     color: white;
                                     border: none;
-                                    padding: 8px 12px;
+                                    padding: 6px 10px;
                                     border-radius: 5px;
                                     cursor: ${index === currentStoryboard.scenes.length - 1 ? 'not-allowed' : 'pointer'};
                                     font-size: 0.85em;
                                     opacity: ${index === currentStoryboard.scenes.length - 1 ? '0.5' : '1'};
+                                    white-space: nowrap;
                                 ">↓</button>
                                 <button onclick="removeScene('${scene.id}')" style="
                                     background: #dc3545;
                                     color: white;
                                     border: none;
-                                    padding: 8px 12px;
+                                    padding: 6px 10px;
                                     border-radius: 5px;
                                     cursor: pointer;
                                     font-size: 0.85em;
+                                    white-space: nowrap;
                                 ">🗑️</button>
                             </div>
                         </div>
