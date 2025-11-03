@@ -2290,6 +2290,18 @@
                             <video controls style="width: 100%; max-width: 400px; border-radius: 8px;">
                                 <source src="data:video/mp4;base64,${scene.video_data}" type="video/mp4">
                             </video>
+                            <div style="margin-top: 8px;">
+                                <button onclick="extractFrameToReference('${scene.id}')" style="
+                                    background: #ffc107;
+                                    color: #333;
+                                    border: none;
+                                    padding: 5px 10px;
+                                    border-radius: 4px;
+                                    cursor: pointer;
+                                    font-size: 0.8em;
+                                    white-space: nowrap;
+                                ">📸 Capture Frame as Reference</button>
+                            </div>
                         </div>
                     ` : ''}
                 </div>
@@ -2338,6 +2350,64 @@
 
             scene.referenceImages.splice(refIndex, 1);
             renderScenesList();
+        }
+
+        // Extract Frame from Video and Add as Reference Image
+        async function extractFrameToReference(sceneId) {
+            const scene = currentStoryboard.scenes.find(s => s.id === sceneId);
+            if (!scene || !scene.video_data) return;
+
+            try {
+                // Show loading state
+                const button = event.target;
+                button.disabled = true;
+                button.textContent = '⏳ Extracting...';
+
+                // Call API to extract frame
+                const response = await fetch('/api/extract-frame', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        video_data: scene.video_data,
+                        frame_position: 'middle'  // Extract middle frame
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Add extracted frame to scene's reference images
+                    if (!scene.referenceImages) {
+                        scene.referenceImages = [];
+                    }
+
+                    // Check if we're at max (3 reference images)
+                    if (scene.referenceImages.length >= 3) {
+                        alert('Maximum 3 reference images per scene. Remove one first.');
+                        return;
+                    }
+
+                    scene.referenceImages.push({
+                        data: data.frame_data,
+                        filename: `frame_scene_${scene.id.slice(-8)}.png`,
+                        type: 'asset'  // Character reference
+                    });
+
+                    // Refresh the scenes list
+                    renderScenesList();
+
+                    // Show success message
+                    alert(`✅ Frame captured at ${data.timestamp.toFixed(1)}s and added as reference image!`);
+                } else {
+                    alert(`Failed to extract frame: ${data.error}`);
+                }
+
+            } catch (error) {
+                console.error('Error extracting frame:', error);
+                alert(`Error extracting frame: ${error.message}`);
+            }
         }
 
         // Update Storyboard Stats

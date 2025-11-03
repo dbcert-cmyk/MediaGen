@@ -1,12 +1,15 @@
 import os
 import time
 import base64
+import tempfile
 from io import BytesIO
 from flask import Flask, render_template, request, jsonify, send_file
 from dotenv import load_dotenv
 from video_editor import VideoEditor
 from pricing import estimate_image_cost, estimate_video_cost, VertexAIPricing
 from storyboard import Storyboard, Scene, StoryboardRenderer, create_scene, estimate_storyboard_cost
+from PIL import Image
+import ffmpeg
 
 # Load environment variables
 load_dotenv()
@@ -249,6 +252,89 @@ def generate_video():
             'file_paths': video_paths,  # File paths for scene tracking
             'prompt': prompt
         })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/extract-frame', methods=['POST'])
+def extract_frame():
+    """Extract a frame from a video (middle frame by default) and return as base64 image"""
+    try:
+        data = request.get_json()
+
+        if not data or 'video_data' not in data:
+            return jsonify({'error': 'No video data provided'}), 400
+
+        video_base64 = data['video_data']
+        frame_position = data.get('frame_position', 'middle')  # 'middle', 'start', or timestamp in seconds
+
+        # Decode base64 video
+        video_bytes = base64.b64decode(video_base64)
+
+        # Create temporary files for video and frame
+        with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as video_file:
+            video_file.write(video_bytes)
+            video_path = video_file.name
+
+        try:
+            # Get video duration to calculate middle frame
+            probe = ffmpeg.probe(video_path)
+            duration = float(probe['format']['duration'])
+
+            # Calculate timestamp based on position
+            if frame_position == 'middle':
+                timestamp = duration / 2
+            elif frame_position == 'start':
+                timestamp = 0.5  # Half second in to avoid black frames
+            else:
+                timestamp = float(frame_position)
+
+            # Extract frame using ffmpeg
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as frame_file:
+                frame_path = frame_file.name
+
+            # Use ffmpeg to extract frame at timestamp
+            (
+                ffmpeg
+                .input(video_path, ss=timestamp)
+                .output(frame_path, vframes=1)
+                .overwrite_output()
+                .run(capture_stdout=True, capture_stderr=True, quiet=True)
+            )
+
+            # Read the extracted frame and convert to base64
+            with open(frame_path, 'rb') as f:
+                frame_bytes = f.read()
+
+            # Optionally resize to reasonable size (256x256 like reference images)
+            img = Image.open(BytesIO(frame_bytes))
+            img.thumbnail((256, 256), Image.Resampling.LANCZOS)
+
+            # Convert to base64
+            img_byte_arr = BytesIO()
+            img.save(img_byte_arr, format='PNG')
+            img_byte_arr = img_byte_arr.getvalue()
+            frame_base64 = base64.b64encode(img_byte_arr).decode('utf-8')
+
+            # Clean up temporary files
+            os.unlink(video_path)
+            os.unlink(frame_path)
+
+            return jsonify({
+                'success': True,
+                'frame_data': frame_base64,
+                'timestamp': timestamp
+            })
+
+        except Exception as e:
+            # Clean up on error
+            if os.path.exists(video_path):
+                os.unlink(video_path)
+            raise e
 
     except Exception as e:
         return jsonify({
