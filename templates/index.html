@@ -1125,15 +1125,10 @@
 
                 <!-- Scenes List -->
                 <div id="scenes-container" style="margin-bottom: 30px;">
-                    <h3 style="margin-bottom: 15px; color: #333;">📋 Scenes</h3>
-
-                    <!-- Global Reference Images Section -->
-                    <div id="global-reference-images-section" style="display: none; margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #ffc107; border-radius: 10px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <div style="font-weight: bold; color: #856404;">📋 Global Reference Images (used by all scenes)</div>
-                        </div>
-                        <div id="global-reference-images-display" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <!-- Global reference images will be rendered here -->
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #333;">📋 Scenes</h3>
+                        <div id="global-reference-thumbnails" style="display: flex; gap: 6px;">
+                            <!-- Global reference image thumbnails will be rendered here -->
                         </div>
                     </div>
 
@@ -2112,22 +2107,17 @@
         function renderScenesList() {
             const scenesList = document.getElementById('scenes-list');
 
-            // Render Global Reference Images Section
-            const globalRefSection = document.getElementById('global-reference-images-section');
-            const globalRefDisplay = document.getElementById('global-reference-images-display');
+            // Render Global Reference Images as Thumbnails next to heading
+            const globalRefThumbnails = document.getElementById('global-reference-thumbnails');
 
             if (currentStoryboard.referenceImages && currentStoryboard.referenceImages.length > 0) {
-                globalRefSection.style.display = 'block';
-                globalRefDisplay.innerHTML = currentStoryboard.referenceImages.map((refImg, index) => `
-                    <div onclick="viewReferenceImage('global', ${index})" style="position: relative; width: 100px; height: 100px; border-radius: 8px; overflow: hidden; border: 2px solid #ffc107; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" title="Click to view larger">
+                globalRefThumbnails.innerHTML = currentStoryboard.referenceImages.map((refImg, index) => `
+                    <div onclick="viewReferenceImage('global', ${index})" style="position: relative; width: 40px; height: 40px; border-radius: 6px; overflow: hidden; border: 2px solid #ffc107; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" title="Global reference image ${index + 1} - Click to view larger">
                         <img src="data:image/png;base64,${refImg.data}" style="width: 100%; height: 100%; object-fit: cover;">
-                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(255, 193, 7, 0.9); color: #333; padding: 4px; font-size: 0.7em; text-align: center; font-weight: bold;">
-                            Global ${index + 1}
-                        </div>
                     </div>
                 `).join('');
             } else {
-                globalRefSection.style.display = 'none';
+                globalRefThumbnails.innerHTML = '';
             }
 
             if (currentStoryboard.scenes.length === 0) {
@@ -2154,10 +2144,19 @@
                                 📐 ${scene.aspect_ratio} • ⏱️ ${scene.duration}s • 📺 ${scene.resolution} • 💰 $${(scene.duration * PRICING.video.perSecond).toFixed(2)}
                             </div>
 
-                            <!-- Reference Images Section -->
+                            <!-- Reference Images Section (Collapsible) -->
                             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
                                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                    <span style="font-size: 0.85em; color: #667eea; font-weight: 500;">📸 Reference Images:</span>
+                                    <button onclick="toggleReferenceSection('${scene.id}')" style="
+                                        background: transparent;
+                                        border: none;
+                                        color: #667eea;
+                                        cursor: pointer;
+                                        font-size: 1em;
+                                        padding: 0;
+                                        width: 20px;
+                                    " title="Show/hide reference images">▼</button>
+                                    <span style="font-size: 0.85em; color: #667eea; font-weight: 500;">📸 Reference Images</span>
                                     <button onclick="document.getElementById('ref-input-${scene.id}').click()" style="
                                         background: #667eea;
                                         color: white;
@@ -2169,32 +2168,34 @@
                                     ">+ Add</button>
                                     <input type="file" id="ref-input-${scene.id}" accept="image/png,image/jpeg,image/jpg" multiple style="display: none;" onchange="handleSceneReferenceUpload('${scene.id}', event)">
                                 </div>
-                                <div id="ref-preview-${scene.id}" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                    ${scene.referenceImages && scene.referenceImages.length > 0 ? scene.referenceImages.map((refImg, refIndex) => `
-                                        <div style="position: relative; width: 80px; height: 80px; border-radius: 6px; overflow: hidden; border: 2px solid #667eea;">
-                                            <img src="data:image/png;base64,${refImg.data}" style="width: 100%; height: 100%; object-fit: cover;">
-                                            <button onclick="removeSceneReference('${scene.id}', ${refIndex})" style="
-                                                position: absolute;
-                                                top: 2px;
-                                                right: 2px;
-                                                background: rgba(220, 53, 69, 0.9);
-                                                color: white;
-                                                border: none;
-                                                width: 20px;
-                                                height: 20px;
-                                                border-radius: 50%;
-                                                cursor: pointer;
-                                                font-size: 0.7em;
-                                                display: flex;
-                                                align-items: center;
-                                                justify-content: center;
-                                                padding: 0;
-                                            ">×</button>
-                                            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 2px; font-size: 0.65em; text-align: center;">
-                                                Ref ${refIndex + 1}
+                                <div id="ref-section-${scene.id}" style="display: block;">
+                                    <div id="ref-preview-${scene.id}" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                        ${scene.referenceImages && scene.referenceImages.length > 0 ? scene.referenceImages.map((refImg, refIndex) => `
+                                            <div style="position: relative; width: 80px; height: 80px; border-radius: 6px; overflow: hidden; border: 2px solid #667eea;">
+                                                <img src="data:image/png;base64,${refImg.data}" style="width: 100%; height: 100%; object-fit: cover;">
+                                                <button onclick="removeSceneReference('${scene.id}', ${refIndex})" style="
+                                                    position: absolute;
+                                                    top: 2px;
+                                                    right: 2px;
+                                                    background: rgba(220, 53, 69, 0.9);
+                                                    color: white;
+                                                    border: none;
+                                                    width: 20px;
+                                                    height: 20px;
+                                                    border-radius: 50%;
+                                                    cursor: pointer;
+                                                    font-size: 0.7em;
+                                                    display: flex;
+                                                    align-items: center;
+                                                    justify-content: center;
+                                                    padding: 0;
+                                                ">×</button>
+                                                <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 2px; font-size: 0.65em; text-align: center;">
+                                                    Ref ${refIndex + 1}
+                                                </div>
                                             </div>
-                                        </div>
-                                    `).join('') : '<span style="font-size: 0.8em; color: #999;">No scene-specific reference images</span>'}
+                                        `).join('') : '<span style="font-size: 0.8em; color: #999;">No scene-specific reference images</span>'}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2422,6 +2423,21 @@
             const actionsDiv = document.getElementById(`actions-${sceneId}`);
             if (actionsDiv) {
                 actionsDiv.style.display = actionsDiv.style.display === 'none' ? 'flex' : 'none';
+            }
+        }
+
+        // Toggle Reference Images Section
+        function toggleReferenceSection(sceneId) {
+            const refSection = document.getElementById(`ref-section-${sceneId}`);
+            const toggleBtn = event.target;
+            if (refSection) {
+                if (refSection.style.display === 'none') {
+                    refSection.style.display = 'block';
+                    toggleBtn.textContent = '▼';
+                } else {
+                    refSection.style.display = 'none';
+                    toggleBtn.textContent = '▶';
+                }
             }
         }
 
