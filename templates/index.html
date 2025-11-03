@@ -1126,6 +1126,17 @@
                 <!-- Scenes List -->
                 <div id="scenes-container" style="margin-bottom: 30px;">
                     <h3 style="margin-bottom: 15px; color: #333;">📋 Scenes</h3>
+
+                    <!-- Global Reference Images Section -->
+                    <div id="global-reference-images-section" style="display: none; margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #ffc107; border-radius: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div style="font-weight: bold; color: #856404;">📋 Global Reference Images (used by all scenes)</div>
+                        </div>
+                        <div id="global-reference-images-display" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <!-- Global reference images will be rendered here -->
+                        </div>
+                    </div>
+
                     <div id="scenes-list" style="min-height: 100px;">
                         <div style="text-align: center; padding: 40px; color: #999;">
                             <div style="font-size: 48px; margin-bottom: 10px;">🎬</div>
@@ -2101,6 +2112,24 @@
         function renderScenesList() {
             const scenesList = document.getElementById('scenes-list');
 
+            // Render Global Reference Images Section
+            const globalRefSection = document.getElementById('global-reference-images-section');
+            const globalRefDisplay = document.getElementById('global-reference-images-display');
+
+            if (currentStoryboard.referenceImages && currentStoryboard.referenceImages.length > 0) {
+                globalRefSection.style.display = 'block';
+                globalRefDisplay.innerHTML = currentStoryboard.referenceImages.map((refImg, index) => `
+                    <div onclick="viewReferenceImage('global', ${index})" style="position: relative; width: 100px; height: 100px; border-radius: 8px; overflow: hidden; border: 2px solid #ffc107; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" title="Click to view larger">
+                        <img src="data:image/png;base64,${refImg.data}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(255, 193, 7, 0.9); color: #333; padding: 4px; font-size: 0.7em; text-align: center; font-weight: bold;">
+                            Global ${index + 1}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                globalRefSection.style.display = 'none';
+            }
+
             if (currentStoryboard.scenes.length === 0) {
                 scenesList.innerHTML = '<p style="text-align: center; color: #999; padding: 30px;">No scenes yet. Add your first scene above!</p>';
                 return;
@@ -2167,26 +2196,9 @@
                                         </div>
                                     `).join('') : '<span style="font-size: 0.8em; color: #999;">No scene-specific reference images</span>'}
                                 </div>
-
-                                <!-- Global Reference Images (shown when no scene-specific images) -->
-                                ${(!scene.referenceImages || scene.referenceImages.length === 0) && currentStoryboard.referenceImages && currentStoryboard.referenceImages.length > 0 ? `
-                                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e5e7eb;">
-                                        <div style="font-size: 0.75em; color: #888; margin-bottom: 6px;">📋 Using Global Reference Images:</div>
-                                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                            ${currentStoryboard.referenceImages.map((refImg, refIndex) => `
-                                                <div onclick="viewReferenceImage('global', ${refIndex})" style="position: relative; width: 60px; height: 60px; border-radius: 6px; overflow: hidden; border: 2px solid #ffc107; cursor: pointer;" title="Click to view larger">
-                                                    <img src="data:image/png;base64,${refImg.data}" style="width: 100%; height: 100%; object-fit: cover;">
-                                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(255, 193, 7, 0.8); color: #333; padding: 2px; font-size: 0.6em; text-align: center; font-weight: bold;">
-                                                        Global ${refIndex + 1}
-                                                    </div>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                ` : ''}
                             </div>
                         </div>
-                        <div style="display: flex; gap: 8px;">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                             ${!scene.generated ? `
                                 <button onclick="generateScene('${scene.id}')" style="
                                     background: #667eea;
@@ -2198,15 +2210,15 @@
                                     font-size: 0.85em;
                                 ">🎥 Generate</button>
                             ` : ''}
-                            <button onclick="editScene('${scene.id}')" style="
-                                background: #17a2b8;
+                            <button onclick="toggleSceneActions('${scene.id}')" style="
+                                background: #6c757d;
                                 color: white;
                                 border: none;
                                 padding: 8px 12px;
                                 border-radius: 5px;
                                 cursor: pointer;
                                 font-size: 0.85em;
-                            ">✏️ Edit</button>
+                            " title="Show/hide more actions">⋯</button>
                             <button onclick="moveSceneUp(${index})" ${index === 0 ? 'disabled' : ''} style="
                                 background: #6c757d;
                                 color: white;
@@ -2236,6 +2248,29 @@
                                 cursor: pointer;
                                 font-size: 0.85em;
                             ">🗑️</button>
+                        </div>
+                        <!-- Collapsible Actions -->
+                        <div id="actions-${scene.id}" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e5e7eb; gap: 8px; flex-wrap: wrap;">
+                            <button onclick="editScene('${scene.id}')" style="
+                                background: #17a2b8;
+                                color: white;
+                                border: none;
+                                padding: 8px 12px;
+                                border-radius: 5px;
+                                cursor: pointer;
+                                font-size: 0.85em;
+                            ">✏️ Edit</button>
+                            ${scene.generated ? `
+                                <button onclick="regenerateScene('${scene.id}')" style="
+                                    background: #28a745;
+                                    color: white;
+                                    border: none;
+                                    padding: 8px 12px;
+                                    border-radius: 5px;
+                                    cursor: pointer;
+                                    font-size: 0.85em;
+                                ">🔄 Regenerate</button>
+                            ` : ''}
                         </div>
                     </div>
                     ${scene.generated && scene.video_data ? `
@@ -2380,6 +2415,32 @@
                 renderScenesList();
                 updateStoryboardStats();
             }
+        }
+
+        // Toggle Scene Actions (Edit/Regenerate)
+        function toggleSceneActions(sceneId) {
+            const actionsDiv = document.getElementById(`actions-${sceneId}`);
+            if (actionsDiv) {
+                actionsDiv.style.display = actionsDiv.style.display === 'none' ? 'flex' : 'none';
+            }
+        }
+
+        // Regenerate Scene
+        async function regenerateScene(sceneId) {
+            const scene = currentStoryboard.scenes.find(s => s.id === sceneId);
+            if (!scene) return;
+
+            if (!confirm('Regenerate this scene? This will replace the current video.')) {
+                return;
+            }
+
+            // Clear the existing video and regenerate
+            scene.generated = false;
+            scene.video_data = null;
+            scene.video_path = null;
+
+            // Trigger generation
+            await generateScene(sceneId);
         }
 
         // View Reference Image (enlarged)
