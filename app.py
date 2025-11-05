@@ -974,45 +974,48 @@ def auto_generate_complete_storyboard():
         # Step 1: AI Character Analysis & Description Generation
         print("🤖 Step 1: Analyzing concept and generating character descriptions...")
 
-        character_analysis_prompt = f"""Analyze this video concept and create detailed character descriptions:
+        character_analysis_prompt = f"""Analyze this video concept and identify ALL main subjects:
 
 CONCEPT: {concept}
 
-TASK: Identify the main character(s) or subject(s) and create a highly detailed description.
+Identify ALL important characters, animals, or objects (not just one).
 
 OUTPUT FORMAT (JSON):
 {{
-  "has_characters": true/false,
-  "character_description": "Detailed description of main character (age, gender, ethnicity, hair, clothing, accessories, personality, features) OR subject/object description if no human character",
-  "character_type": "human" / "animal" / "object" / "abstract",
-  "reference_image_prompts": [
-    "Prompt for reference image 1 (front view/portrait)",
-    "Prompt for reference image 2 (side profile/different angle)",
-    "Prompt for reference image 3 (in action/context)"
-  ]
+  "subjects": [
+    {{
+      "name": "Subject 1 name",
+      "description": "Detailed description",
+      "type": "human/animal/object",
+      "importance": "primary/secondary"
+    }}
+  ],
+  "combined_description": "Brief combined description of all subjects for prompts",
+  "reference_image_prompt": "Single reference image showing the main scene/subjects together"
 }}
 
 GUIDELINES:
-- If human: Include age, gender, ethnicity, hair (color, length, style), facial features, clothing (specific colors and items), accessories (jewelry, watches, glasses), personality traits
-- If animal: Species, breed, size, color, markings, personality
-- If object: Type, material, color, style, condition
-- Be EXTREMELY specific - this ensures consistency across all scenes
-- Reference image prompts should be detailed and photorealistic
-- Each reference image should show the same character from different angles
+- List ALL important subjects (humans, animals, objects)
+- Be specific: age, features, colors, clothing, breed, etc.
+- For "firefighter rescuing cat" → identify BOTH firefighter AND cat
+- combined_description should mention all subjects briefly
+- reference_image_prompt shows main subjects in context
 
-Generate the analysis now:"""
+Generate now:"""
 
         if mock_mode:
             # Mock response for testing
             character_data = {
-                "has_characters": True,
-                "character_description": "A 35-year-old male chef with short dark hair, white chef's jacket, black apron",
-                "character_type": "human",
-                "reference_image_prompts": [
-                    "Professional portrait of a chef",
-                    "Side profile of a chef in kitchen",
-                    "Chef cooking in action"
-                ]
+                "subjects": [
+                    {
+                        "name": "Chef",
+                        "description": "A 35-year-old male chef with short dark hair, white chef's jacket, black apron",
+                        "type": "human",
+                        "importance": "primary"
+                    }
+                ],
+                "combined_description": "A 35-year-old male chef with short dark hair, white chef's jacket, black apron",
+                "reference_image_prompt": "Professional portrait of a chef in white chef's jacket and black apron, photorealistic"
             }
         else:
             import vertexai
@@ -1045,34 +1048,41 @@ Generate the analysis now:"""
                 # Fallback: Create character data from concept
                 print("🔄 Using fallback character creation...")
                 character_data = {
-                    "has_characters": True,
-                    "character_description": f"Main subject from the concept: {concept}",
-                    "character_type": "human",
-                    "reference_image_prompts": [
-                        f"Professional portrait photograph of the main character from: {concept}, photorealistic, high quality, studio lighting",
-                        f"Side profile photograph of the character from: {concept}, natural lighting, detailed",
-                        f"Action shot of the character from: {concept}, in motion, dynamic composition"
-                    ]
+                    "subjects": [
+                        {
+                            "name": "Main Subject",
+                            "description": f"Subject from: {concept}",
+                            "type": "human",
+                            "importance": "primary"
+                        }
+                    ],
+                    "combined_description": f"Subject from: {concept}",
+                    "reference_image_prompt": f"Professional photograph showing the main scene from: {concept}, photorealistic, high quality"
                 }
 
-        character_description = character_data.get('character_description', '')
-        reference_prompts = character_data.get('reference_image_prompts', [])
+        # Extract all subjects and combined description
+        subjects = character_data.get('subjects', [])
+        combined_description = character_data.get('combined_description', '')
+        reference_image_prompt = character_data.get('reference_image_prompt', '')
 
-        print(f"✅ Character Description: {character_description[:100]}...")
+        print(f"✅ Identified {len(subjects)} subject(s):")
+        for subj in subjects:
+            print(f"   - {subj.get('name', 'Unknown')}: {subj.get('description', '')[:80]}...")
+        print(f"✅ Combined Description: {combined_description[:100]}...")
 
         # Step 2: Generate Reference Images using Imagen
         print("🎨 Step 2: Generating reference images using Imagen...")
 
         reference_images = []
-        # Generate only 1 reference image to reduce payload size (was causing 413 errors with 3)
-        for i, ref_prompt in enumerate(reference_prompts[:1]):  # Only 1 image to avoid 413 errors
+        # Generate single reference image showing all main subjects
+        if reference_image_prompt:
             try:
-                print(f"   Generating reference image {i+1}/1...")
+                print(f"   Generating reference image showing all subjects...")
 
                 # Generate image using existing media_generator
                 # Note: generate_image returns list of PIL Images, need to save first
                 images = media_generator.generate_image(
-                    prompt=ref_prompt,
+                    prompt=reference_image_prompt,
                     number_of_images=1,
                     aspect_ratio="1:1"  # Square for reference images
                 )
@@ -1084,7 +1094,7 @@ Generate the analysis now:"""
 
                 # Save the compressed image as JPEG for smaller size
                 timestamp = int(time.time())
-                image_path = f"generated_media/reference_{timestamp}_{i}.jpg"
+                image_path = f"generated_media/reference_{timestamp}_all_subjects.jpg"
                 os.makedirs('generated_media', exist_ok=True)
                 img.convert('RGB').save(image_path, 'JPEG', optimize=True, quality=80)
 
@@ -1093,16 +1103,16 @@ Generate the analysis now:"""
                     image_data = base64.b64encode(img_file.read()).decode()
                     reference_images.append({
                         'data': image_data,
-                        'filename': f'reference_{i+1}.png',
+                        'filename': 'reference_all_subjects.jpg',
                         'type': 'asset',
-                        'prompt': ref_prompt
+                        'prompt': reference_image_prompt
                     })
 
-                print(f"   ✅ Reference image {i+1} generated")
+                print(f"   ✅ Reference image generated showing all subjects")
 
             except Exception as e:
-                print(f"   ⚠️  Failed to generate reference image {i+1}: {e}")
-                # Continue even if one image fails
+                print(f"   ⚠️  Failed to generate reference image: {e}")
+                # Continue even if image generation fails
 
         print(f"✅ Generated {len(reference_images)} reference image(s)")
 
@@ -1113,12 +1123,17 @@ Generate the analysis now:"""
 
         storyboard_generation_prompt = f"""Create {num_scenes} video scene prompts for: {concept}
 
-Character: {character_description}
+ALL SUBJECTS: {combined_description}
+
+IMPORTANT - STORY CONTINUITY:
+- Ensure logical sequence (setup → action → resolution)
+- Maintain consistency of ALL subjects throughout
+- Each scene should flow naturally to the next
 
 Style: {style}. Pacing: {pacing}.
 Shots: {', '.join([f"{i+1}={shot_rotation[i]}" for i in range(num_scenes)])}
 
-Include character description in EVERY prompt. Use camera movements and lighting.
+Include ALL subjects from combined description in EVERY scene prompt. Use camera movements and lighting.
 
 Return ONLY valid JSON array (no markdown):
 [{{"prompt": "scene description", "shot_type": "wide", "duration": 8, "resolution": "720p", "aspect_ratio": "16:9"}}, ...]"""
@@ -1127,7 +1142,7 @@ Return ONLY valid JSON array (no markdown):
             scenes = []
             for i in range(num_scenes):
                 scenes.append({
-                    'prompt': f"Scene {i+1}: {shot_rotation[i]} shot featuring {character_description}, cinematic lighting and composition",
+                    'prompt': f"Scene {i+1}: {shot_rotation[i]} shot featuring {combined_description}, cinematic lighting and composition",
                     'shot_type': shot_rotation[i],
                     'duration': 8,
                     'resolution': '720p',
@@ -1156,7 +1171,7 @@ Return ONLY valid JSON array (no markdown):
                 scenes = []
                 for i in range(num_scenes):
                     scenes.append({
-                        'prompt': f"Scene {i+1}: {shot_rotation[i]} cinematic shot of {character_description}, professional lighting and composition, {style} style with {pacing} pacing",
+                        'prompt': f"Scene {i+1}: {shot_rotation[i]} cinematic shot of {combined_description}, professional lighting and composition, {style} style with {pacing} pacing",
                         'shot_type': shot_rotation[i],
                         'duration': 8,
                         'resolution': '720p',
@@ -1185,12 +1200,12 @@ Return ONLY valid JSON array (no markdown):
                     print(f"❌ JSON parsing failed: {e}")
                     print(f"📄 Response text (full): {response_text}")
 
-                    # Fallback: Create basic scenes from character description
+                    # Fallback: Create basic scenes from combined description
                     print("🔄 Using fallback scene creation...")
                     scenes = []
                     for i in range(num_scenes):
                         scenes.append({
-                            'prompt': f"Scene {i+1}: {shot_rotation[i]} cinematic shot of {character_description}, professional lighting and composition, {style} style with {pacing} pacing",
+                            'prompt': f"Scene {i+1}: {shot_rotation[i]} cinematic shot of {combined_description}, professional lighting and composition, {style} style with {pacing} pacing",
                             'shot_type': shot_rotation[i],
                             'duration': 8,
                             'resolution': '720p',
@@ -1212,14 +1227,15 @@ Return ONLY valid JSON array (no markdown):
         return jsonify({
             'success': True,
             'concept': concept,
-            'character_description': character_description,
-            'character_data': character_data,
+            'character_description': combined_description,  # Combined description of all subjects
+            'subjects': subjects,  # Detailed list of all subjects
+            'character_data': character_data,  # Full character analysis data
             'reference_images': reference_images,
             'scenes': scenes,
             'num_scenes': len(scenes),
             'style': style,
             'pacing': pacing,
-            'message': f'🤖 AI generated complete storyboard: {len(reference_images)} reference images + {len(scenes)} scenes'
+            'message': f'🤖 AI generated complete storyboard: {len(subjects)} subject(s), {len(reference_images)} reference image(s), {len(scenes)} scenes'
         })
 
     except Exception as e:
