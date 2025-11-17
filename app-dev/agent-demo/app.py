@@ -141,7 +141,9 @@ def handle_query(data):
         emit('query_complete', {
             'response': result['response'],
             'activity_log': result['activity_log'],
-            'turns': result.get('turns', 0)
+            'turns': result.get('turns', 0),
+            'workflow_steps': result.get('workflow_steps', []),
+            'total_steps': result.get('total_steps', 0)
         })
     else:
         emit('query_error', {

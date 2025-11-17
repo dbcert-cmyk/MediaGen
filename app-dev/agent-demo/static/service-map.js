@@ -230,7 +230,7 @@ class ServiceMap {
         }
     }
 
-    activateConnection(fromId, toId, duration = 2000) {
+    activateConnection(fromId, toId, duration = 2000, stepNumber = null) {
         const line = document.getElementById(`line-${fromId}-${toId}`);
         if (!line) return;
 
@@ -239,6 +239,11 @@ class ServiceMap {
         line.setAttribute('stroke-width', '6');  // Thicker line
         line.setAttribute('stroke-dasharray', '0');
         line.style.filter = 'drop-shadow(0 0 8px #00FF00)';  // Add glow
+
+        // Add step number badge if provided
+        if (stepNumber !== null) {
+            this.showStepBadge(fromId, toId, stepNumber);
+        }
 
         // Create multiple flowing particles for better visibility
         for (let i = 0; i < 3; i++) {
@@ -254,6 +259,57 @@ class ServiceMap {
             line.setAttribute('stroke-dasharray', '5,5');
             line.style.filter = '';
         }, duration);
+    }
+
+    showStepBadge(fromId, toId, stepNumber) {
+        const from = this.services[fromId];
+        const to = this.services[toId];
+        if (!from || !to) return;
+
+        // Calculate midpoint
+        const midX = (from.x + to.x) / 2;
+        const midY = (from.y + to.y) / 2;
+
+        // Remove old badge if exists
+        const oldBadge = document.getElementById(`step-badge-${fromId}-${toId}`);
+        if (oldBadge) {
+            oldBadge.remove();
+        }
+
+        // Create badge group
+        const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        badge.setAttribute('id', `step-badge-${fromId}-${toId}`);
+        badge.setAttribute('class', 'step-badge');
+
+        // Badge circle
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', midX);
+        circle.setAttribute('cy', midY);
+        circle.setAttribute('r', '18');
+        circle.setAttribute('fill', '#00FF00');
+        circle.setAttribute('stroke', '#fff');
+        circle.setAttribute('stroke-width', '2');
+        circle.style.filter = 'drop-shadow(0 0 10px #00FF00)';
+
+        // Badge text
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', midX);
+        text.setAttribute('y', midY + 5);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', '#000');
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('font-size', '14');
+        text.textContent = stepNumber;
+
+        badge.appendChild(circle);
+        badge.appendChild(text);
+        this.svg.appendChild(badge);
+
+        // Fade out after duration
+        setTimeout(() => {
+            badge.style.opacity = '0.3';
+            badge.style.transition = 'opacity 0.5s';
+        }, 2000);
     }
 
     createFlowingParticle(fromId, toId) {
@@ -342,7 +398,7 @@ class ServiceMap {
         }, delay + 500);
     }
 
-    handleToolCall(toolName) {
+    handleToolCall(toolName, stepNumber = null) {
         // Map tool names to services
         const toolToService = {
             // Database tools
@@ -371,7 +427,7 @@ class ServiceMap {
         if (serviceId) {
             this.setServiceStatus('agent', 'active');
             this.setServiceStatus(serviceId, 'active');
-            this.activateConnection('agent', serviceId);
+            this.activateConnection('agent', serviceId, 2000, stepNumber);
 
             // Activate data source
             const dataSourceMap = {
@@ -383,7 +439,7 @@ class ServiceMap {
             const dataSource = dataSourceMap[serviceId];
             if (dataSource) {
                 setTimeout(() => {
-                    this.activateConnection(serviceId, dataSource);
+                    this.activateConnection(serviceId, dataSource, 2000, stepNumber);
                     this.setServiceStatus(dataSource, 'active');
                 }, 400);
             }

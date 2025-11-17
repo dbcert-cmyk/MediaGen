@@ -157,6 +157,10 @@ class AgentService:
         """
         self.log_activity("user_query", user_query)
 
+        # Track workflow steps for visualization
+        workflow_steps = []
+        current_step = 0
+
         if on_progress:
             on_progress({"type": "started", "message": "Agent processing query..."})
 
@@ -205,16 +209,31 @@ class AgentService:
                     if not fc or not hasattr(fc, 'name'):
                         continue
 
+                    # Track this step in the workflow
+                    current_step += 1
+                    step_info = {
+                        "step": current_step,
+                        "tool": fc.name,
+                        "server": self.tool_handlers.get(fc.name, {}).get("server_type", "unknown"),
+                        "args": dict(fc.args) if hasattr(fc, 'args') and fc.args else {}
+                    }
+                    workflow_steps.append(step_info)
+
                     if on_progress:
                         on_progress({
                             "type": "tool_call",
                             "tool": fc.name,
-                            "server": self.tool_handlers.get(fc.name, {}).get("server_type", "unknown")
+                            "server": step_info["server"],
+                            "step": current_step,
+                            "total_steps": None  # We don't know total yet
                         })
 
                     # Execute the function
                     args_dict = dict(fc.args) if hasattr(fc, 'args') and fc.args else {}
                     result = await self.execute_tool(fc.name, args_dict)
+
+                    # Update step with result
+                    step_info["completed"] = True
 
                     # Create function response
                     function_responses.append(
@@ -244,13 +263,20 @@ class AgentService:
                 self.log_activity("agent_response", "Query completed successfully")
 
                 if on_progress:
-                    on_progress({"type": "completed", "message": "Query completed"})
+                    on_progress({
+                        "type": "completed",
+                        "message": "Query completed",
+                        "workflow_steps": workflow_steps,
+                        "total_steps": current_step
+                    })
 
                 return {
                     "success": True,
                     "response": final_text,
                     "activity_log": self.activity_log.copy(),
-                    "turns": turn_count
+                    "turns": turn_count,
+                    "workflow_steps": workflow_steps,
+                    "total_steps": current_step
                 }
             else:
                 return {

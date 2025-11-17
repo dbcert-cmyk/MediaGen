@@ -42,13 +42,16 @@
 
                 <!-- Quick Actions -->
                 <div class="quick-actions">
-                    <h3>Quick Queries:</h3>
+                    <h3>Single-Step Queries:</h3>
                     <button class="quick-btn" data-query="How many orders are in the database?">📊 Order Count</button>
                     <button class="quick-btn" data-query="List all JSON files in the data folder">📁 List Files</button>
                     <button class="quick-btn" data-query="What's the weather in San Francisco?">🌤️ Weather</button>
-                    <button class="quick-btn" data-query="Find all orders over $100">💰 High-Value Orders</button>
-                    <button class="quick-btn" data-query="Get the stock price for GOOGL">📈 Stock Price</button>
-                    <button class="quick-btn" data-query="Count how many temperature readings are in sensor_data.json">🌡️ Sensor Data</button>
+
+                    <h3 style="margin-top: 15px;">Multi-Step Workflows:</h3>
+                    <button class="quick-btn" data-query="List all JSON files and then count temperature readings in sensor_data.json">🔄 Files + Analysis</button>
+                    <button class="quick-btn" data-query="Get database statistics and list all tables">🔄 DB Analysis</button>
+                    <button class="quick-btn" data-query="What's the weather in San Francisco and New York?">🔄 Multi-City Weather</button>
+                    <button class="quick-btn" data-query="Search for log files and get info about server.log">🔄 File Search + Info</button>
                 </div>
             </section>
 
