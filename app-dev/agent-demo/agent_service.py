@@ -39,7 +39,7 @@ class AgentService:
         self.model_id = "gemini-2.5-flash"
 
         # Available tools from MCP servers
-        self.tools = []
+        self.function_declarations = []
         self.tool_handlers = {}
 
         # Activity log for tracking
@@ -67,7 +67,7 @@ class AgentService:
         for tool in api_tools:
             self._register_tool(tool, api_server, "api")
 
-        self.log_activity("system", f"Initialized {len(self.tools)} tools from 3 MCP servers")
+        self.log_activity("system", f"Initialized {len(self.function_declarations)} tools from 3 MCP servers")
 
     def _register_tool(self, mcp_tool, server, server_type):
         """Register an MCP tool for use with the agent"""
@@ -78,7 +78,7 @@ class AgentService:
             parameters=mcp_tool.inputSchema
         )
 
-        self.tools.append(function_declaration)
+        self.function_declarations.append(function_declaration)
 
         # Store handler
         self.tool_handlers[mcp_tool.name] = {
@@ -161,11 +161,16 @@ class AgentService:
             on_progress({"type": "started", "message": "Agent processing query..."})
 
         try:
+            # Create tool with all function declarations
+            tool = types.Tool(
+                function_declarations=self.function_declarations
+            )
+
             # Create the chat with tools
             chat = self.client.chats.create(
                 model=self.model_id,
                 config=types.GenerateContentConfig(
-                    tools=self.tools,
+                    tools=[tool],
                     temperature=0.1,  # Low temperature for more deterministic responses
                 )
             )
@@ -272,7 +277,7 @@ class AgentService:
                 "description": tool.description,
                 "server": self.tool_handlers[tool.name]["server_type"]
             }
-            for tool in self.tools
+            for tool in self.function_declarations
         ]
 
 
