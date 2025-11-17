@@ -210,6 +210,8 @@ class ServiceMap {
 
         // Update visual
         const serviceElement = document.querySelector(`#service-${serviceId} .service-box`);
+        const serviceGroup = document.querySelector(`#service-${serviceId}`);
+
         if (serviceElement) {
             serviceElement.setAttribute('fill', this.getServiceColor(status));
 
@@ -217,10 +219,26 @@ class ServiceMap {
             if (status === 'active') {
                 serviceElement.style.filter = 'drop-shadow(0 0 15px ' + this.getServiceColor(status) + ')';
                 serviceElement.style.animation = 'pulse 0.8s infinite';
+
+                // Add bounce effect on activation
+                if (serviceGroup) {
+                    serviceGroup.style.animation = 'bounce 0.6s ease-out';
+                    setTimeout(() => {
+                        serviceGroup.style.animation = '';
+                    }, 600);
+                }
             } else if (status === 'success') {
                 // Bright green glow with pulsing animation
                 serviceElement.style.filter = 'drop-shadow(0 0 20px #00FF00)';
                 serviceElement.style.animation = 'pulse 0.8s infinite';
+
+                // Add bounce effect on success
+                if (serviceGroup) {
+                    serviceGroup.style.animation = 'bounce 0.6s ease-out';
+                    setTimeout(() => {
+                        serviceGroup.style.animation = '';
+                    }, 600);
+                }
 
                 setTimeout(() => {
                     serviceElement.style.filter = '';

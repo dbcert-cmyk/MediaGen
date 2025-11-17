@@ -264,14 +264,31 @@ class Dashboard {
             const pre = document.createElement('pre');
             pre.textContent = JSON.stringify(jsonData, null, 2);
             content.appendChild(pre);
+            responseDiv.appendChild(content);
         } catch (e) {
-            // Not JSON, display as text
+            // Not JSON, display as text with typing animation
             const p = document.createElement('p');
-            p.textContent = response;
             content.appendChild(p);
-        }
+            responseDiv.appendChild(content);
 
-        responseDiv.appendChild(content);
+            // Typing animation
+            this.typeText(p, response, 15); // 15ms per character
+        }
+    }
+
+    typeText(element, text, speed = 15) {
+        let index = 0;
+        element.textContent = '';
+
+        const typeChar = () => {
+            if (index < text.length) {
+                element.textContent += text.charAt(index);
+                index++;
+                setTimeout(typeChar, speed);
+            }
+        };
+
+        typeChar();
     }
 
     setQueryButtonState(isLoading) {
