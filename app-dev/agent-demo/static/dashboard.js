@@ -68,12 +68,14 @@ class Dashboard {
             console.log('Progress:', data);
 
             if (data.type === 'tool_call') {
-                this.addActivityLog('tool_call', `Calling ${data.tool} on ${data.server} MCP server`);
+                // Format message with step number if available
+                const stepPrefix = data.step ? `[Step ${data.step}] ` : '';
+                this.addActivityLog('tool_call', `${stepPrefix}Calling ${data.tool} on ${data.server} MCP server`);
                 this.stats.totalToolCalls++;
 
-                // Update service map
+                // Update service map with step number
                 if (window.serviceMap && data.tool) {
-                    window.serviceMap.handleToolCall(data.tool);
+                    window.serviceMap.handleToolCall(data.tool, data.step);
                 }
             }
         });
@@ -83,7 +85,13 @@ class Dashboard {
                 ? ((Date.now() - this.currentQueryStartTime) / 1000).toFixed(2)
                 : 0;
 
-            this.addActivityLog('tool_response', `Query completed in ${duration}s`);
+            // Display workflow summary if multi-step
+            if (data.total_steps && data.total_steps > 1) {
+                this.addActivityLog('tool_response', `✓ Completed ${data.total_steps}-step workflow in ${duration}s`);
+            } else {
+                this.addActivityLog('tool_response', `Query completed in ${duration}s`);
+            }
+
             this.displayAgentResponse(data.response);
             this.setQueryButtonState(false);
 
@@ -166,9 +174,10 @@ class Dashboard {
     runDemo() {
         const demoQueries = [
             "How many orders are in the database?",
-            "List all JSON files in the data folder",
-            "What's the weather in San Francisco?",
-            "Find all orders over $100"
+            "List all JSON files in the data folder and then count the temperature readings in sensor_data.json",
+            "What's the weather in San Francisco and New York?",
+            "Show me database statistics and list the available tables",
+            "Search for log files and tell me about the database schema"
         ];
 
         let index = 0;
