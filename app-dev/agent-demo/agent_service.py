@@ -225,7 +225,14 @@ class AgentService:
                     )
 
                 # Send function responses back to the model
-                response = chat.send_message(function_responses)
+                # Wrap function response parts in Content
+                if function_responses:
+                    response = chat.send_message(
+                        types.Content(
+                            role="user",
+                            parts=function_responses
+                        )
+                    )
 
             # Extract final response
             if response.candidates and response.candidates[0].content.parts:
