@@ -13,6 +13,7 @@ class Dashboard {
             successCount: 0
         };
         this.currentQueryStartTime = null;
+        this.demoMode = false;
 
         this.init();
     }
@@ -153,6 +154,13 @@ class Dashboard {
         document.getElementById('clearBtn').addEventListener('click', () => {
             this.clearLog();
         });
+
+        // Demo mode toggle
+        document.getElementById('demoModeToggle').addEventListener('change', (e) => {
+            this.demoMode = e.target.checked;
+            const statusText = this.demoMode ? 'Demo Mode (Local)' : 'Live Mode';
+            this.addActivityLog('system', `Switched to ${statusText}`);
+        });
     }
 
     submitQuery() {
@@ -164,11 +172,164 @@ class Dashboard {
             return;
         }
 
-        // Send query via WebSocket
-        this.socket.emit('query', { query });
+        // Check if demo mode is enabled
+        if (this.demoMode) {
+            this.simulateQuery(query);
+        } else {
+            // Send query via WebSocket
+            this.socket.emit('query', { query });
+        }
 
         // Clear input
         // queryInput.value = '';
+    }
+
+    simulateQuery(query) {
+        // Simulate the entire query workflow locally
+        this.currentQueryStartTime = Date.now();
+        this.addActivityLog('user_query', `Query: ${query}`);
+        this.setQueryButtonState(true);
+
+        // Reset service map
+        if (window.serviceMap) {
+            window.serviceMap.reset();
+            window.serviceMap.setServiceStatus('agent', 'active');
+        }
+
+        // Determine which services to activate based on query
+        const services = this.getServicesForQuery(query);
+
+        // Simulate tool calls
+        let delay = 800;
+        let stepNumber = 0;
+
+        services.forEach((service, index) => {
+            setTimeout(() => {
+                stepNumber++;
+                const stepPrefix = services.length > 1 ? `[Step ${stepNumber}] ` : '';
+                this.addActivityLog('tool_call', `${stepPrefix}Calling ${service.tool} on ${service.server} MCP server`);
+                this.stats.totalToolCalls++;
+
+                if (window.serviceMap) {
+                    window.serviceMap.handleToolCall(service.tool, stepNumber);
+                }
+
+                // If this is the last service, complete the query
+                if (index === services.length - 1) {
+                    setTimeout(() => {
+                        const duration = ((Date.now() - this.currentQueryStartTime) / 1000).toFixed(2);
+                        const response = this.getMockResponse(query, services);
+
+                        if (services.length > 1) {
+                            this.addActivityLog('tool_response', `✓ Completed ${services.length}-step workflow in ${duration}s`);
+                        } else {
+                            this.addActivityLog('tool_response', `Query completed in ${duration}s`);
+                        }
+
+                        this.displayAgentResponse(response);
+                        this.setQueryButtonState(false);
+
+                        // Update stats
+                        this.stats.totalQueries++;
+                        this.stats.successCount++;
+                        this.stats.totalTime += parseFloat(duration);
+                        this.updateStats();
+
+                        // Update service map
+                        if (window.serviceMap) {
+                            window.serviceMap.setServiceStatus('agent', 'success');
+                        }
+                    }, 1000);
+                }
+            }, delay);
+
+            delay += 1500;
+        });
+    }
+
+    getServicesForQuery(query) {
+        const lowerQuery = query.toLowerCase();
+        const services = [];
+
+        // Detect database queries
+        if (lowerQuery.includes('order') || lowerQuery.includes('database') ||
+            lowerQuery.includes('table') || lowerQuery.includes('statistics') ||
+            lowerQuery.includes('customer')) {
+            services.push({ tool: 'query_database', server: 'database' });
+        }
+
+        // Detect file operations
+        if (lowerQuery.includes('file') || lowerQuery.includes('json') ||
+            lowerQuery.includes('log') || lowerQuery.includes('search')) {
+            services.push({ tool: 'list_files', server: 'filesystem' });
+        }
+
+        // Detect API calls
+        if (lowerQuery.includes('weather') || lowerQuery.includes('stock') ||
+            lowerQuery.includes('price') || lowerQuery.includes('sensor')) {
+            services.push({ tool: 'get_weather', server: 'api' });
+        }
+
+        // If multi-step query, add additional service
+        if ((lowerQuery.includes('and') || lowerQuery.includes('then')) && services.length > 0) {
+            if (lowerQuery.includes('count') || lowerQuery.includes('reading')) {
+                services.push({ tool: 'count_json_records', server: 'filesystem' });
+            } else if (lowerQuery.includes('list') && lowerQuery.includes('table')) {
+                services.push({ tool: 'list_tables', server: 'database' });
+            }
+        }
+
+        // Default to database if nothing matched
+        if (services.length === 0) {
+            services.push({ tool: 'query_database', server: 'database' });
+        }
+
+        return services;
+    }
+
+    getMockResponse(query, services) {
+        const lowerQuery = query.toLowerCase();
+
+        // Database responses
+        if (lowerQuery.includes('how many order')) {
+            return 'Based on the database query, there are 150 orders in the database.';
+        }
+        if (lowerQuery.includes('customer')) {
+            return 'Found 8 customers in the database. The top customers by order value are: Alice Johnson, Bob Smith, and Carol Davis.';
+        }
+        if (lowerQuery.includes('statistics')) {
+            return 'Database Statistics: 8 customers, 12 products, 150 orders, 500 analytics events. Total database size: 2.4 MB.';
+        }
+
+        // File responses
+        if (lowerQuery.includes('json file')) {
+            return 'Found 3 JSON files: sensor_data.json (245 KB), user_analytics.json (189 KB), and api_logs.json (156 KB).';
+        }
+        if (lowerQuery.includes('log file')) {
+            return 'Found 2 log files: server.log (1.2 MB) and error.log (45 KB).';
+        }
+        if (lowerQuery.includes('temperature')) {
+            return 'Counted 720 temperature readings in sensor_data.json. Average temperature: 22.3°C.';
+        }
+
+        // Weather responses
+        if (lowerQuery.includes('weather')) {
+            if (lowerQuery.includes('san francisco')) {
+                return 'San Francisco weather: Partly cloudy, 18°C (64°F), 65% humidity, wind 12 km/h W.';
+            }
+            if (lowerQuery.includes('new york')) {
+                return 'Multi-city weather report:\n• San Francisco: 18°C, partly cloudy\n• New York: 12°C, overcast';
+            }
+            return 'San Francisco weather: Partly cloudy, 18°C (64°F), 65% humidity.';
+        }
+
+        // Multi-step responses
+        if (services.length > 1) {
+            return `Completed ${services.length}-step workflow successfully. Data retrieved from ${services.map(s => s.server).join(' and ')} services.`;
+        }
+
+        // Default response
+        return 'Query processed successfully using demo mode. All visualizations are simulated locally without API calls.';
     }
 
     runDemo() {
