@@ -102,6 +102,64 @@ Access at: http://localhost:5001
 
 ---
 
+## AI-Powered Network Assistant (Optional)
+
+### Enabling the AI Agent
+
+The portal includes an optional AI assistant that can answer questions about your network in natural language.
+
+**Prerequisites:**
+- Google API Key (free tier available)
+
+**Setup Steps:**
+
+1. **Get your Google API Key**
+   ```bash
+   # Visit Google AI Studio
+   open https://aistudio.google.com/app/apikey
+
+   # Create a new API key
+   # Copy the key
+   ```
+
+2. **Configure the environment**
+   ```bash
+   # Create .env file from example
+   cp .env.example .env
+
+   # Edit .env and add your key
+   echo "GOOGLE_API_KEY=your_actual_key_here" >> .env
+   ```
+
+3. **Restart the application**
+   ```bash
+   # If running manually
+   python app.py
+
+   # If using Docker
+   docker-compose restart
+   ```
+
+### Using the AI Assistant
+
+Once configured, you'll see an "Ask AI" button in the bottom-right corner of the dashboard.
+
+**Example Queries:**
+- "Which devices are offline?"
+- "Why is my server's CPU usage so high?"
+- "How many WiFi clients are connected?"
+- "Show me all servers with high disk usage"
+- "What's the status of my network switches?"
+
+The AI assistant uses:
+- **Google Gemini 2.5 Flash** for intelligent responses
+- **MCP (Model Context Protocol)** servers for network data access
+- **Multi-step reasoning** to gather and analyze information
+
+**Privacy Note**: All network queries are processed through Google's Gemini API. Network data is only sent when you explicitly ask questions. The assistant is completely optional and can be disabled by not setting the GOOGLE_API_KEY.
+
+---
+
 ## Docker Deployment
 
 ### Quick Start with Docker

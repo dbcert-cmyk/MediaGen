@@ -26,3 +26,7 @@ peewee==3.17.0
 # Utilities
 requests==2.31.0
 python-dateutil==2.8.2
+
+# AI Agent (optional - for agentic capabilities)
+google-genai==1.0.0
+mcp==1.21.1

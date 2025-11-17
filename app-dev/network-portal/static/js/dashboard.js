@@ -6,6 +6,8 @@
 class NetworkDashboard {
     constructor() {
         this.socket = null;
+        this.agentAvailable = false;
+        this.chatOpen = false;
         this.init();
     }
 
@@ -58,12 +60,60 @@ class NetworkDashboard {
         this.socket.on('alerts', (alerts) => {
             this.showAlerts(alerts);
         });
+
+        // Listen for agent status
+        this.socket.on('agent_status', (data) => {
+            this.agentAvailable = data.available;
+            this.updateAgentStatus(data.available);
+        });
+
+        // Listen for agent responses
+        this.socket.on('agent_response', (data) => {
+            this.displayAgentResponse(data);
+        });
+
+        // Listen for agent progress
+        this.socket.on('agent_progress', (data) => {
+            this.displayAgentProgress(data);
+        });
+
+        // Listen for agent errors
+        this.socket.on('agent_error', (data) => {
+            this.displayAgentError(data.error);
+        });
     }
 
     setupEventListeners() {
         // Refresh button
         document.getElementById('refreshBtn').addEventListener('click', () => {
             this.socket.emit('request_update');
+        });
+
+        // Chat toggle button
+        document.getElementById('chatToggleBtn').addEventListener('click', () => {
+            this.toggleChat();
+        });
+
+        // Close chat button
+        document.getElementById('closeChatBtn').addEventListener('click', () => {
+            this.toggleChat();
+        });
+
+        // Send chat message
+        document.getElementById('sendChatBtn').addEventListener('click', () => {
+            this.sendChatMessage();
+        });
+
+        // Enter key to send message
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.sendChatMessage();
+            }
+        });
+
+        // Check agent status on connect
+        this.socket.on('connect', () => {
+            this.socket.emit('get_agent_status');
         });
     }
 
@@ -334,6 +384,143 @@ class NetworkDashboard {
         `).join('');
 
         banner.style.display = 'block';
+    }
+
+    // Agent Chat Methods
+
+    toggleChat() {
+        this.chatOpen = !this.chatOpen;
+        const chatPanel = document.getElementById('agentChat');
+        const toggleBtn = document.getElementById('chatToggleBtn');
+
+        if (this.chatOpen) {
+            chatPanel.classList.add('open');
+            toggleBtn.classList.add('hidden');
+        } else {
+            chatPanel.classList.remove('open');
+            toggleBtn.classList.remove('hidden');
+        }
+    }
+
+    updateAgentStatus(available) {
+        const statusDot = document.querySelector('.agent-status-dot');
+        const statusText = document.querySelector('.agent-status-text');
+        const toggleBtn = document.getElementById('chatToggleBtn');
+
+        if (available) {
+            statusDot.className = 'agent-status-dot online';
+            statusText.textContent = 'AI Assistant Ready';
+            toggleBtn.style.display = 'flex';
+        } else {
+            statusDot.className = 'agent-status-dot offline';
+            statusText.textContent = 'AI Assistant Unavailable';
+            toggleBtn.style.display = 'none';
+        }
+    }
+
+    sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        const query = input.value.trim();
+
+        if (!query) return;
+
+        // Display user message
+        this.addChatMessage('user', query);
+
+        // Clear input
+        input.value = '';
+
+        // Show typing indicator
+        this.showTypingIndicator();
+
+        // Send to agent
+        this.socket.emit('agent_query', { query });
+    }
+
+    addChatMessage(role, content) {
+        const messagesContainer = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `agent-message ${role}-message`;
+
+        if (role === 'agent') {
+            // Type out agent messages with animation
+            const contentP = document.createElement('p');
+            messageDiv.appendChild(contentP);
+            messagesContainer.appendChild(messageDiv);
+            this.typeText(contentP, content);
+        } else {
+            messageDiv.innerHTML = `<p>${this.escapeHtml(content)}</p>`;
+            messagesContainer.appendChild(messageDiv);
+        }
+
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    typeText(element, text, speed = 15) {
+        let index = 0;
+        const typeChar = () => {
+            if (index < text.length) {
+                element.textContent += text.charAt(index);
+                index++;
+                setTimeout(typeChar, speed);
+            }
+        };
+        typeChar();
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    showTypingIndicator() {
+        const messagesContainer = document.getElementById('chatMessages');
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'agent-message typing-indicator';
+        typingDiv.id = 'typingIndicator';
+        typingDiv.innerHTML = '<p><span></span><span></span><span></span></p>';
+        messagesContainer.appendChild(typingDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    hideTypingIndicator() {
+        const indicator = document.getElementById('typingIndicator');
+        if (indicator) {
+            indicator.remove();
+        }
+    }
+
+    displayAgentProgress(data) {
+        console.log('[AGENT PROGRESS]', data);
+        // Could add visual progress indicators here
+        if (data.type === 'tool_call') {
+            console.log(`Using tool: ${data.tool} from ${data.server} server`);
+        }
+    }
+
+    displayAgentResponse(data) {
+        this.hideTypingIndicator();
+
+        const response = data.response || 'No response';
+        this.addChatMessage('agent', response);
+
+        // Log workflow steps
+        if (data.workflow_steps && data.workflow_steps.length > 0) {
+            console.log(`[AGENT] Completed ${data.total_steps} steps:`, data.workflow_steps);
+        }
+    }
+
+    displayAgentError(error) {
+        this.hideTypingIndicator();
+
+        const messagesContainer = document.getElementById('chatMessages');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'agent-message error-message';
+        errorDiv.innerHTML = `<p>⚠️ ${this.escapeHtml(error)}</p>`;
+        messagesContainer.appendChild(errorDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 }
 

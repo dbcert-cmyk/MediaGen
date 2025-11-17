@@ -13,6 +13,11 @@ A comprehensive, open-source network management dashboard for monitoring and man
 ✅ Service health monitoring
 ✅ Alert system for issues
 ✅ Beautiful, responsive dashboard
+✅ **🤖 AI-Powered Network Assistant** (NEW!)
+  - Natural language queries about your network
+  - Intelligent troubleshooting and recommendations
+  - Multi-step reasoning with Google Gemini
+  - MCP server integration for network data access
 ✅ 100% free and open source
 
 ## Tech Stack
@@ -48,6 +53,32 @@ python app.py
 ```
 
 Access the dashboard at: http://localhost:5001
+
+## AI Agent Setup (Optional)
+
+To enable the AI-powered network assistant:
+
+1. **Get a Google API Key**
+   - Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
+   - Create a new API key
+
+2. **Configure the key**
+   ```bash
+   # Create .env file
+   cp .env.example .env
+
+   # Edit .env and add your key
+   GOOGLE_API_KEY=your_api_key_here
+   ```
+
+3. **Restart the application**
+
+The AI assistant will now be available! Click the "Ask AI" button in the bottom-right corner to:
+- Ask questions like "Which devices are offline?"
+- Get intelligent troubleshooting: "Why is my server CPU high?"
+- Analyze network status: "Show me all WiFi clients"
+
+**Note**: The AI assistant is completely optional. The portal works perfectly without it for basic monitoring.
 
 ## Configuration
 

@@ -5,6 +5,7 @@ Main Flask application with real-time monitoring
 
 import os
 import yaml
+import asyncio
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
@@ -14,6 +15,15 @@ import time
 from monitors.server_monitor import ServerMonitor
 from monitors.wifi_monitor import WiFiMonitor
 from monitors.switch_monitor import SwitchMonitor
+
+# Import network agent (optional - graceful degradation)
+try:
+    from network_agent import NetworkAgent
+    AGENT_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️  Network agent not available: {e}")
+    AGENT_AVAILABLE = False
+    NetworkAgent = None
 
 # Create Flask app
 app = Flask(__name__)
@@ -39,6 +49,16 @@ config = load_config()
 server_monitor = ServerMonitor(config.get('servers', []))
 wifi_monitor = WiFiMonitor(config.get('wifi_aps', []))
 switch_monitor = SwitchMonitor(config.get('switches', []))
+
+# Initialize network agent (if available)
+network_agent = None
+if AGENT_AVAILABLE and NetworkAgent:
+    try:
+        network_agent = NetworkAgent(server_monitor, wifi_monitor, switch_monitor)
+        print("✓ Network agent initialized with AI capabilities")
+    except Exception as e:
+        print(f"⚠️  Could not initialize network agent: {e}")
+        print("   Dashboard will work without AI features")
 
 # Background monitoring thread
 monitoring_active = False
@@ -162,6 +182,61 @@ def handle_update_request():
     emit('server_update', server_stats)
     emit('wifi_update', wifi_stats)
     emit('switch_update', switch_stats)
+
+@socketio.on('agent_query')
+def handle_agent_query(data):
+    """Handle AI agent query"""
+    if not network_agent:
+        emit('agent_error', {
+            'error': 'AI agent not available. Please set GOOGLE_API_KEY in .env file.'
+        })
+        return
+
+    query_text = data.get('query', '').strip()
+    if not query_text:
+        emit('agent_error', {'error': 'Empty query'})
+        return
+
+    print(f"[AGENT] Processing query: {query_text}")
+
+    # Progress callback for real-time updates
+    def progress_callback(progress_data):
+        emit('agent_progress', progress_data)
+
+    # Run async query in new event loop
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(
+            network_agent.query(query_text, on_progress=progress_callback)
+        )
+        loop.close()
+
+        if result.get('success'):
+            emit('agent_response', {
+                'response': result.get('response', ''),
+                'workflow_steps': result.get('workflow_steps', []),
+                'total_steps': result.get('total_steps', 0),
+                'turns': result.get('turns', 0)
+            })
+        else:
+            emit('agent_error', {
+                'error': result.get('error', 'Unknown error occurred')
+            })
+
+    except Exception as e:
+        print(f"[AGENT ERROR] {str(e)}")
+        emit('agent_error', {
+            'error': f'Error processing query: {str(e)}'
+        })
+
+@socketio.on('get_agent_status')
+def handle_agent_status():
+    """Check if agent is available"""
+    emit('agent_status', {
+        'available': network_agent is not None,
+        'tools': network_agent.get_available_tools() if network_agent else []
+    })
 
 
 def main():

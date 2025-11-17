@@ -26,6 +26,39 @@
         <!-- Alert Banner -->
         <div id="alertBanner" class="alert-banner" style="display: none;"></div>
 
+        <!-- AI Agent Chat -->
+        <div id="agentChat" class="agent-chat-panel">
+            <div class="agent-chat-header">
+                <h3>🤖 Network Assistant</h3>
+                <button id="closeChatBtn" class="close-chat-btn">✕</button>
+            </div>
+            <div class="agent-chat-messages" id="chatMessages">
+                <div class="agent-message system-message">
+                    <p>Hello! I'm your intelligent network assistant. Ask me anything about your network:</p>
+                    <ul class="example-queries">
+                        <li onclick="document.getElementById('chatInput').value='Which devices are offline?'">Which devices are offline?</li>
+                        <li onclick="document.getElementById('chatInput').value='Why is my server CPU high?'">Why is my server CPU high?</li>
+                        <li onclick="document.getElementById('chatInput').value='How many WiFi clients are connected?'">How many WiFi clients are connected?</li>
+                        <li onclick="document.getElementById('chatInput').value='Show me all server stats'">Show me all server stats</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="agent-chat-input">
+                <input type="text" id="chatInput" placeholder="Ask about your network..." />
+                <button id="sendChatBtn" class="btn btn-primary">Send</button>
+            </div>
+            <div class="agent-status" id="agentStatus">
+                <span class="agent-status-dot"></span>
+                <span class="agent-status-text">Checking agent...</span>
+            </div>
+        </div>
+
+        <!-- Chat Toggle Button -->
+        <button id="chatToggleBtn" class="chat-toggle-btn">
+            <span class="chat-icon">💬</span>
+            <span class="chat-label">Ask AI</span>
+        </button>
+
         <!-- Main Content -->
         <div class="main-content">
             <!-- Servers Section -->
