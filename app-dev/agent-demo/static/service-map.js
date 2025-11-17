@@ -196,7 +196,7 @@ class ServiceMap {
         const colors = {
             idle: '#ff9800',      // Orange
             active: '#2196F3',    // Blue
-            success: '#4CAF50',   // Green
+            success: '#00FF00',   // Bright green
             error: '#f44336'      // Red
         };
         return colors[status] || colors.idle;
@@ -213,16 +213,16 @@ class ServiceMap {
         if (serviceElement) {
             serviceElement.setAttribute('fill', this.getServiceColor(status));
 
-            // Add pulse animation for active state
+            // Add strong pulse and glow animation for active state
             if (status === 'active') {
-                serviceElement.style.filter = 'url(#glow)';
-                serviceElement.style.animation = 'pulse 1s infinite';
+                serviceElement.style.filter = 'drop-shadow(0 0 15px ' + this.getServiceColor(status) + ')';
+                serviceElement.style.animation = 'pulse 0.8s infinite';
             } else if (status === 'success') {
-                serviceElement.style.filter = 'url(#glow)';
+                serviceElement.style.filter = 'drop-shadow(0 0 20px #00FF00)';  // Bright green glow
                 setTimeout(() => {
                     serviceElement.style.filter = '';
                     this.setServiceStatus(serviceId, 'idle');
-                }, 1000);
+                }, 1500);  // Longer success state
             } else {
                 serviceElement.style.filter = '';
                 serviceElement.style.animation = '';
@@ -230,23 +230,29 @@ class ServiceMap {
         }
     }
 
-    activateConnection(fromId, toId, duration = 1000) {
+    activateConnection(fromId, toId, duration = 2000) {
         const line = document.getElementById(`line-${fromId}-${toId}`);
         if (!line) return;
 
-        // Animate the connection
-        line.setAttribute('stroke', '#4CAF50');
-        line.setAttribute('stroke-width', '4');
+        // Animate the connection with bright green
+        line.setAttribute('stroke', '#00FF00');  // Bright green
+        line.setAttribute('stroke-width', '6');  // Thicker line
         line.setAttribute('stroke-dasharray', '0');
+        line.style.filter = 'drop-shadow(0 0 8px #00FF00)';  // Add glow
 
-        // Create flowing particle effect
-        this.createFlowingParticle(fromId, toId);
+        // Create multiple flowing particles for better visibility
+        for (let i = 0; i < 3; i++) {
+            setTimeout(() => {
+                this.createFlowingParticle(fromId, toId);
+            }, i * 300);
+        }
 
         // Reset after duration
         setTimeout(() => {
             line.setAttribute('stroke', '#ccc');
             line.setAttribute('stroke-width', '2');
             line.setAttribute('stroke-dasharray', '5,5');
+            line.style.filter = '';
         }, duration);
     }
 
@@ -255,23 +261,23 @@ class ServiceMap {
         const to = this.services[toId];
 
         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('r', '5');
-        circle.setAttribute('fill', '#4CAF50');
-        circle.style.filter = 'url(#glow)';
+        circle.setAttribute('r', '8');  // Larger particle
+        circle.setAttribute('fill', '#00FF00');  // Bright green
+        circle.style.filter = 'drop-shadow(0 0 10px #00FF00)';  // Stronger glow
 
         // Animate from start to end
         const animate = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
         animate.setAttribute('attributeName', 'cx');
         animate.setAttribute('from', from.x);
         animate.setAttribute('to', to.x);
-        animate.setAttribute('dur', '0.8s');
+        animate.setAttribute('dur', '1.2s');  // Slower animation
         animate.setAttribute('repeatCount', '1');
 
         const animate2 = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
         animate2.setAttribute('attributeName', 'cy');
         animate2.setAttribute('from', from.y + 30);
         animate2.setAttribute('to', to.y - 30);
-        animate2.setAttribute('dur', '0.8s');
+        animate2.setAttribute('dur', '1.2s');  // Slower animation
         animate2.setAttribute('repeatCount', '1');
 
         circle.appendChild(animate);
@@ -281,7 +287,7 @@ class ServiceMap {
         // Remove after animation
         setTimeout(() => {
             circle.remove();
-        }, 800);
+        }, 1200);
     }
 
     simulateQuery(servicesToActivate) {
