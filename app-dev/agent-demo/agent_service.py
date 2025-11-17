@@ -165,7 +165,7 @@ class AgentService:
             chat = self.client.chats.create(
                 model=self.model_id,
                 config=types.GenerateContentConfig(
-                    tools=[self.tools],
+                    tools=self.tools,
                     temperature=0.1,  # Low temperature for more deterministic responses
                 )
             )
