@@ -196,15 +196,20 @@ class AgentService:
                 for fc_part in function_calls:
                     fc = fc_part.function_call
 
+                    # Safety check
+                    if not fc or not hasattr(fc, 'name'):
+                        continue
+
                     if on_progress:
                         on_progress({
                             "type": "tool_call",
                             "tool": fc.name,
-                            "server": self.tool_handlers[fc.name]["server_type"]
+                            "server": self.tool_handlers.get(fc.name, {}).get("server_type", "unknown")
                         })
 
                     # Execute the function
-                    result = await self.execute_tool(fc.name, dict(fc.args))
+                    args_dict = dict(fc.args) if hasattr(fc, 'args') and fc.args else {}
+                    result = await self.execute_tool(fc.name, args_dict)
 
                     # Create function response
                     function_responses.append(
