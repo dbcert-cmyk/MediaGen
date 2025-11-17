@@ -1,0 +1,101 @@
+Date,Product,Category,Units_Sold,Revenue,Region
+2025-10-25,Wireless Mouse,Electronics,18,7267.44,North
+2025-10-18,Wireless Mouse,Electronics,5,1393.55,South
+2025-10-22,Mechanical Keyboard,Electronics,14,3627.8,South
+2025-10-31,Mechanical Keyboard,Electronics,17,6914.13,South
+2025-10-26,Coffee Maker,Kitchen,8,1058.78,West
+2025-11-03,Laptop Pro 15,Electronics,8,2448.53,South
+2025-11-01,Coffee Maker,Kitchen,19,1079.36,North
+2025-10-23,Mechanical Keyboard,Electronics,2,743.5,South
+2025-11-10,Wireless Mouse,Electronics,10,1979.26,North
+2025-10-23,Wireless Mouse,Electronics,16,5685.58,South
+2025-10-20,Wireless Mouse,Electronics,20,6476.53,East
+2025-11-02,Laptop Pro 15,Electronics,9,889.71,East
+2025-11-01,Mechanical Keyboard,Electronics,6,573.17,East
+2025-10-30,Mechanical Keyboard,Electronics,10,3586.86,South
+2025-10-26,Coffee Maker,Kitchen,3,1124.34,South
+2025-10-21,Coffee Maker,Kitchen,9,2358.0,West
+2025-10-20,Wireless Mouse,Electronics,15,7282.47,East
+2025-11-11,Mechanical Keyboard,Electronics,6,1695.41,North
+2025-10-21,Laptop Pro 15,Electronics,1,122.29,West
+2025-10-22,Wireless Mouse,Electronics,18,7520.74,South
+2025-10-25,Laptop Pro 15,Electronics,4,1178.27,West
+2025-11-02,Mechanical Keyboard,Electronics,19,8823.67,East
+2025-11-03,Wireless Mouse,Electronics,17,1689.08,West
+2025-11-13,Wireless Mouse,Electronics,6,2131.2,East
+2025-11-10,Laptop Pro 15,Electronics,16,2613.4,South
+2025-11-09,Wireless Mouse,Electronics,1,427.1,West
+2025-11-10,Mechanical Keyboard,Electronics,3,288.38,North
+2025-10-23,Wireless Mouse,Electronics,14,2858.81,East
+2025-10-28,Laptop Pro 15,Electronics,1,465.83,North
+2025-11-11,Mechanical Keyboard,Electronics,17,2420.61,South
+2025-10-20,Mechanical Keyboard,Electronics,19,3691.75,South
+2025-11-09,Mechanical Keyboard,Electronics,8,1920.1,North
+2025-11-14,Coffee Maker,Kitchen,20,2189.64,West
+2025-11-15,Wireless Mouse,Electronics,14,1880.24,East
+2025-10-18,Wireless Mouse,Electronics,19,3206.88,West
+2025-10-27,Laptop Pro 15,Electronics,8,664.04,East
+2025-11-10,Mechanical Keyboard,Electronics,17,6787.11,North
+2025-10-31,Mechanical Keyboard,Electronics,17,5416.3,West
+2025-11-09,Mechanical Keyboard,Electronics,6,2510.92,South
+2025-11-03,Laptop Pro 15,Electronics,12,3349.29,East
+2025-11-16,Laptop Pro 15,Electronics,5,421.21,East
+2025-10-21,Coffee Maker,Kitchen,19,2533.06,East
+2025-11-09,Laptop Pro 15,Electronics,17,7612.56,North
+2025-10-28,Wireless Mouse,Electronics,9,3838.9,North
+2025-11-02,Laptop Pro 15,Electronics,4,1065.95,South
+2025-10-24,Laptop Pro 15,Electronics,6,1751.26,West
+2025-11-07,Mechanical Keyboard,Electronics,11,2650.56,South
+2025-10-17,Laptop Pro 15,Electronics,19,5827.3,East
+2025-11-06,Mechanical Keyboard,Electronics,1,315.37,South
+2025-10-25,Wireless Mouse,Electronics,16,4081.13,North
+2025-10-22,Laptop Pro 15,Electronics,2,948.62,South
+2025-11-07,Mechanical Keyboard,Electronics,13,4833.15,East
+2025-10-24,Coffee Maker,Kitchen,20,7844.82,South
+2025-11-15,Wireless Mouse,Electronics,14,4905.25,North
+2025-10-27,Laptop Pro 15,Electronics,3,478.32,West
+2025-10-27,Coffee Maker,Kitchen,19,1926.45,East
+2025-11-04,Mechanical Keyboard,Electronics,13,785.68,North
+2025-11-14,Mechanical Keyboard,Electronics,15,2172.14,South
+2025-11-11,Coffee Maker,Kitchen,4,1023.12,East
+2025-10-28,Mechanical Keyboard,Electronics,7,2655.08,South
+2025-10-23,Laptop Pro 15,Electronics,9,3938.13,East
+2025-11-15,Coffee Maker,Kitchen,8,2066.14,North
+2025-10-25,Mechanical Keyboard,Electronics,4,529.28,North
+2025-10-17,Coffee Maker,Kitchen,19,7997.33,North
+2025-11-16,Mechanical Keyboard,Electronics,13,1039.65,West
+2025-11-14,Mechanical Keyboard,Electronics,12,1595.88,North
+2025-11-06,Laptop Pro 15,Electronics,14,1012.07,East
+2025-10-22,Laptop Pro 15,Electronics,6,1349.37,South
+2025-10-26,Coffee Maker,Kitchen,13,2587.12,West
+2025-11-06,Coffee Maker,Kitchen,20,6162.68,West
+2025-10-25,Wireless Mouse,Electronics,19,5315.86,East
+2025-11-06,Coffee Maker,Kitchen,12,5802.87,West
+2025-10-18,Mechanical Keyboard,Electronics,5,401.04,North
+2025-10-17,Laptop Pro 15,Electronics,9,1252.78,East
+2025-10-23,Laptop Pro 15,Electronics,5,638.76,West
+2025-10-28,Mechanical Keyboard,Electronics,14,6239.04,East
+2025-11-01,Coffee Maker,Kitchen,10,1411.47,East
+2025-11-06,Coffee Maker,Kitchen,4,466.67,North
+2025-11-07,Coffee Maker,Kitchen,18,5090.27,South
+2025-11-10,Mechanical Keyboard,Electronics,14,3605.84,South
+2025-11-08,Wireless Mouse,Electronics,17,1807.57,West
+2025-10-30,Laptop Pro 15,Electronics,11,1507.24,West
+2025-11-03,Coffee Maker,Kitchen,7,3020.06,East
+2025-11-08,Coffee Maker,Kitchen,10,1168.68,North
+2025-11-16,Wireless Mouse,Electronics,12,5375.38,South
+2025-10-27,Coffee Maker,Kitchen,5,1692.59,North
+2025-10-22,Wireless Mouse,Electronics,11,4807.17,South
+2025-11-12,Laptop Pro 15,Electronics,12,1215.48,South
+2025-11-12,Coffee Maker,Kitchen,16,5447.56,South
+2025-10-28,Coffee Maker,Kitchen,7,2341.29,North
+2025-10-17,Laptop Pro 15,Electronics,15,2418.43,East
+2025-10-17,Wireless Mouse,Electronics,13,1971.34,North
+2025-11-10,Laptop Pro 15,Electronics,11,3679.21,North
+2025-11-08,Wireless Mouse,Electronics,20,2040.24,East
+2025-11-14,Laptop Pro 15,Electronics,18,8462.34,South
+2025-10-18,Laptop Pro 15,Electronics,15,2390.99,North
+2025-11-02,Laptop Pro 15,Electronics,5,703.85,South
+2025-10-25,Mechanical Keyboard,Electronics,18,1515.92,North
+2025-10-17,Laptop Pro 15,Electronics,5,1429.5,North
+2025-10-21,Wireless Mouse,Electronics,5,1310.4,West

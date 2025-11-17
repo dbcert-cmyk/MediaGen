@@ -1,0 +1,37 @@
+{
+  "report_date": "2025-11-16",
+  "metrics": {
+    "total_users": 1245,
+    "active_users": 892,
+    "new_signups": 47,
+    "churn_rate": 3.2,
+    "avg_session_duration": 342
+  },
+  "top_pages": [
+    {
+      "page": "/products",
+      "views": 8924,
+      "avg_time": 145
+    },
+    {
+      "page": "/home",
+      "views": 6543,
+      "avg_time": 89
+    },
+    {
+      "page": "/cart",
+      "views": 2341,
+      "avg_time": 234
+    },
+    {
+      "page": "/checkout",
+      "views": 1567,
+      "avg_time": 456
+    },
+    {
+      "page": "/account",
+      "views": 987,
+      "avg_time": 178
+    }
+  ]
+}

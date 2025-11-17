@@ -36,7 +36,7 @@ class AgentService:
         self.client = genai.Client(api_key=self.api_key)
 
         # Model to use (Gemini 2.5 Flash with function calling)
-        self.model_id = "gemini-2.5-flash-latest"
+        self.model_id = "gemini-2.5-flash"
 
         # Available tools from MCP servers
         self.tools = []

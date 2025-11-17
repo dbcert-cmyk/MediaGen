@@ -1,0 +1,501 @@
+Timestamp,Level,Service,Message,Duration_ms
+2025-11-16T10:23:47.860611,WARN,cache,Connection timeout,24
+2025-11-16T15:18:47.860622,ERROR,cache,Cache miss,101
+2025-11-16T11:49:47.860629,INFO,api-gateway,Request processed successfully,193
+2025-11-16T13:57:47.860634,INFO,api-gateway,Request processed successfully,118
+2025-11-16T08:54:47.860639,INFO,cache,Connection timeout,218
+2025-11-16T04:14:47.860644,ERROR,cache,Connection timeout,286
+2025-11-16T16:19:47.860649,INFO,auth-service,Rate limit exceeded,210
+2025-11-16T07:47:47.860654,WARN,api-gateway,Request processed successfully,138
+2025-11-16T14:50:47.860658,ERROR,auth-service,Connection timeout,355
+2025-11-16T12:50:47.860663,ERROR,cache,Rate limit exceeded,396
+2025-11-16T15:53:47.860668,INFO,auth-service,Connection established,368
+2025-11-16T07:32:47.860672,INFO,cache,Query executed,327
+2025-11-16T19:04:47.860677,INFO,cache,Rate limit exceeded,78
+2025-11-16T06:08:47.860681,WARN,cache,Slow query detected,2418
+2025-11-16T18:40:47.860686,INFO,api-gateway,Rate limit exceeded,394
+2025-11-16T11:29:47.860690,INFO,api-gateway,Query executed,326
+2025-11-16T13:16:47.860695,INFO,cache,Request processed successfully,481
+2025-11-16T04:44:47.860699,ERROR,api-gateway,Query executed,33
+2025-11-16T20:53:47.860704,ERROR,database,Cache miss,146
+2025-11-16T13:06:47.860708,ERROR,api-gateway,Rate limit exceeded,220
+2025-11-16T14:13:47.860712,ERROR,auth-service,Rate limit exceeded,407
+2025-11-16T08:25:47.860717,INFO,cache,Request processed successfully,44
+2025-11-16T20:09:47.860721,INFO,api-gateway,Connection established,250
+2025-11-16T16:25:47.860726,WARN,database,Connection established,55
+2025-11-16T15:05:47.860730,INFO,api-gateway,Query executed,344
+2025-11-16T13:10:47.860735,WARN,worker,Connection established,292
+2025-11-16T04:51:47.860739,WARN,database,Authentication failed,418
+2025-11-16T18:35:47.860744,ERROR,auth-service,Query executed,488
+2025-11-15T23:00:47.860748,INFO,database,Rate limit exceeded,72
+2025-11-16T18:31:47.860753,ERROR,cache,Query executed,288
+2025-11-16T04:57:47.860757,INFO,api-gateway,Connection established,235
+2025-11-16T03:03:47.860761,INFO,cache,Authentication failed,306
+2025-11-15T23:26:47.860766,INFO,cache,Rate limit exceeded,461
+2025-11-16T13:40:47.860770,INFO,auth-service,Request processed successfully,162
+2025-11-15T22:07:47.860775,WARN,database,Rate limit exceeded,381
+2025-11-15T22:18:47.860779,WARN,worker,Connection established,353
+2025-11-15T23:19:47.860783,INFO,auth-service,Request processed successfully,114
+2025-11-16T15:32:47.860788,INFO,api-gateway,Connection timeout,389
+2025-11-16T05:59:47.860792,ERROR,api-gateway,Slow query detected,2779
+2025-11-16T12:09:47.860797,INFO,api-gateway,Connection established,456
+2025-11-15T22:43:47.860802,INFO,database,Authentication failed,213
+2025-11-16T12:39:47.860806,INFO,auth-service,Cache miss,58
+2025-11-16T12:23:47.860810,WARN,auth-service,Cache miss,77
+2025-11-16T05:45:47.860815,ERROR,cache,Connection timeout,343
+2025-11-16T19:38:47.860819,INFO,cache,Rate limit exceeded,406
+2025-11-16T19:11:47.860823,INFO,worker,Request processed successfully,310
+2025-11-16T12:03:47.860828,INFO,api-gateway,Query executed,115
+2025-11-16T16:16:47.860832,WARN,api-gateway,Connection timeout,298
+2025-11-16T18:53:47.860836,WARN,database,Authentication failed,28
+2025-11-16T01:06:47.860840,INFO,database,Slow query detected,2903
+2025-11-15T23:07:47.860845,INFO,auth-service,Slow query detected,2152
+2025-11-16T16:37:47.860850,WARN,auth-service,Connection timeout,361
+2025-11-16T21:24:47.860854,INFO,worker,Connection timeout,199
+2025-11-16T15:07:47.860859,INFO,database,Authentication failed,243
+2025-11-15T23:01:47.860863,INFO,auth-service,Cache miss,478
+2025-11-15T23:33:47.860868,INFO,database,Connection timeout,210
+2025-11-16T01:28:47.860872,INFO,database,Query executed,210
+2025-11-16T06:55:47.860876,INFO,cache,Connection timeout,10
+2025-11-16T16:20:47.860880,INFO,cache,Request processed successfully,62
+2025-11-16T08:42:47.860885,INFO,database,Rate limit exceeded,179
+2025-11-16T15:53:47.860889,ERROR,worker,Request processed successfully,59
+2025-11-16T10:32:47.860894,WARN,auth-service,Rate limit exceeded,16
+2025-11-16T06:04:47.860898,INFO,api-gateway,Authentication failed,199
+2025-11-16T00:42:47.860903,WARN,auth-service,Rate limit exceeded,214
+2025-11-16T05:34:47.860908,INFO,database,Authentication failed,235
+2025-11-16T19:09:47.860912,INFO,worker,Rate limit exceeded,237
+2025-11-16T13:16:47.860916,INFO,cache,Rate limit exceeded,57
+2025-11-16T12:36:47.860921,INFO,auth-service,Connection timeout,474
+2025-11-16T20:37:47.860925,INFO,api-gateway,Slow query detected,4786
+2025-11-16T12:44:47.860930,INFO,cache,Request processed successfully,122
+2025-11-16T09:10:47.860934,INFO,auth-service,Authentication failed,302
+2025-11-16T19:40:47.860939,WARN,worker,Slow query detected,4885
+2025-11-16T12:41:47.860943,INFO,api-gateway,Request processed successfully,147
+2025-11-15T23:55:47.860948,INFO,worker,Connection timeout,90
+2025-11-16T19:20:47.860953,INFO,auth-service,Authentication failed,129
+2025-11-16T00:59:47.860958,ERROR,api-gateway,Authentication failed,85
+2025-11-16T13:08:47.860962,ERROR,database,Slow query detected,1751
+2025-11-15T23:49:47.860967,WARN,worker,Request processed successfully,201
+2025-11-16T08:23:47.860981,INFO,cache,Request processed successfully,188
+2025-11-16T19:55:47.860987,INFO,worker,Query executed,413
+2025-11-16T17:20:47.860992,ERROR,auth-service,Authentication failed,276
+2025-11-16T04:45:47.860996,INFO,worker,Cache miss,48
+2025-11-15T22:43:47.861000,WARN,auth-service,Connection timeout,217
+2025-11-16T08:12:47.861005,INFO,auth-service,Connection established,201
+2025-11-15T23:21:47.861009,WARN,cache,Connection timeout,341
+2025-11-16T18:42:47.861013,WARN,cache,Query executed,65
+2025-11-16T05:43:47.861018,INFO,auth-service,Connection timeout,253
+2025-11-16T06:36:47.861022,WARN,cache,Query executed,253
+2025-11-16T06:36:47.861026,INFO,api-gateway,Request processed successfully,279
+2025-11-15T22:56:47.861031,ERROR,auth-service,Connection established,397
+2025-11-16T20:03:47.861035,INFO,database,Connection timeout,10
+2025-11-16T14:26:47.861040,INFO,worker,Query executed,144
+2025-11-16T17:41:47.861044,INFO,worker,Connection established,268
+2025-11-16T02:41:47.861049,WARN,api-gateway,Request processed successfully,158
+2025-11-16T17:23:47.861053,INFO,worker,Connection established,489
+2025-11-16T17:04:47.861058,INFO,auth-service,Connection established,36
+2025-11-16T13:13:47.861062,ERROR,worker,Request processed successfully,191
+2025-11-16T13:37:47.861067,INFO,worker,Rate limit exceeded,388
+2025-11-16T10:11:47.861071,INFO,database,Slow query detected,4488
+2025-11-16T20:08:47.861076,WARN,cache,Slow query detected,2847
+2025-11-15T22:54:47.861080,INFO,worker,Connection established,326
+2025-11-16T02:53:47.861084,INFO,cache,Connection established,226
+2025-11-16T05:21:47.861089,ERROR,cache,Connection timeout,430
+2025-11-16T19:26:47.861093,INFO,cache,Query executed,17
+2025-11-16T04:12:47.861097,ERROR,auth-service,Cache miss,100
+2025-11-16T11:28:47.861102,INFO,auth-service,Rate limit exceeded,78
+2025-11-16T11:06:47.861106,WARN,database,Cache miss,139
+2025-11-15T23:47:47.861110,ERROR,worker,Request processed successfully,151
+2025-11-16T03:51:47.861115,INFO,worker,Connection timeout,52
+2025-11-16T20:21:47.861119,INFO,auth-service,Cache miss,258
+2025-11-16T03:24:47.861124,INFO,cache,Connection timeout,226
+2025-11-15T23:26:47.861128,INFO,worker,Authentication failed,220
+2025-11-16T09:42:47.861132,INFO,auth-service,Request processed successfully,303
+2025-11-15T23:39:47.861137,WARN,api-gateway,Slow query detected,116
+2025-11-16T17:18:47.861142,INFO,cache,Connection established,296
+2025-11-16T02:36:47.861146,WARN,cache,Authentication failed,289
+2025-11-16T11:38:47.861150,ERROR,database,Authentication failed,477
+2025-11-16T12:01:47.861155,WARN,cache,Connection timeout,176
+2025-11-16T21:02:47.861159,ERROR,database,Request processed successfully,359
+2025-11-16T09:53:47.861164,ERROR,cache,Request processed successfully,361
+2025-11-16T21:51:47.861168,INFO,auth-service,Connection established,425
+2025-11-16T01:06:47.861189,INFO,auth-service,Cache miss,36
+2025-11-16T11:50:47.861195,WARN,database,Connection timeout,167
+2025-11-16T06:14:47.861200,INFO,auth-service,Query executed,35
+2025-11-16T17:47:47.861204,INFO,auth-service,Connection timeout,267
+2025-11-16T07:52:47.861209,ERROR,worker,Request processed successfully,10
+2025-11-16T11:49:47.861213,INFO,worker,Slow query detected,3286
+2025-11-16T02:32:47.861218,WARN,worker,Connection established,174
+2025-11-16T06:30:47.861222,INFO,auth-service,Query executed,110
+2025-11-16T00:14:47.861227,ERROR,cache,Query executed,370
+2025-11-16T11:23:47.861231,INFO,database,Cache miss,169
+2025-11-16T17:50:47.861235,INFO,cache,Request processed successfully,388
+2025-11-16T07:52:47.861240,INFO,database,Connection established,37
+2025-11-16T02:21:47.861244,INFO,api-gateway,Slow query detected,925
+2025-11-16T20:04:47.861248,INFO,cache,Rate limit exceeded,477
+2025-11-16T08:32:47.861253,WARN,cache,Rate limit exceeded,190
+2025-11-16T18:48:47.861257,INFO,cache,Request processed successfully,275
+2025-11-16T18:26:47.861262,INFO,auth-service,Connection timeout,157
+2025-11-16T10:44:47.861266,WARN,auth-service,Slow query detected,3796
+2025-11-16T08:49:47.861271,ERROR,auth-service,Slow query detected,2506
+2025-11-16T02:20:47.861275,ERROR,cache,Cache miss,479
+2025-11-16T16:26:47.861279,ERROR,api-gateway,Connection established,291
+2025-11-16T02:57:47.861284,INFO,api-gateway,Query executed,149
+2025-11-16T17:11:47.861288,WARN,database,Request processed successfully,62
+2025-11-16T20:10:47.861293,WARN,api-gateway,Cache miss,388
+2025-11-16T11:47:47.861297,INFO,cache,Authentication failed,393
+2025-11-16T08:11:47.861301,INFO,database,Slow query detected,1437
+2025-11-16T20:56:47.861306,ERROR,api-gateway,Rate limit exceeded,53
+2025-11-15T23:18:47.861311,WARN,database,Cache miss,164
+2025-11-16T08:26:47.861315,WARN,database,Rate limit exceeded,240
+2025-11-16T20:20:47.861319,INFO,cache,Rate limit exceeded,168
+2025-11-16T01:13:47.861324,INFO,auth-service,Request processed successfully,289
+2025-11-16T15:36:47.861328,ERROR,api-gateway,Request processed successfully,127
+2025-11-16T13:12:47.861333,ERROR,worker,Query executed,138
+2025-11-16T19:49:47.861337,INFO,cache,Authentication failed,120
+2025-11-16T15:45:47.861342,INFO,api-gateway,Query executed,87
+2025-11-16T19:27:47.861346,INFO,cache,Rate limit exceeded,361
+2025-11-16T16:27:47.861350,ERROR,auth-service,Authentication failed,101
+2025-11-16T12:12:47.861355,INFO,database,Authentication failed,205
+2025-11-16T17:43:47.861359,WARN,database,Query executed,63
+2025-11-16T15:07:47.861364,ERROR,auth-service,Slow query detected,4537
+2025-11-16T19:09:47.861368,WARN,database,Request processed successfully,151
+2025-11-16T10:18:47.861373,INFO,cache,Authentication failed,344
+2025-11-16T00:29:47.861377,INFO,cache,Slow query detected,771
+2025-11-16T11:07:47.861381,INFO,cache,Rate limit exceeded,76
+2025-11-16T19:49:47.861386,ERROR,database,Slow query detected,3517
+2025-11-15T23:07:47.861390,INFO,database,Connection established,131
+2025-11-16T16:12:47.861394,WARN,cache,Request processed successfully,452
+2025-11-16T11:24:47.861399,WARN,cache,Connection established,216
+2025-11-15T23:32:47.861403,ERROR,auth-service,Slow query detected,423
+2025-11-16T05:44:47.861408,WARN,database,Cache miss,386
+2025-11-16T14:38:47.861412,INFO,auth-service,Cache miss,488
+2025-11-16T18:43:47.861416,INFO,auth-service,Request processed successfully,195
+2025-11-16T19:53:47.861421,INFO,worker,Request processed successfully,51
+2025-11-16T12:37:47.861425,WARN,api-gateway,Rate limit exceeded,322
+2025-11-16T01:00:47.861430,ERROR,worker,Slow query detected,1003
+2025-11-16T04:02:47.861434,INFO,auth-service,Connection timeout,287
+2025-11-15T23:51:47.861439,ERROR,auth-service,Connection timeout,376
+2025-11-16T11:49:47.861443,INFO,auth-service,Cache miss,77
+2025-11-16T16:55:47.861448,WARN,api-gateway,Rate limit exceeded,237
+2025-11-16T13:17:47.861452,WARN,cache,Rate limit exceeded,121
+2025-11-16T13:40:47.861456,INFO,api-gateway,Request processed successfully,449
+2025-11-16T10:16:47.861461,INFO,database,Connection established,462
+2025-11-16T02:06:47.861465,ERROR,cache,Connection established,478
+2025-11-16T01:08:47.861470,INFO,api-gateway,Cache miss,215
+2025-11-16T21:50:47.861474,INFO,auth-service,Authentication failed,153
+2025-11-16T05:55:47.861487,INFO,database,Cache miss,232
+2025-11-16T05:58:47.861492,INFO,cache,Connection timeout,448
+2025-11-16T15:56:47.861496,INFO,api-gateway,Cache miss,427
+2025-11-15T23:39:47.861500,INFO,api-gateway,Authentication failed,293
+2025-11-15T22:35:47.861530,INFO,api-gateway,Request processed successfully,36
+2025-11-16T11:44:47.861535,ERROR,api-gateway,Connection established,308
+2025-11-16T11:36:47.861539,INFO,worker,Slow query detected,2646
+2025-11-16T07:48:47.861544,INFO,worker,Slow query detected,3312
+2025-11-16T13:29:47.861548,INFO,api-gateway,Connection established,401
+2025-11-16T19:12:47.861568,WARN,cache,Slow query detected,2417
+2025-11-16T02:31:47.861572,WARN,worker,Slow query detected,2090
+2025-11-16T08:00:47.861577,INFO,database,Connection timeout,144
+2025-11-16T06:54:47.861581,WARN,auth-service,Rate limit exceeded,423
+2025-11-16T08:30:47.861585,ERROR,auth-service,Request processed successfully,275
+2025-11-16T06:44:47.861590,INFO,worker,Cache miss,123
+2025-11-16T17:30:47.861595,WARN,database,Connection timeout,275
+2025-11-15T23:46:47.861599,INFO,cache,Query executed,97
+2025-11-16T21:23:47.861603,WARN,cache,Request processed successfully,343
+2025-11-16T16:31:47.861607,ERROR,auth-service,Query executed,12
+2025-11-16T16:55:47.861612,ERROR,worker,Authentication failed,136
+2025-11-16T15:50:47.861616,INFO,api-gateway,Connection timeout,309
+2025-11-16T21:46:47.861621,WARN,worker,Query executed,421
+2025-11-16T11:32:47.861625,WARN,cache,Query executed,210
+2025-11-16T20:52:47.861629,WARN,database,Authentication failed,291
+2025-11-16T13:03:47.861634,INFO,api-gateway,Rate limit exceeded,239
+2025-11-16T18:54:47.861638,ERROR,auth-service,Rate limit exceeded,493
+2025-11-16T20:02:47.861643,INFO,api-gateway,Connection timeout,379
+2025-11-16T04:33:47.861647,WARN,worker,Connection established,318
+2025-11-16T19:42:47.861651,ERROR,cache,Query executed,57
+2025-11-16T03:08:47.861656,INFO,database,Rate limit exceeded,266
+2025-11-16T11:49:47.861660,INFO,worker,Cache miss,456
+2025-11-15T22:20:47.861664,INFO,cache,Connection timeout,203
+2025-11-16T15:10:47.861668,ERROR,worker,Rate limit exceeded,443
+2025-11-15T22:22:47.861673,WARN,api-gateway,Request processed successfully,297
+2025-11-16T20:51:47.861677,INFO,auth-service,Rate limit exceeded,17
+2025-11-16T16:38:47.861682,WARN,api-gateway,Query executed,258
+2025-11-16T11:08:47.861686,WARN,cache,Cache miss,42
+2025-11-16T14:27:47.861690,WARN,database,Connection timeout,162
+2025-11-16T18:03:47.861695,INFO,worker,Slow query detected,252
+2025-11-15T22:01:47.861699,ERROR,database,Request processed successfully,394
+2025-11-16T12:17:47.861704,WARN,cache,Request processed successfully,132
+2025-11-16T18:47:47.861708,WARN,database,Query executed,474
+2025-11-16T01:10:47.861712,WARN,database,Rate limit exceeded,30
+2025-11-16T09:41:47.861717,INFO,cache,Connection timeout,121
+2025-11-16T01:17:47.861721,WARN,worker,Request processed successfully,369
+2025-11-16T10:29:47.861726,ERROR,cache,Connection established,102
+2025-11-16T17:16:47.861730,WARN,api-gateway,Connection timeout,16
+2025-11-16T19:06:47.861734,INFO,database,Connection established,337
+2025-11-15T23:12:47.861739,WARN,worker,Authentication failed,355
+2025-11-16T10:21:47.861743,INFO,worker,Request processed successfully,197
+2025-11-16T06:10:47.861748,ERROR,cache,Authentication failed,177
+2025-11-15T22:48:47.861752,ERROR,api-gateway,Query executed,166
+2025-11-16T21:44:47.861757,ERROR,auth-service,Slow query detected,552
+2025-11-16T13:28:47.861761,WARN,auth-service,Connection established,465
+2025-11-16T18:40:47.861766,INFO,cache,Query executed,278
+2025-11-16T20:42:47.861770,WARN,auth-service,Slow query detected,3296
+2025-11-16T15:49:47.861774,INFO,cache,Connection established,335
+2025-11-16T12:32:47.861787,INFO,database,Cache miss,478
+2025-11-16T09:51:47.861792,INFO,auth-service,Slow query detected,4555
+2025-11-16T10:12:47.861797,WARN,api-gateway,Slow query detected,2912
+2025-11-16T09:18:47.861801,INFO,database,Rate limit exceeded,114
+2025-11-16T20:48:47.861806,INFO,database,Authentication failed,139
+2025-11-16T00:45:47.861810,INFO,auth-service,Slow query detected,3575
+2025-11-16T14:54:47.861815,INFO,auth-service,Cache miss,386
+2025-11-16T08:47:47.861819,INFO,database,Slow query detected,11
+2025-11-16T08:47:47.861824,INFO,auth-service,Query executed,498
+2025-11-16T17:59:47.861828,ERROR,cache,Authentication failed,449
+2025-11-16T03:30:47.861832,WARN,auth-service,Authentication failed,305
+2025-11-16T04:30:47.861837,INFO,auth-service,Slow query detected,230
+2025-11-16T18:46:47.861841,WARN,api-gateway,Connection established,32
+2025-11-16T06:39:47.861846,INFO,cache,Connection timeout,352
+2025-11-16T14:20:47.861850,INFO,database,Slow query detected,4557
+2025-11-16T07:34:47.861855,INFO,worker,Query executed,170
+2025-11-16T12:24:47.861859,ERROR,api-gateway,Connection timeout,258
+2025-11-15T22:26:47.861863,INFO,database,Connection timeout,463
+2025-11-16T17:58:47.861868,WARN,cache,Rate limit exceeded,46
+2025-11-16T18:09:47.861872,ERROR,auth-service,Slow query detected,166
+2025-11-16T03:10:47.861876,INFO,cache,Connection timeout,260
+2025-11-15T23:44:47.861881,INFO,api-gateway,Cache miss,73
+2025-11-16T13:24:47.861885,INFO,worker,Connection established,88
+2025-11-16T08:31:47.861890,WARN,api-gateway,Connection established,485
+2025-11-16T06:36:47.861894,INFO,worker,Connection established,88
+2025-11-16T12:25:47.861898,INFO,database,Connection timeout,173
+2025-11-16T15:35:47.861903,WARN,auth-service,Query executed,459
+2025-11-15T23:47:47.861907,INFO,auth-service,Connection established,136
+2025-11-16T15:07:47.861911,INFO,api-gateway,Authentication failed,469
+2025-11-16T20:24:47.861916,INFO,database,Connection established,31
+2025-11-16T08:07:47.861920,WARN,auth-service,Connection timeout,130
+2025-11-16T10:46:47.861925,ERROR,worker,Query executed,147
+2025-11-16T15:10:47.861929,INFO,cache,Query executed,436
+2025-11-16T03:22:47.861933,INFO,auth-service,Connection timeout,43
+2025-11-15T22:45:47.861938,INFO,worker,Cache miss,412
+2025-11-15T21:52:47.861942,INFO,api-gateway,Rate limit exceeded,156
+2025-11-16T04:16:47.861946,INFO,database,Connection timeout,184
+2025-11-16T06:26:47.861951,INFO,cache,Connection established,371
+2025-11-16T10:06:47.861955,WARN,worker,Request processed successfully,361
+2025-11-16T08:25:47.861959,INFO,database,Cache miss,399
+2025-11-16T14:44:47.861964,WARN,cache,Query executed,402
+2025-11-16T14:50:47.861968,INFO,database,Cache miss,116
+2025-11-16T19:47:47.861972,WARN,worker,Connection timeout,403
+2025-11-16T21:12:47.861976,WARN,worker,Rate limit exceeded,166
+2025-11-16T20:41:47.861981,WARN,cache,Authentication failed,203
+2025-11-15T22:30:47.861985,WARN,api-gateway,Connection established,463
+2025-11-16T08:34:47.861997,INFO,auth-service,Connection timeout,456
+2025-11-16T21:20:47.862002,INFO,worker,Slow query detected,3103
+2025-11-16T08:44:47.862007,ERROR,cache,Slow query detected,3489
+2025-11-16T10:45:47.862011,INFO,auth-service,Slow query detected,629
+2025-11-16T20:06:47.862016,WARN,cache,Slow query detected,3378
+2025-11-16T04:43:47.862020,WARN,api-gateway,Request processed successfully,309
+2025-11-15T23:41:47.862025,INFO,auth-service,Query executed,425
+2025-11-16T15:49:47.862030,WARN,database,Connection established,55
+2025-11-16T02:39:47.862034,INFO,cache,Slow query detected,2773
+2025-11-16T00:14:47.862038,WARN,worker,Query executed,289
+2025-11-16T02:14:47.862043,INFO,worker,Slow query detected,4595
+2025-11-16T07:31:47.862047,INFO,cache,Request processed successfully,223
+2025-11-16T16:57:47.862052,ERROR,database,Connection timeout,178
+2025-11-16T05:13:47.862056,WARN,cache,Connection timeout,406
+2025-11-16T18:57:47.862061,INFO,api-gateway,Connection established,73
+2025-11-16T03:35:47.862065,WARN,auth-service,Authentication failed,166
+2025-11-16T03:08:47.862070,INFO,worker,Query executed,480
+2025-11-16T14:50:47.862074,INFO,database,Query executed,187
+2025-11-15T23:44:47.862079,WARN,database,Rate limit exceeded,399
+2025-11-16T05:36:47.862083,INFO,database,Cache miss,121
+2025-11-15T23:40:47.862087,INFO,database,Cache miss,242
+2025-11-16T17:13:47.862092,INFO,cache,Connection established,390
+2025-11-16T10:23:47.862096,INFO,cache,Rate limit exceeded,36
+2025-11-16T06:56:47.862100,INFO,database,Slow query detected,143
+2025-11-16T15:30:47.862105,ERROR,api-gateway,Rate limit exceeded,309
+2025-11-16T00:37:47.862109,ERROR,worker,Authentication failed,206
+2025-11-16T11:10:47.862114,INFO,auth-service,Query executed,380
+2025-11-16T02:51:47.862118,INFO,api-gateway,Authentication failed,364
+2025-11-16T14:25:47.862123,INFO,worker,Request processed successfully,314
+2025-11-15T23:01:47.862127,WARN,database,Authentication failed,401
+2025-11-16T05:29:47.862132,ERROR,database,Authentication failed,292
+2025-11-16T10:39:47.862136,INFO,auth-service,Authentication failed,15
+2025-11-16T02:38:47.862141,INFO,auth-service,Authentication failed,430
+2025-11-16T10:03:47.862145,INFO,cache,Rate limit exceeded,44
+2025-11-16T06:22:47.862150,INFO,auth-service,Request processed successfully,489
+2025-11-16T08:11:47.862155,INFO,api-gateway,Rate limit exceeded,491
+2025-11-16T16:14:47.862159,INFO,cache,Connection timeout,67
+2025-11-16T00:51:47.862163,WARN,auth-service,Connection timeout,152
+2025-11-16T20:31:47.862168,INFO,auth-service,Authentication failed,386
+2025-11-16T07:50:47.862172,INFO,cache,Query executed,195
+2025-11-15T22:44:47.862176,WARN,auth-service,Cache miss,51
+2025-11-16T05:14:47.862181,INFO,cache,Connection established,76
+2025-11-16T07:04:47.862185,INFO,auth-service,Cache miss,408
+2025-11-16T16:21:47.862189,ERROR,auth-service,Cache miss,188
+2025-11-16T04:15:47.862194,INFO,auth-service,Query executed,227
+2025-11-15T22:50:47.862198,ERROR,worker,Slow query detected,740
+2025-11-16T18:52:47.862203,WARN,api-gateway,Request processed successfully,124
+2025-11-16T07:31:47.862208,INFO,api-gateway,Rate limit exceeded,449
+2025-11-16T03:03:47.862212,INFO,database,Connection established,15
+2025-11-16T14:44:47.862216,ERROR,api-gateway,Query executed,220
+2025-11-16T01:02:47.862221,INFO,database,Request processed successfully,423
+2025-11-16T03:01:47.862225,INFO,auth-service,Rate limit exceeded,443
+2025-11-16T11:38:47.862230,ERROR,auth-service,Authentication failed,266
+2025-11-16T13:02:47.862235,INFO,worker,Slow query detected,327
+2025-11-16T04:41:47.862239,INFO,cache,Slow query detected,3832
+2025-11-16T04:04:47.862244,INFO,auth-service,Connection established,257
+2025-11-16T17:02:47.862248,INFO,auth-service,Authentication failed,227
+2025-11-16T04:57:47.862253,INFO,auth-service,Query executed,268
+2025-11-16T10:23:47.862257,INFO,api-gateway,Connection timeout,41
+2025-11-16T17:59:47.862261,INFO,api-gateway,Authentication failed,49
+2025-11-16T06:44:47.862266,INFO,api-gateway,Query executed,33
+2025-11-16T09:28:47.862270,INFO,cache,Slow query detected,2690
+2025-11-16T10:40:47.862275,INFO,auth-service,Authentication failed,464
+2025-11-15T23:44:47.862279,INFO,auth-service,Slow query detected,2838
+2025-11-16T14:41:47.862284,INFO,worker,Connection established,61
+2025-11-16T17:28:47.862288,WARN,auth-service,Rate limit exceeded,239
+2025-11-16T04:02:47.862292,WARN,auth-service,Connection established,322
+2025-11-16T02:34:47.862297,INFO,api-gateway,Query executed,412
+2025-11-16T03:41:47.862301,INFO,auth-service,Slow query detected,4918
+2025-11-16T08:02:47.862306,INFO,cache,Rate limit exceeded,336
+2025-11-16T14:45:47.862310,ERROR,api-gateway,Rate limit exceeded,31
+2025-11-16T10:04:47.862315,WARN,api-gateway,Connection timeout,480
+2025-11-16T05:17:47.862319,INFO,worker,Query executed,326
+2025-11-16T08:51:47.862323,INFO,api-gateway,Query executed,261
+2025-11-16T17:35:47.862328,INFO,api-gateway,Query executed,375
+2025-11-16T05:04:47.862332,WARN,auth-service,Request processed successfully,113
+2025-11-16T08:43:47.862347,INFO,cache,Query executed,222
+2025-11-16T16:11:47.862353,INFO,database,Connection established,405
+2025-11-16T14:56:47.862357,INFO,database,Request processed successfully,200
+2025-11-16T15:10:47.862362,INFO,database,Request processed successfully,267
+2025-11-16T19:19:47.862367,WARN,cache,Cache miss,295
+2025-11-16T02:01:47.862371,WARN,auth-service,Rate limit exceeded,158
+2025-11-16T06:41:47.862376,INFO,auth-service,Request processed successfully,72
+2025-11-16T16:57:47.862380,INFO,worker,Authentication failed,156
+2025-11-16T21:10:47.862385,INFO,auth-service,Authentication failed,191
+2025-11-16T09:28:47.862389,ERROR,api-gateway,Authentication failed,250
+2025-11-16T19:23:47.862394,ERROR,worker,Connection timeout,71
+2025-11-16T14:43:47.862398,INFO,api-gateway,Rate limit exceeded,262
+2025-11-16T02:14:47.862402,INFO,api-gateway,Slow query detected,2146
+2025-11-16T16:41:47.862407,WARN,database,Authentication failed,297
+2025-11-16T14:09:47.862411,WARN,database,Connection timeout,311
+2025-11-16T03:38:47.862416,WARN,database,Rate limit exceeded,123
+2025-11-16T11:54:47.862420,ERROR,auth-service,Query executed,393
+2025-11-16T09:56:47.862424,ERROR,database,Slow query detected,2176
+2025-11-16T00:07:47.862429,WARN,auth-service,Authentication failed,13
+2025-11-16T02:09:47.862433,ERROR,cache,Connection established,377
+2025-11-16T15:23:47.862437,INFO,worker,Connection established,327
+2025-11-15T23:15:47.862442,INFO,cache,Rate limit exceeded,63
+2025-11-15T23:30:47.862446,WARN,cache,Cache miss,378
+2025-11-15T22:52:47.862450,WARN,api-gateway,Connection timeout,333
+2025-11-16T03:42:47.862455,WARN,api-gateway,Cache miss,410
+2025-11-16T17:57:47.862459,WARN,worker,Authentication failed,439
+2025-11-16T04:51:47.862463,ERROR,auth-service,Connection timeout,495
+2025-11-16T04:40:47.862468,INFO,database,Rate limit exceeded,250
+2025-11-16T11:18:47.862472,ERROR,worker,Cache miss,468
+2025-11-16T06:39:47.862481,ERROR,database,Connection established,387
+2025-11-16T16:21:47.862486,INFO,api-gateway,Connection established,346
+2025-11-16T18:57:47.862491,WARN,worker,Authentication failed,442
+2025-11-16T02:23:47.862495,INFO,database,Slow query detected,4200
+2025-11-16T00:51:47.862500,ERROR,auth-service,Authentication failed,339
+2025-11-16T20:33:47.862532,WARN,cache,Connection timeout,210
+2025-11-16T10:13:47.862536,INFO,auth-service,Authentication failed,12
+2025-11-16T12:54:47.862541,INFO,cache,Cache miss,126
+2025-11-16T06:40:47.862559,ERROR,worker,Connection established,168
+2025-11-16T05:11:47.862563,ERROR,auth-service,Slow query detected,1788
+2025-11-16T13:06:47.862568,ERROR,cache,Connection timeout,241
+2025-11-16T03:52:47.862572,INFO,database,Rate limit exceeded,274
+2025-11-16T07:58:47.862576,WARN,cache,Connection established,58
+2025-11-16T07:03:47.862581,INFO,database,Authentication failed,35
+2025-11-16T05:41:47.862585,INFO,worker,Cache miss,85
+2025-11-16T18:12:47.862589,INFO,auth-service,Slow query detected,3800
+2025-11-16T00:29:47.862594,ERROR,worker,Authentication failed,453
+2025-11-16T01:19:47.862598,INFO,worker,Authentication failed,292
+2025-11-16T08:44:47.862603,WARN,database,Connection timeout,340
+2025-11-16T15:58:47.862607,WARN,cache,Connection timeout,438
+2025-11-16T18:11:47.862611,INFO,auth-service,Request processed successfully,89
+2025-11-16T00:05:47.862616,ERROR,database,Request processed successfully,417
+2025-11-16T05:10:47.862621,INFO,worker,Request processed successfully,420
+2025-11-16T20:42:47.862625,ERROR,database,Connection timeout,25
+2025-11-16T06:00:47.862630,INFO,cache,Slow query detected,1973
+2025-11-16T06:21:47.862634,INFO,cache,Rate limit exceeded,466
+2025-11-16T04:19:47.862639,INFO,api-gateway,Rate limit exceeded,362
+2025-11-15T23:14:47.862643,WARN,cache,Slow query detected,856
+2025-11-16T16:57:47.862648,INFO,cache,Connection established,351
+2025-11-16T02:18:47.862652,ERROR,auth-service,Connection timeout,493
+2025-11-16T14:57:47.862657,ERROR,database,Connection timeout,435
+2025-11-16T11:17:47.862661,WARN,worker,Request processed successfully,260
+2025-11-16T01:55:47.862665,ERROR,api-gateway,Cache miss,443
+2025-11-16T07:47:47.862670,INFO,worker,Cache miss,293
+2025-11-16T11:42:47.862674,ERROR,api-gateway,Query executed,110
+2025-11-16T05:36:47.862678,WARN,cache,Request processed successfully,23
+2025-11-16T04:11:47.862683,WARN,database,Rate limit exceeded,470
+2025-11-16T06:09:47.862688,ERROR,api-gateway,Query executed,450
+2025-11-16T10:12:47.862692,INFO,worker,Slow query detected,616
+2025-11-16T03:23:47.862696,INFO,worker,Connection established,270
+2025-11-16T18:09:47.862700,ERROR,cache,Connection timeout,209
+2025-11-15T22:16:47.862705,INFO,worker,Connection established,393
+2025-11-16T06:56:47.862709,INFO,auth-service,Connection timeout,458
+2025-11-16T03:10:47.862714,ERROR,worker,Connection timeout,459
+2025-11-16T14:19:47.862718,INFO,auth-service,Authentication failed,255
+2025-11-16T21:47:47.862722,INFO,api-gateway,Cache miss,104
+2025-11-16T17:34:47.862727,ERROR,auth-service,Connection timeout,198
+2025-11-16T05:32:47.862731,ERROR,cache,Cache miss,466
+2025-11-16T13:29:47.862735,INFO,api-gateway,Authentication failed,395
+2025-11-16T18:35:47.862740,WARN,database,Query executed,314
+2025-11-16T21:33:47.862744,INFO,cache,Cache miss,426
+2025-11-16T05:04:47.862748,INFO,api-gateway,Authentication failed,139
+2025-11-16T15:32:47.862753,ERROR,worker,Request processed successfully,286
+2025-11-16T11:17:47.862758,INFO,cache,Connection established,481
+2025-11-16T19:59:47.862762,WARN,cache,Connection timeout,181
+2025-11-16T11:30:47.862766,WARN,worker,Slow query detected,4353
+2025-11-16T19:51:47.862771,ERROR,worker,Rate limit exceeded,413
+2025-11-16T06:32:47.862775,WARN,auth-service,Cache miss,362
+2025-11-16T21:30:47.862780,INFO,database,Request processed successfully,355
+2025-11-16T02:46:47.862784,ERROR,cache,Connection timeout,315
+2025-11-16T03:45:47.862789,INFO,worker,Slow query detected,1278
+2025-11-16T00:17:47.862793,INFO,database,Rate limit exceeded,160
+2025-11-16T06:59:47.862798,WARN,database,Connection timeout,257
+2025-11-16T14:19:47.862802,INFO,database,Rate limit exceeded,264
+2025-11-16T05:04:47.862807,WARN,api-gateway,Authentication failed,49
+2025-11-16T09:20:47.862811,INFO,database,Request processed successfully,123
+2025-11-15T23:29:47.862816,WARN,auth-service,Rate limit exceeded,26
+2025-11-15T22:43:47.862820,INFO,cache,Authentication failed,14
+2025-11-16T07:37:47.862824,INFO,api-gateway,Query executed,474
+2025-11-16T00:18:47.862829,WARN,worker,Slow query detected,2062
+2025-11-15T22:50:47.862833,INFO,auth-service,Slow query detected,1597
+2025-11-16T18:07:47.862838,INFO,database,Rate limit exceeded,194
+2025-11-16T09:17:47.862842,INFO,cache,Request processed successfully,406
+2025-11-16T08:20:47.862847,WARN,auth-service,Connection timeout,22
+2025-11-16T20:23:47.862851,ERROR,api-gateway,Request processed successfully,170
+2025-11-16T00:23:47.862856,INFO,database,Cache miss,260
+2025-11-16T14:05:47.862860,INFO,worker,Request processed successfully,330
+2025-11-16T09:37:47.862865,INFO,auth-service,Slow query detected,1788
+2025-11-16T11:00:47.862869,INFO,cache,Rate limit exceeded,369
+2025-11-16T18:35:47.862874,WARN,worker,Query executed,476
+2025-11-15T22:06:47.862878,INFO,worker,Connection timeout,240
+2025-11-16T19:33:47.862882,INFO,cache,Authentication failed,351
+2025-11-16T20:18:47.862887,ERROR,cache,Connection established,309
+2025-11-16T11:03:47.862891,WARN,api-gateway,Request processed successfully,306
+2025-11-16T08:17:47.862896,INFO,worker,Connection timeout,11
+2025-11-16T01:05:47.862900,WARN,cache,Cache miss,322
+2025-11-15T23:36:47.862905,INFO,database,Connection established,375
+2025-11-16T05:05:47.862909,INFO,api-gateway,Query executed,295
+2025-11-16T03:16:47.862913,WARN,cache,Authentication failed,261
+2025-11-16T00:07:47.862918,INFO,database,Connection timeout,89
+2025-11-16T02:53:47.862922,INFO,worker,Rate limit exceeded,64
+2025-11-16T18:15:47.862926,INFO,auth-service,Request processed successfully,468
+2025-11-16T08:03:47.862931,INFO,api-gateway,Request processed successfully,404
+2025-11-16T05:25:47.862936,WARN,api-gateway,Query executed,286
+2025-11-16T09:22:47.862948,ERROR,auth-service,Authentication failed,46
+2025-11-16T16:56:47.862954,ERROR,database,Authentication failed,197
+2025-11-16T14:42:47.862958,WARN,api-gateway,Query executed,51
+2025-11-15T22:15:47.862963,ERROR,database,Connection established,33
+2025-11-16T20:11:47.862967,ERROR,cache,Rate limit exceeded,35
+2025-11-16T12:04:47.862971,INFO,cache,Slow query detected,960
+2025-11-16T21:33:47.862976,ERROR,api-gateway,Slow query detected,3894
+2025-11-16T01:39:47.862980,INFO,api-gateway,Request processed successfully,179
+2025-11-16T21:48:47.862985,ERROR,api-gateway,Connection established,441
+2025-11-15T21:53:47.862997,INFO,api-gateway,Cache miss,335
+2025-11-16T06:40:47.863002,ERROR,database,Request processed successfully,353
+2025-11-16T10:07:47.863006,INFO,worker,Rate limit exceeded,51
