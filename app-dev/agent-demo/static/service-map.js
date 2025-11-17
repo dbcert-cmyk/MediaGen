@@ -133,6 +133,9 @@ class ServiceMap {
             const from = this.services[conn.from];
             const to = this.services[conn.to];
 
+            // Skip if services don't exist
+            if (!from || !to) return;
+
             // Create line
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('id', `line-${conn.from}-${conn.to}`);
