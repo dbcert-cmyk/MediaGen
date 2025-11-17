@@ -9,9 +9,6 @@ google-genai==1.0.0
 # MCP (Model Context Protocol)
 mcp==1.21.1
 
-# Database
-sqlite3-python==1.0.0
-
 # Utilities
 python-dotenv==1.0.0
 requests==2.31.0
