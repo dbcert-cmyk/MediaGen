@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Management Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🌐 Home Network Management Portal</h1>
+            <p class="subtitle">Real-time monitoring of servers, WiFi, and switches</p>
+            <div class="header-controls">
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Connecting...</span>
+                </div>
+                <button id="refreshBtn" class="btn btn-secondary">🔄 Refresh</button>
+            </div>
+        </header>
+
+        <!-- Alert Banner -->
+        <div id="alertBanner" class="alert-banner" style="display: none;"></div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Servers Section -->
+            <section class="card-section">
+                <h2>📊 Servers</h2>
+                <div id="serversGrid" class="grid">
+                    <div class="loading">Loading servers...</div>
+                </div>
+            </section>
+
+            <!-- WiFi Section -->
+            <section class="card-section">
+                <h2>📡 WiFi Access Points</h2>
+                <div id="wifiGrid" class="grid">
+                    <div class="loading">Loading WiFi APs...</div>
+                </div>
+            </section>
+
+            <!-- Switches Section -->
+            <section class="card-section">
+                <h2>🔌 Network Switches</h2>
+                <div id="switchesGrid" class="grid">
+                    <div class="loading">Loading switches...</div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Open Source Network Management • Built with Flask, Python & Chart.js</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

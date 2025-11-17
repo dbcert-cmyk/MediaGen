@@ -1,0 +1,68 @@
+# Network Management Portal Configuration
+
+# Servers to monitor
+servers:
+  - name: "Local Server"
+    host: "localhost"
+    type: "local"  # Monitor the server running this app
+    enabled: true
+
+  # - name: "Remote Server 1"
+  #   host: "192.168.1.100"
+  #   type: "ssh"
+  #   username: "admin"
+  #   ssh_key: "/home/user/.ssh/id_rsa"
+  #   enabled: true
+
+  # - name: "Remote Server 2"
+  #   host: "192.168.1.101"
+  #   type: "ssh"
+  #   username: "admin"
+  #   password: "your_password"  # Use SSH key instead when possible
+  #   enabled: true
+
+# WiFi Access Points
+wifi_aps:
+  # - name: "Living Room AP"
+  #   host: "192.168.1.10"
+  #   type: "snmp"
+  #   community: "public"  # SNMP community string
+  #   enabled: true
+
+  # - name: "Office AP"
+  #   host: "192.168.1.11"
+  #   type: "unifi"  # For UniFi APs
+  #   controller: "192.168.1.2"
+  #   username: "admin"
+  #   password: "password"
+  #   enabled: true
+
+# Network Switches
+switches:
+  # - name: "Main Switch"
+  #   host: "192.168.1.1"
+  #   type: "snmp"
+  #   community: "public"
+  #   enabled: true
+
+  # - name: "PoE Switch"
+  #   host: "192.168.1.2"
+  #   type: "snmp"
+  #   community: "public"
+  #   vlan_support: true
+  #   enabled: true
+
+# Alert Settings
+alerts:
+  cpu_threshold: 80  # Alert if CPU > 80%
+  memory_threshold: 85  # Alert if memory > 85%
+  disk_threshold: 90  # Alert if disk > 90%
+  email_enabled: false
+  # email_to: "admin@example.com"
+  # email_from: "network@example.com"
+
+# Dashboard Settings
+dashboard:
+  refresh_interval: 5  # Seconds between updates
+  history_retention: 7  # Days to keep historical data
+  port: 5001

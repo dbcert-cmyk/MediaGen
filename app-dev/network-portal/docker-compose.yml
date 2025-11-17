@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  network-portal:
+    build: .
+    container_name: network-portal
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./data:/app/data
+    environment:
+      - FLASK_DEBUG=false
+    restart: unless-stopped
+    network_mode: host  # Required for monitoring local network devices

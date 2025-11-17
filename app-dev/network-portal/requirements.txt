@@ -1,0 +1,28 @@
+# Web Framework
+Flask==3.0.0
+flask-socketio==5.3.5
+flask-cors==4.0.0
+
+# Real-time communication
+python-socketio==5.11.0
+
+# System monitoring
+psutil==5.9.6
+
+# Network monitoring
+pysnmp==4.4.12
+easysnmp==0.2.5
+
+# SSH for remote server management
+paramiko==3.4.0
+
+# Data handling
+PyYAML==6.0.1
+python-dotenv==1.0.0
+
+# Database
+peewee==3.17.0
+
+# Utilities
+requests==2.31.0
+python-dateutil==2.8.2

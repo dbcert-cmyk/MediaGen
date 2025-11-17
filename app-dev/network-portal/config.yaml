@@ -1,0 +1,23 @@
+# Network Management Portal Configuration
+# Copy this to config.yaml and customize for your network
+
+servers:
+  - name: "Local Server"
+    host: "localhost"
+    type: "local"
+    enabled: true
+
+wifi_aps: []
+
+switches: []
+
+alerts:
+  cpu_threshold: 80
+  memory_threshold: 85
+  disk_threshold: 90
+  email_enabled: false
+
+dashboard:
+  refresh_interval: 5
+  history_retention: 7
+  port: 5001
