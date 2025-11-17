@@ -35,8 +35,8 @@ class AgentService:
         # Initialize Google GenAI client
         self.client = genai.Client(api_key=self.api_key)
 
-        # Model to use (Gemini 2.0 Flash with function calling)
-        self.model_id = "gemini-2.0-flash-exp"
+        # Model to use (Gemini 2.5 Flash with function calling)
+        self.model_id = "gemini-2.5-flash-latest"
 
         # Available tools from MCP servers
         self.tools = []
