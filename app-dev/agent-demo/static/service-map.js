@@ -454,8 +454,18 @@ class ServiceMap {
                 setTimeout(() => {
                     this.activateConnection(serviceId, dataSource, 2000, stepNumber);
                     this.setServiceStatus(dataSource, 'active');
+
+                    // Mark data source as success after processing
+                    setTimeout(() => {
+                        this.setServiceStatus(dataSource, 'success');
+                    }, 800);
                 }, 400);
             }
+
+            // Mark MCP service as success after processing
+            setTimeout(() => {
+                this.setServiceStatus(serviceId, 'success');
+            }, 1200);
         }
     }
 
