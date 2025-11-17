@@ -220,25 +220,16 @@ class ServiceMap {
                 serviceElement.style.filter = 'drop-shadow(0 0 15px ' + this.getServiceColor(status) + ')';
                 serviceElement.style.animation = 'pulse 0.8s infinite';
 
-                // Add bounce effect on activation
-                if (serviceGroup) {
-                    serviceGroup.style.animation = 'bounce 0.6s ease-out';
-                    setTimeout(() => {
-                        serviceGroup.style.animation = '';
-                    }, 600);
-                }
+                // Add subtle bounce effect on activation (apply to the box itself)
+                serviceElement.style.transformBox = 'fill-box';
+                serviceElement.style.transformOrigin = 'center';
+                serviceElement.style.animation = 'pulse 0.8s infinite, bounce 0.6s ease-out';
             } else if (status === 'success') {
-                // Bright green glow with pulsing animation
+                // Bright green glow with pulsing and bounce animation
                 serviceElement.style.filter = 'drop-shadow(0 0 20px #00FF00)';
-                serviceElement.style.animation = 'pulse 0.8s infinite';
-
-                // Add bounce effect on success
-                if (serviceGroup) {
-                    serviceGroup.style.animation = 'bounce 0.6s ease-out';
-                    setTimeout(() => {
-                        serviceGroup.style.animation = '';
-                    }, 600);
-                }
+                serviceElement.style.transformBox = 'fill-box';
+                serviceElement.style.transformOrigin = 'center';
+                serviceElement.style.animation = 'pulse 0.8s infinite, bounce 0.6s ease-out';
 
                 setTimeout(() => {
                     serviceElement.style.filter = '';
