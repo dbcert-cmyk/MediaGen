@@ -351,4 +351,26 @@ For issues and questions:
 
 ---
 
-Built with Vertex AI, Flask, and Python
+## 🌍 Multi-Agent Travel Planner
+
+**NEW!** This repository now includes an intelligent multi-agent travel planning system that demonstrates agent orchestration using Anthropic's Claude AI.
+
+### Features
+- **Multi-Agent Architecture**: Specialized agents (Flight, Hotel, Activity) collaborate to create complete travel plans
+- **Natural Language Input**: Just describe your dream trip in plain English
+- **Beautiful Streamlit UI**: User-friendly interface with real-time progress
+- **Complete Itineraries**: Flights, hotels, and day-by-day activities in one plan
+
+### Quick Start
+```bash
+cd travel_planner
+pip install -r requirements.txt
+export ANTHROPIC_API_KEY='your-key-here'
+cd ui && streamlit run streamlit_app.py
+```
+
+See [`travel_planner/README.md`](travel_planner/README.md) for full documentation.
+
+---
+
+Built with Vertex AI, Flask, Python, Anthropic Claude, and Streamlit

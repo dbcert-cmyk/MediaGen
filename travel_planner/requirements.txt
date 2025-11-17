@@ -1,0 +1,10 @@
+# Multi-Agent Travel Planner Requirements
+
+# Core dependencies
+anthropic>=0.18.0
+streamlit>=1.31.0
+python-dotenv>=1.0.0
+
+# Optional: For real API integrations (future enhancement)
+# requests>=2.31.0
+# amadeus>=8.1.0
