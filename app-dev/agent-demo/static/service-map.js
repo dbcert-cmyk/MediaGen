@@ -9,9 +9,9 @@ class ServiceMap {
         this.width = this.svg.clientWidth;
         this.height = 500;
 
-        // Service definitions
+        // Service definitions - keys must match IDs for lookup
         this.services = {
-            agent: {
+            'agent': {
                 id: 'agent',
                 name: 'Agent Kit',
                 x: this.width / 2,
@@ -19,7 +19,7 @@ class ServiceMap {
                 status: 'idle',
                 type: 'agent'
             },
-            mcpDb: {
+            'mcp-db': {
                 id: 'mcp-db',
                 name: 'MCP: Database',
                 x: this.width / 4,
@@ -27,7 +27,7 @@ class ServiceMap {
                 status: 'idle',
                 type: 'mcp'
             },
-            mcpFs: {
+            'mcp-fs': {
                 id: 'mcp-fs',
                 name: 'MCP: Filesystem',
                 x: this.width / 2,
@@ -35,7 +35,7 @@ class ServiceMap {
                 status: 'idle',
                 type: 'mcp'
             },
-            mcpApi: {
+            'mcp-api': {
                 id: 'mcp-api',
                 name: 'MCP: API',
                 x: (this.width * 3) / 4,
@@ -43,7 +43,7 @@ class ServiceMap {
                 status: 'idle',
                 type: 'mcp'
             },
-            sqlite: {
+            'sqlite': {
                 id: 'sqlite',
                 name: 'SQLite DB',
                 x: this.width / 4,
@@ -51,7 +51,7 @@ class ServiceMap {
                 status: 'idle',
                 type: 'data'
             },
-            filesystem: {
+            'filesystem': {
                 id: 'filesystem',
                 name: 'Filesystem',
                 x: this.width / 2,
@@ -59,7 +59,7 @@ class ServiceMap {
                 status: 'idle',
                 type: 'data'
             },
-            mockApi: {
+            'mock-api': {
                 id: 'mock-api',
                 name: 'Mock API',
                 x: (this.width * 3) / 4,
