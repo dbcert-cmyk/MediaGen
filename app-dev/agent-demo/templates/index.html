@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Data Flow Visualizer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🤖 Agent Data Flow Visualizer</h1>
+            <p class="subtitle">Google Agent Kit + MCP Servers + Real-time Visualization</p>
+            <div class="header-controls">
+                <button id="demoBtn" class="btn btn-demo">Run Demo</button>
+                <button id="clearBtn" class="btn btn-secondary">Clear Log</button>
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Connecting...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Query Input Section -->
+            <section class="query-section">
+                <h2>Ask the Agent</h2>
+                <div class="query-input-container">
+                    <textarea
+                        id="queryInput"
+                        placeholder="Try: 'How many orders are in the database?' or 'List all JSON files' or 'What's the weather in San Francisco?'"
+                        rows="3"
+                    ></textarea>
+                    <button id="submitBtn" class="btn btn-primary">
+                        <span class="btn-text">Ask Agent</span>
+                        <span class="btn-loader" style="display: none;">Processing...</span>
+                    </button>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h3>Quick Queries:</h3>
+                    <button class="quick-btn" data-query="How many orders are in the database?">📊 Order Count</button>
+                    <button class="quick-btn" data-query="List all JSON files in the data folder">📁 List Files</button>
+                    <button class="quick-btn" data-query="What's the weather in San Francisco?">🌤️ Weather</button>
+                    <button class="quick-btn" data-query="Find all orders over $100">💰 High-Value Orders</button>
+                    <button class="quick-btn" data-query="Get the stock price for GOOGL">📈 Stock Price</button>
+                    <button class="quick-btn" data-query="Count how many temperature readings are in sensor_data.json">🌡️ Sensor Data</button>
+                </div>
+            </section>
+
+            <!-- Service Map Visualization -->
+            <section class="service-map-section">
+                <h2>Service Architecture Map</h2>
+                <div class="service-map-container">
+                    <svg id="serviceMap" width="100%" height="500"></svg>
+                </div>
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #4CAF50;"></span>
+                        <span>Active/Success</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #2196F3;"></span>
+                        <span>Processing</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ff9800;"></span>
+                        <span>Idle</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #f44336;"></span>
+                        <span>Error</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Two Column Layout -->
+            <div class="two-column">
+                <!-- Activity Log -->
+                <section class="activity-section">
+                    <h2>Activity Log</h2>
+                    <div id="activityLog" class="activity-log">
+                        <div class="activity-item system">
+                            <span class="activity-icon">ℹ️</span>
+                            <span class="activity-text">System ready. Ask a question to see the agent in action!</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Agent Response -->
+                <section class="response-section">
+                    <h2>Agent Response</h2>
+                    <div id="agentResponse" class="agent-response">
+                        <p class="placeholder">Agent responses will appear here...</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Statistics -->
+            <section class="stats-section">
+                <h2>Session Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statQueries">0</div>
+                        <div class="stat-label">Total Queries</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statToolCalls">0</div>
+                        <div class="stat-label">Tool Calls</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statAvgTime">0.0s</div>
+                        <div class="stat-label">Avg Response Time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statSuccess">100%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Built with Flask, Google Gemini 2.0 Flash, MCP Protocol, SQLite &amp; Vanilla JS</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='service-map.js') }}"></script>
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>
