@@ -398,12 +398,11 @@ class ServiceMap {
 }
 
 // Initialize on page load
-let serviceMap;
 document.addEventListener('DOMContentLoaded', () => {
-    serviceMap = new ServiceMap('serviceMap');
+    window.serviceMap = new ServiceMap('serviceMap');
 
     // Handle window resize
     window.addEventListener('resize', () => {
-        serviceMap.init();
+        window.serviceMap.init();
     });
 });
