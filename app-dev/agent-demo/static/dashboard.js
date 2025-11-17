@@ -179,7 +179,7 @@ class Dashboard {
                 queryInput.value = demoQueries[index];
                 this.submitQuery();
                 index++;
-                setTimeout(runNext, 5000); // Wait 5 seconds between queries
+                setTimeout(runNext, 10000); // Wait 10 seconds between queries to avoid rate limits
             }
         };
 
