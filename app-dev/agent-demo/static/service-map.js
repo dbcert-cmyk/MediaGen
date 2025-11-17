@@ -218,9 +218,13 @@ class ServiceMap {
                 serviceElement.style.filter = 'drop-shadow(0 0 15px ' + this.getServiceColor(status) + ')';
                 serviceElement.style.animation = 'pulse 0.8s infinite';
             } else if (status === 'success') {
-                serviceElement.style.filter = 'drop-shadow(0 0 20px #00FF00)';  // Bright green glow
+                // Bright green glow with pulsing animation
+                serviceElement.style.filter = 'drop-shadow(0 0 20px #00FF00)';
+                serviceElement.style.animation = 'pulse 0.8s infinite';
+
                 setTimeout(() => {
                     serviceElement.style.filter = '';
+                    serviceElement.style.animation = '';
                     this.setServiceStatus(serviceId, 'idle');
                 }, 1500);  // Longer success state
             } else {
