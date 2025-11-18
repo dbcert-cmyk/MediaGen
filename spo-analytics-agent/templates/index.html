@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPO Analytics Agent - Conversational Programmatic Analytics</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🔍 SPO Analytics Agent</h1>
+                <p class="subtitle">Conversational Supply Path Optimization Analytics</p>
+                <div class="config-badge">
+                    <span class="badge badge-{{ 'mock' if config.mode == 'MOCK' else 'production' }}">
+                        {{ config.mode }}
+                    </span>
+                    <span class="config-detail">{{ config.model }}</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar with Examples -->
+            <aside class="sidebar">
+                <div class="examples-section">
+                    <h3>📚 Example Queries</h3>
+                    <p class="examples-intro">Try asking questions like:</p>
+
+                    <div class="example-category">
+                        <h4>Fill Rate Analysis</h4>
+                        <div class="example-list">
+                            <button class="example-btn" data-query="What's my fill rate for the last 7 days?">
+                                What's my fill rate for the last 7 days?
+                            </button>
+                            <button class="example-btn" data-query="Compare fill rates between CTV and Mobile inventory">
+                                Compare fill rates between CTV and Mobile
+                            </button>
+                            <button class="example-btn" data-query="Why did my fill rate drop last week?">
+                                Why did my fill rate drop last week?
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="example-category">
+                        <h4>SPO Transparency</h4>
+                        <div class="example-list">
+                            <button class="example-btn" data-query="What's the average markup across all DSPs?">
+                                What's the average markup across all DSPs?
+                            </button>
+                            <button class="example-btn" data-query="Compare exchange fees for different inventory types">
+                                Compare exchange fees by inventory type
+                            </button>
+                            <button class="example-btn" data-query="Which DSP has the highest markup?">
+                                Which DSP has the highest markup?
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="example-category">
+                        <h4>Root Cause Analysis</h4>
+                        <div class="example-list">
+                            <button class="example-btn" data-query="Why is traffic being blocked?">
+                                Why is traffic being blocked?
+                            </button>
+                            <button class="example-btn" data-query="What's the IVT block rate for US traffic?">
+                                What's the IVT block rate for US traffic?
+                            </button>
+                            <button class="example-btn" data-query="Show me the top filter categories from last week">
+                                Top filter categories from last week
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="example-category">
+                        <h4>Revenue & Performance</h4>
+                        <div class="example-list">
+                            <button class="example-btn" data-query="What's my total revenue for the last 30 days?">
+                                Total revenue for the last 30 days
+                            </button>
+                            <button class="example-btn" data-query="Show me the top performing inventory types">
+                                Top performing inventory types
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dataset Stats -->
+                <div class="stats-section">
+                    <h3>📊 Dataset Status</h3>
+                    <div id="dataset-stats" class="stats-content">
+                        <p class="loading">Loading...</p>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Chat Interface -->
+            <main class="chat-container">
+                <!-- Chat Messages -->
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message assistant-message">
+                        <div class="message-icon">🤖</div>
+                        <div class="message-content">
+                            <p>👋 Hi! I'm your SPO Analytics Agent.</p>
+                            <p>I can help you analyze your programmatic advertising data using natural language. Ask me about fill rates, supply path fees, root cause analysis, or any performance questions.</p>
+                            <p class="hint">Try one of the example queries on the left to get started!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="chat-input-container">
+                    <form id="query-form">
+                        <textarea
+                            id="query-input"
+                            placeholder="Ask me anything about your programmatic performance..."
+                            rows="3"
+                        ></textarea>
+                        <button type="submit" id="send-btn" class="send-btn">
+                            <span class="btn-text">Send</span>
+                            <span class="btn-icon">📊</span>
+                        </button>
+                    </form>
+                    <div class="input-hint">
+                        Press Enter to send, Shift+Enter for new line
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Loading Indicator Template -->
+    <template id="loading-template">
+        <div class="message assistant-message loading-message">
+            <div class="message-icon">🤖</div>
+            <div class="message-content">
+                <div class="loading-indicator">
+                    <div class="loading-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <p>Analyzing your data...</p>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

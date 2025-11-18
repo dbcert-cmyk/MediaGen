@@ -1,0 +1,18 @@
+# Flask Web Framework
+flask>=3.0.0
+
+# Google Cloud Platform
+google-cloud-bigquery>=3.14.0
+google-cloud-aiplatform>=1.124.0
+
+# Vertex AI Generative AI
+google-generativeai>=0.3.0
+
+# Environment Management
+python-dotenv>=1.0.0
+
+# WSGI Server for Production
+gunicorn>=21.2.0
+
+# Data Handling
+pandas>=2.1.0
