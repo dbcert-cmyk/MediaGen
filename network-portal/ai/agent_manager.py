@@ -12,7 +12,7 @@ from langchain.memory import ConversationBufferMemory
 
 from mcp_servers.network_scanner import scan_network
 from mcp_servers.ssh_manager import execute_ssh_command
-from mcp_servers.device_info import get_device_info
+from mcp_servers.device_info import get_device_info, get_all_devices
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +50,11 @@ class AgentManager:
 
             # Define tools for the agent
             tools = [
+                Tool(
+                    name="ListDevices",
+                    func=lambda x: self._run_async(get_all_devices()),
+                    description="List all devices in the database. Use this to show all discovered devices. Input can be anything (will be ignored)."
+                ),
                 Tool(
                     name="NetworkScan",
                     func=lambda subnet: self._run_async(scan_network(subnet, "discovery")),
