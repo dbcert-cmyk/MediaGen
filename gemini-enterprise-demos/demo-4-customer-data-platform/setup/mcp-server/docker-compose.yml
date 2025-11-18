@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mcp-multi-db-server:latest
+    container_name: mcp-server
+    restart: unless-stopped
+
+    ports:
+      - "3100:3100"
+
+    environment:
+      - PROJECT_ID=${PROJECT_ID}
+      - ALLOYDB_HOST=${ALLOYDB_HOST}
+      - ALLOYDB_PASSWORD=${ALLOYDB_PASSWORD}
+      - PORT=3100
+      - NODE_ENV=production
+
+    # Mount Google Cloud credentials
+    volumes:
+      - ${GOOGLE_APPLICATION_CREDENTIALS}:/app/service-account-key.json:ro
+
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/service-account-key.json
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3100/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    networks:
+      - mcp-network
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  mcp-network:
+    driver: bridge

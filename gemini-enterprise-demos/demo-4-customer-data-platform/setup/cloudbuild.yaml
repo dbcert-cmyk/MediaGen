@@ -1,0 +1,192 @@
+# Cloud Build configuration for Demo #4
+# Triggered on commits to main branch
+#
+# Setup:
+#   gcloud builds triggers create github \
+#     --repo-name=YOUR_REPO \
+#     --branch-pattern=^main$ \
+#     --build-config=gemini-enterprise-demos/demo-4-customer-data-platform/setup/cloudbuild.yaml
+
+substitutions:
+  _PROJECT_ID: ${PROJECT_ID}
+  _REGION: us-central1
+  _ENVIRONMENT: dev
+  _ALLOYDB_CPU: '2'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 3600s  # 1 hour (AlloyDB takes time)
+
+steps:
+  # Step 1: Terraform Init
+  - name: 'hashicorp/terraform:1.6'
+    id: 'terraform-init'
+    dir: 'gemini-enterprise-demos/demo-4-customer-data-platform/setup/terraform'
+    args:
+      - 'init'
+
+  # Step 2: Terraform Plan
+  - name: 'hashicorp/terraform:1.6'
+    id: 'terraform-plan'
+    dir: 'gemini-enterprise-demos/demo-4-customer-data-platform/setup/terraform'
+    args:
+      - 'plan'
+      - '-var=project_id=${_PROJECT_ID}'
+      - '-var=region=${_REGION}'
+      - '-var=environment=${_ENVIRONMENT}'
+      - '-var=alloydb_cpu_count=${_ALLOYDB_CPU}'
+      - '-out=tfplan'
+
+  # Step 3: Terraform Apply
+  - name: 'hashicorp/terraform:1.6'
+    id: 'terraform-apply'
+    dir: 'gemini-enterprise-demos/demo-4-customer-data-platform/setup/terraform'
+    args:
+      - 'apply'
+      - '-auto-approve'
+      - 'tfplan'
+
+  # Step 4: Save Terraform Outputs
+  - name: 'hashicorp/terraform:1.6'
+    id: 'terraform-output'
+    dir: 'gemini-enterprise-demos/demo-4-customer-data-platform/setup/terraform'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        terraform output -json > /workspace/tf-outputs.json
+        cat /workspace/tf-outputs.json
+
+  # Step 5: Build MCP Server Image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-build'
+    dir: 'gemini-enterprise-demos/demo-4-customer-data-platform/setup/mcp-server'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/${_PROJECT_ID}/mcp-server:${BUILD_ID}'
+      - '-t'
+      - 'gcr.io/${_PROJECT_ID}/mcp-server:latest'
+      - '.'
+
+  # Step 6: Push Image to GCR
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-push'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'gcr.io/${_PROJECT_ID}/mcp-server'
+
+  # Step 7: Get AlloyDB IP from Terraform Output
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'get-alloydb-ip'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        ALLOYDB_IP=$(cat /workspace/tf-outputs.json | jq -r '.alloydb_ip_address.value')
+        echo "ALLOYDB_IP=$ALLOYDB_IP" > /workspace/alloydb.env
+        echo "AlloyDB IP: $ALLOYDB_IP"
+
+  # Step 8: Deploy MCP Server to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-cloud-run'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        source /workspace/alloydb.env
+        gcloud run deploy mcp-server \
+          --image=gcr.io/${_PROJECT_ID}/mcp-server:${BUILD_ID} \
+          --region=${_REGION} \
+          --platform=managed \
+          --set-env-vars="PROJECT_ID=${_PROJECT_ID},ALLOYDB_HOST=$$ALLOYDB_IP" \
+          --set-secrets="ALLOYDB_PASSWORD=alloydb-password:latest" \
+          --allow-unauthenticated \
+          --max-instances=10 \
+          --memory=512Mi \
+          --cpu=1
+
+  # Step 9: Load BigQuery Mock Data
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'load-bigquery-data'
+    dir: 'gemini-enterprise-demos/demo-4-customer-data-platform/mock-data'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        if [ -f bigquery_customers.json ]; then
+          bq load \
+            --source_format=NEWLINE_DELIMITED_JSON \
+            --project_id=${_PROJECT_ID} \
+            customer_analytics.customers \
+            bigquery_customers.json
+          echo "✅ BigQuery data loaded"
+        else
+          echo "⚠️ Mock data file not found, skipping"
+        fi
+
+  # Step 10: Test MCP Server
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'test-mcp-server'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        SERVICE_URL=$(gcloud run services describe mcp-server \
+          --region=${_REGION} \
+          --format='value(status.url)')
+
+        echo "Testing MCP Server at: $SERVICE_URL"
+
+        # Test health endpoint
+        curl -f $SERVICE_URL/health || exit 1
+
+        echo "✅ MCP Server is healthy"
+
+  # Step 11: Summary
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deployment-summary'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        echo "=========================================="
+        echo "  Demo #4 Deployment Complete!"
+        echo "=========================================="
+        echo ""
+        echo "Project ID: ${_PROJECT_ID}"
+        echo "Region: ${_REGION}"
+        echo "Environment: ${_ENVIRONMENT}"
+        echo ""
+        echo "Deployed Resources:"
+        echo "  - BigQuery Dataset: customer_analytics"
+        echo "  - AlloyDB Cluster: customer-db-cluster"
+        echo "  - Cloud Storage Buckets: 2"
+        echo "  - Cloud Run Service: mcp-server"
+        echo ""
+        echo "MCP Server URL:"
+        gcloud run services describe mcp-server \
+          --region=${_REGION} \
+          --format='value(status.url)'
+        echo ""
+        echo "Next Steps:"
+        echo "  1. Create Gemini Enterprise data stores (manual)"
+        echo "  2. Test the demo with sample queries"
+        echo "  3. Review the demo script"
+        echo ""
+
+# Images to be pushed to Container Registry
+images:
+  - 'gcr.io/${_PROJECT_ID}/mcp-server:${BUILD_ID}'
+  - 'gcr.io/${_PROJECT_ID}/mcp-server:latest'
+
+# Artifacts to save
+artifacts:
+  objects:
+    location: 'gs://${_PROJECT_ID}-build-artifacts/demo-4/${BUILD_ID}'
+    paths:
+      - '/workspace/tf-outputs.json'
+      - '/workspace/alloydb.env'

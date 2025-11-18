@@ -1,0 +1,257 @@
+name: Deploy Demo #4 - Customer Data Platform
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'gemini-enterprise-demos/demo-4-customer-data-platform/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'gemini-enterprise-demos/demo-4-customer-data-platform/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  MCP_SERVER_IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/mcp-server
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gemini-enterprise-demos/demo-4-customer-data-platform/setup/terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var="project_id=${{ env.PROJECT_ID }}" \
+            -var="environment=${{ github.event.inputs.environment || 'dev' }}" \
+            -out=tfplan
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v3
+        with:
+          name: tfplan
+          path: gemini-enterprise-demos/demo-4-customer-data-platform/setup/terraform/tfplan
+          retention-days: 5
+
+  terraform-apply:
+    name: Terraform Apply
+    needs: terraform-plan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gemini-enterprise-demos/demo-4-customer-data-platform/setup/terraform
+    environment:
+      name: ${{ github.event.inputs.environment || 'dev' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v3
+        with:
+          name: tfplan
+          path: gemini-enterprise-demos/demo-4-customer-data-platform/setup/terraform/
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+      - name: Save Outputs
+        run: |
+          terraform output -json > outputs.json
+          cat outputs.json
+
+      - name: Upload Outputs
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-outputs
+          path: gemini-enterprise-demos/demo-4-customer-data-platform/setup/terraform/outputs.json
+
+  build-mcp-server:
+    name: Build MCP Server Image
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gemini-enterprise-demos/demo-4-customer-data-platform/setup/mcp-server
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${{ env.MCP_SERVER_IMAGE }}:${{ github.sha }} \
+            -t ${{ env.MCP_SERVER_IMAGE }}:latest \
+            .
+
+      - name: Run security scan
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy image \
+            --severity HIGH,CRITICAL \
+            ${{ env.MCP_SERVER_IMAGE }}:${{ github.sha }}
+        continue-on-error: true
+
+      - name: Push to GCR
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker push ${{ env.MCP_SERVER_IMAGE }}:${{ github.sha }}
+          docker push ${{ env.MCP_SERVER_IMAGE }}:latest
+
+  deploy-mcp-server:
+    name: Deploy MCP Server to Cloud Run
+    needs: [terraform-apply, build-mcp-server]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Download Terraform Outputs
+        uses: actions/download-artifact@v3
+        with:
+          name: terraform-outputs
+
+      - name: Extract AlloyDB IP
+        id: alloydb
+        run: |
+          ALLOYDB_IP=$(jq -r '.alloydb_ip_address.value' outputs.json)
+          echo "ip=$ALLOYDB_IP" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: mcp-server
+          image: ${{ env.MCP_SERVER_IMAGE }}:${{ github.sha }}
+          region: ${{ env.REGION }}
+          env_vars: |
+            PROJECT_ID=${{ env.PROJECT_ID }}
+            ALLOYDB_HOST=${{ steps.alloydb.outputs.ip }}
+          secrets: |
+            ALLOYDB_PASSWORD=alloydb-password:latest
+
+      - name: Test MCP Server
+        run: |
+          SERVICE_URL=$(gcloud run services describe mcp-server \
+            --region=${{ env.REGION }} \
+            --format='value(status.url)')
+
+          curl -f $SERVICE_URL/health || exit 1
+
+  load-mock-data:
+    name: Load Mock Data
+    needs: terraform-apply
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Load BigQuery Data
+        working-directory: gemini-enterprise-demos/demo-4-customer-data-platform/mock-data
+        run: |
+          bq load \
+            --source_format=NEWLINE_DELIMITED_JSON \
+            --project_id=${{ env.PROJECT_ID }} \
+            customer_analytics.customers \
+            bigquery_customers.json
+
+  notify:
+    name: Notify Deployment Status
+    needs: [deploy-mcp-server, load-mock-data]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deployment Success
+        if: ${{ needs.deploy-mcp-server.result == 'success' && needs.load-mock-data.result == 'success' }}
+        run: |
+          echo "✅ Demo #4 deployed successfully!"
+          echo "Project: ${{ env.PROJECT_ID }}"
+          echo "Region: ${{ env.REGION }}"
+
+      - name: Deployment Failed
+        if: ${{ needs.deploy-mcp-server.result == 'failure' || needs.load-mock-data.result == 'failure' }}
+        run: |
+          echo "❌ Demo #4 deployment failed!"
+          exit 1
