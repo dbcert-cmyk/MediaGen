@@ -23,6 +23,7 @@ services:
       - netbox
     networks:
       - netportal
+      - macvlan_network
     restart: unless-stopped
 
   # PostgreSQL Database
@@ -191,3 +192,11 @@ volumes:
 networks:
   netportal:
     driver: bridge
+  macvlan_network:
+    driver: macvlan
+    driver_opts:
+      parent: br0
+    ipam:
+      config:
+        - subnet: 10.2.2.0/24
+          ip_range: 10.2.2.240/28
