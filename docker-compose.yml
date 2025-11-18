@@ -13,6 +13,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock  # For Docker API access
     environment:
       - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=llama3.2:1b
       - NETBOX_URL=http://netbox:8080
       - LIBRENMS_URL=http://librenms:8000
       - DATABASE_URL=postgresql://netportal:netportal@postgres:5432/netportal
