@@ -39,6 +39,9 @@ async def lifespan(app: FastAPI):
     await agent_manager.initialize()
     logger.info("AI Agent initialized")
 
+    # Set agent manager in router
+    ai_agent.set_agent_manager(agent_manager)
+
     yield
 
     # Shutdown
