@@ -1,0 +1,50 @@
+[
+  {
+    "customer_id": "CUST-001",
+    "company_name": "Acme Corporation",
+    "industry": "Technology",
+    "employee_count": 5000,
+    "annual_revenue_usd": 50000000,
+    "account_tier": "Enterprise",
+    "customer_since": "2022-03-15",
+    "lifetime_value_usd": 485000,
+    "total_transactions": 147,
+    "last_transaction_date": "2025-11-10",
+    "churn_risk_score": 0.12,
+    "health_score": 92,
+    "primary_contact_email": "john.smith@acmecorp.com",
+    "geographic_region": "North America"
+  },
+  {
+    "customer_id": "CUST-002",
+    "company_name": "GlobalTech Industries",
+    "industry": "Manufacturing",
+    "employee_count": 12000,
+    "annual_revenue_usd": 250000000,
+    "account_tier": "Enterprise",
+    "customer_since": "2021-08-22",
+    "lifetime_value_usd": 892000,
+    "total_transactions": 298,
+    "last_transaction_date": "2025-11-15",
+    "churn_risk_score": 0.08,
+    "health_score": 95,
+    "primary_contact_email": "sarah.jones@globaltech.com",
+    "geographic_region": "North America"
+  },
+  {
+    "customer_id": "CUST-003",
+    "company_name": "Startup Innovations LLC",
+    "industry": "Technology",
+    "employee_count": 45,
+    "annual_revenue_usd": 2000000,
+    "account_tier": "Growth",
+    "customer_since": "2024-06-10",
+    "lifetime_value_usd": 28500,
+    "total_transactions": 18,
+    "last_transaction_date": "2025-10-28",
+    "churn_risk_score": 0.65,
+    "health_score": 58,
+    "primary_contact_email": "founder@startupinnovations.com",
+    "geographic_region": "North America"
+  }
+]

@@ -1,0 +1,184 @@
+{
+  "events": [
+    {
+      "id": "event_001",
+      "title": "Daily Standup",
+      "start": "2025-11-18T09:00:00-08:00",
+      "end": "2025-11-18T09:15:00-08:00",
+      "location": "Zoom: https://zoom.us/j/123456",
+      "attendees": [
+        "demo-user@company.com",
+        "alex.thompson@company.com",
+        "maria.rodriguez@company.com",
+        "kevin.park@company.com"
+      ],
+      "organizer": "demo-user@company.com",
+      "description": "Daily team sync",
+      "status": "confirmed",
+      "recurring": true,
+      "recurrence_rule": "FREQ=DAILY;BYDAY=MO,TU,WE,TH,FR"
+    },
+    {
+      "id": "event_002",
+      "title": "Client Demo - Enterprise Features",
+      "start": "2025-11-18T14:00:00-08:00",
+      "end": "2025-11-18T15:00:00-08:00",
+      "location": "Google Meet",
+      "attendees": [
+        "demo-user@company.com",
+        "maria.rodriguez@company.com",
+        "client-contact@prospectcorp.com"
+      ],
+      "organizer": "maria.rodriguez@company.com",
+      "description": "Demo of enterprise AI capabilities for Prospect Corp.\n\nAgenda:\n- Product overview (10 min)\n- Live demo of search features (30 min)\n- Q&A (20 min)\n\nPrep: Review their use case doc in Drive",
+      "status": "confirmed",
+      "recurring": false
+    },
+    {
+      "id": "event_003",
+      "title": "1:1 with Sarah Chen",
+      "start": "2025-11-18T15:30:00-08:00",
+      "end": "2025-11-18T16:00:00-08:00",
+      "location": "Conference Room A",
+      "attendees": [
+        "demo-user@company.com",
+        "sarah.chen@acmecorp.com"
+      ],
+      "organizer": "sarah.chen@acmecorp.com",
+      "description": "Weekly 1:1\n\nTopics:\n- Q4 budget review\n- Team performance discussions\n- Q1 planning",
+      "status": "confirmed",
+      "recurring": true,
+      "recurrence_rule": "FREQ=WEEKLY;BYDAY=MO"
+    },
+    {
+      "id": "event_004",
+      "title": "Engineering All-Hands",
+      "start": "2025-11-18T16:00:00-08:00",
+      "end": "2025-11-18T17:00:00-08:00",
+      "location": "Main Auditorium / Zoom Hybrid",
+      "attendees": [
+        "demo-user@company.com",
+        "cto@company.com",
+        "all-engineering@company.com"
+      ],
+      "organizer": "cto@company.com",
+      "description": "Monthly engineering all-hands\n\nAgenda:\n- Product roadmap updates\n- Infrastructure cost optimization\n- New team member introductions\n- Q&A",
+      "status": "confirmed",
+      "recurring": true,
+      "recurrence_rule": "FREQ=MONTHLY;BYMONTHDAY=18"
+    },
+    {
+      "id": "event_005",
+      "title": "API Integration Kickoff Call",
+      "start": "2025-11-19T10:00:00-08:00",
+      "end": "2025-11-19T11:00:00-08:00",
+      "location": "Zoom: https://zoom.us/j/789012",
+      "attendees": [
+        "demo-user@company.com",
+        "john.martinez@vendor.com",
+        "alex.thompson@company.com"
+      ],
+      "organizer": "demo-user@company.com",
+      "description": "Kickoff meeting for API integration project\n\nAgenda:\n- Requirements review\n- Timeline discussion\n- Technical architecture\n- Access and credentials setup\n\nPrep: Review John's proposal PDF",
+      "status": "confirmed",
+      "recurring": false
+    },
+    {
+      "id": "event_006",
+      "title": "Sprint Planning",
+      "start": "2025-11-20T09:00:00-08:00",
+      "end": "2025-11-20T11:00:00-08:00",
+      "location": "Conference Room B",
+      "attendees": [
+        "demo-user@company.com",
+        "alex.thompson@company.com",
+        "maria.rodriguez@company.com",
+        "kevin.park@company.com"
+      ],
+      "organizer": "kevin.park@company.com",
+      "description": "Sprint 24 Planning\n\nObjectives:\n- Review completed sprint 23\n- Prioritize sprint 24 features\n- Capacity planning\n- Story point estimation\n\nPrep: Review backlog items",
+      "status": "confirmed",
+      "recurring": false
+    },
+    {
+      "id": "event_007",
+      "title": "Product Roadmap Planning",
+      "start": "2025-11-21T14:00:00-08:00",
+      "end": "2025-11-21T16:00:00-08:00",
+      "location": "Conference Room B",
+      "attendees": [
+        "demo-user@company.com",
+        "sarah.chen@acmecorp.com",
+        "cto@company.com",
+        "product-team@company.com"
+      ],
+      "organizer": "sarah.chen@acmecorp.com",
+      "description": "Q1 2026 Product Roadmap Planning\n\nAgenda:\n- Review Q1 priorities\n- Resource allocation\n- Timeline planning\n- Dependencies and risks\n\nPrep: Review Q1_Roadmap_Draft.pdf",
+      "status": "tentative",
+      "recurring": false,
+      "needs_response": true
+    },
+    {
+      "id": "event_008",
+      "title": "Infrastructure Cost Review",
+      "start": "2025-11-22T11:00:00-08:00",
+      "end": "2025-11-22T12:00:00-08:00",
+      "location": "Zoom",
+      "attendees": [
+        "demo-user@company.com",
+        "cto@company.com"
+      ],
+      "organizer": "cto@company.com",
+      "description": "1:1 to discuss infrastructure cost optimization\n\nTopics:\n- Current resource usage audit\n- Optimization opportunities\n- Cost reduction plan for Q1\n- Timeline and milestones",
+      "status": "confirmed",
+      "recurring": false
+    },
+    {
+      "id": "event_009",
+      "title": "Lunch: Team Building",
+      "start": "2025-11-22T12:00:00-08:00",
+      "end": "2025-11-22T13:00:00-08:00",
+      "location": "Local Restaurant",
+      "attendees": [
+        "demo-user@company.com",
+        "alex.thompson@company.com",
+        "maria.rodriguez@company.com",
+        "kevin.park@company.com"
+      ],
+      "organizer": "demo-user@company.com",
+      "description": "Monthly team lunch - casual, no agenda",
+      "status": "confirmed",
+      "recurring": true,
+      "recurrence_rule": "FREQ=MONTHLY;BYDAY=4FR"
+    },
+    {
+      "id": "event_010",
+      "title": "Focus Time: Documentation",
+      "start": "2025-11-22T14:00:00-08:00",
+      "end": "2025-11-22T16:00:00-08:00",
+      "location": "No meeting - blocked time",
+      "attendees": [
+        "demo-user@company.com"
+      ],
+      "organizer": "demo-user@company.com",
+      "description": "Blocked time for documentation work\n\nTasks:\n- Update API documentation\n- Review architecture diagrams\n- Write deployment guide",
+      "status": "confirmed",
+      "recurring": false,
+      "is_focus_time": true
+    }
+  ],
+  "calendar_stats": {
+    "total_events_this_week": 10,
+    "total_meeting_hours_this_week": 12.5,
+    "back_to_back_meetings": 2,
+    "focus_time_hours": 2,
+    "average_meeting_duration_minutes": 60,
+    "busiest_day": "2025-11-21"
+  },
+  "working_hours": {
+    "timezone": "America/Los_Angeles",
+    "start_time": "09:00",
+    "end_time": "17:00",
+    "lunch_time": "12:00-13:00"
+  }
+}
