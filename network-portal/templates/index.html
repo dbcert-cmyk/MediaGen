@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Network Management Portal</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🏠 Home Network Portal</h1>
+            <div class="header-status">
+                <span id="status-indicator" class="status-badge status-online">System Ready</span>
+            </div>
+        </header>
+
+        <!-- Main Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+            <button class="nav-tab" data-tab="devices">Devices</button>
+            <button class="nav-tab" data-tab="monitoring">Monitoring</button>
+            <button class="nav-tab" data-tab="network-ops">Network Ops</button>
+            <button class="nav-tab" data-tab="ai-assistant">AI Assistant</button>
+        </nav>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-pane active">
+                <h2>Network Overview</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Devices</h3>
+                        <div class="stat-value" id="total-devices">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Online</h3>
+                        <div class="stat-value online" id="online-devices">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Offline</h3>
+                        <div class="stat-value offline" id="offline-devices">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Unknown</h3>
+                        <div class="stat-value" id="unknown-devices">0</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>Quick Actions</h3>
+                        <div class="button-group">
+                            <button class="btn btn-primary" onclick="showTab('network-ops'); scanNetwork()">Scan Network</button>
+                            <button class="btn btn-secondary" onclick="refreshDashboard()">Refresh</button>
+                            <button class="btn btn-secondary" onclick="loadDevices()">View Devices</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Device Types</h3>
+                        <div id="device-types-chart"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Recent Activity</h3>
+                    <div id="recent-activity">
+                        <p class="text-muted">No recent activity</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Devices Tab -->
+            <div id="devices" class="tab-pane">
+                <div class="card-header">
+                    <h2>Network Devices</h2>
+                    <button class="btn btn-primary" onclick="showAddDeviceModal()">Add Device</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="device-table">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>IP Address</th>
+                                <th>MAC Address</th>
+                                <th>Last Seen</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="devices-table-body">
+                            <tr>
+                                <td colspan="7" class="text-center">Loading devices...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Monitoring Tab -->
+            <div id="monitoring" class="tab-pane">
+                <h2>Network Monitoring</h2>
+
+                <div class="monitoring-grid">
+                    <div class="card">
+                        <h3>Netdata (Real-time Metrics)</h3>
+                        <p>Monitor system performance in real-time</p>
+                        <a href="http://localhost:19999" target="_blank" class="btn btn-primary">Open Netdata</a>
+                    </div>
+
+                    <div class="card">
+                        <h3>LibreNMS (Network Monitoring)</h3>
+                        <p>Monitor network devices and services</p>
+                        <a href="http://localhost:8001" target="_blank" class="btn btn-primary">Open LibreNMS</a>
+                    </div>
+
+                    <div class="card">
+                        <h3>Netbox (IPAM)</h3>
+                        <p>IP address and network documentation</p>
+                        <a href="http://localhost:8080" target="_blank" class="btn btn-primary">Open Netbox</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Ops Tab -->
+            <div id="network-ops" class="tab-pane">
+                <h2>Network Operations</h2>
+
+                <div class="card">
+                    <h3>Network Scanner</h3>
+                    <div class="form-group">
+                        <label for="scan-subnet">Subnet (CIDR notation):</label>
+                        <input type="text" id="scan-subnet" placeholder="192.168.1.0/24" value="192.168.1.0/24">
+                    </div>
+                    <div class="form-group">
+                        <label for="scan-type">Scan Type:</label>
+                        <select id="scan-type">
+                            <option value="discovery">Discovery (Ping Sweep)</option>
+                            <option value="port_scan">Port Scan</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="scanNetwork()">Start Scan</button>
+                    <div id="scan-results" class="results-container"></div>
+                </div>
+
+                <div class="card">
+                    <h3>SSH Command Execution</h3>
+                    <div class="form-group">
+                        <label for="ssh-host">Host:</label>
+                        <input type="text" id="ssh-host" placeholder="192.168.1.100">
+                    </div>
+                    <div class="form-group">
+                        <label for="ssh-username">Username:</label>
+                        <input type="text" id="ssh-username" placeholder="admin">
+                    </div>
+                    <div class="form-group">
+                        <label for="ssh-password">Password:</label>
+                        <input type="password" id="ssh-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="ssh-command">Command:</label>
+                        <input type="text" id="ssh-command" placeholder="uptime">
+                    </div>
+                    <button class="btn btn-primary" onclick="executeSSH()">Execute</button>
+                    <div id="ssh-results" class="results-container"></div>
+                </div>
+            </div>
+
+            <!-- AI Assistant Tab -->
+            <div id="ai-assistant" class="tab-pane">
+                <h2>AI Network Assistant</h2>
+
+                <div class="ai-chat-container">
+                    <div id="chat-messages" class="chat-messages"></div>
+
+                    <div class="chat-input-container">
+                        <input type="text" id="chat-input" placeholder="Ask me anything about your network..."
+                               onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                        <button class="btn btn-primary" onclick="sendChatMessage()">Send</button>
+                    </div>
+                </div>
+
+                <div class="ai-suggestions">
+                    <h3>Suggested Commands:</h3>
+                    <div class="suggestion-buttons">
+                        <button class="btn btn-secondary" onclick="setChatMessage('Scan my network for new devices')">
+                            Scan for new devices
+                        </button>
+                        <button class="btn btn-secondary" onclick="setChatMessage('Show me all offline devices')">
+                            Show offline devices
+                        </button>
+                        <button class="btn btn-secondary" onclick="setChatMessage('What is the status of my network?')">
+                            Network status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Device Modal -->
+    <div id="add-device-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddDeviceModal()">&times;</span>
+            <h2>Add New Device</h2>
+            <div class="form-group">
+                <label for="device-name">Device Name:</label>
+                <input type="text" id="device-name" required>
+            </div>
+            <div class="form-group">
+                <label for="device-type">Device Type:</label>
+                <select id="device-type">
+                    <option value="server">Server</option>
+                    <option value="switch">Switch</option>
+                    <option value="router">Router</option>
+                    <option value="ap">Access Point</option>
+                    <option value="workstation">Workstation</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="device-ip">IP Address:</label>
+                <input type="text" id="device-ip" required>
+            </div>
+            <div class="form-group">
+                <label for="device-mac">MAC Address:</label>
+                <input type="text" id="device-mac">
+            </div>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="addDevice()">Add Device</button>
+                <button class="btn btn-secondary" onclick="closeAddDeviceModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

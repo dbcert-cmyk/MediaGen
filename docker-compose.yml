@@ -1,0 +1,192 @@
+version: '3.8'
+
+services:
+  # Main Network Portal Backend
+  network-portal:
+    build:
+      context: ./network-portal
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./network-portal:/app
+      - /var/run/docker.sock:/var/run/docker.sock  # For Docker API access
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - NETBOX_URL=http://netbox:8080
+      - LIBRENMS_URL=http://librenms:8000
+      - DATABASE_URL=postgresql://netportal:netportal@postgres:5432/netportal
+    depends_on:
+      - postgres
+      - ollama
+      - netbox
+    networks:
+      - netportal
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=netportal
+      - POSTGRES_PASSWORD=netportal
+      - POSTGRES_DB=netportal
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - netportal
+    restart: unless-stopped
+
+  # Ollama - Local LLM for AI agent
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - netportal
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # Comment out the deploy section above if you don't have GPU
+
+  # Netbox - IPAM and Network Documentation
+  netbox:
+    image: netboxcommunity/netbox:latest
+    depends_on:
+      - postgres-netbox
+      - redis
+    environment:
+      - SUPERUSER_NAME=admin
+      - SUPERUSER_EMAIL=admin@example.com
+      - SUPERUSER_PASSWORD=admin
+      - ALLOWED_HOSTS=*
+      - DB_HOST=postgres-netbox
+      - DB_NAME=netbox
+      - DB_USER=netbox
+      - DB_PASSWORD=netbox
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SECRET_KEY=r8OwDznj!!dci#P9ghmRfdu1Ysxm0AiPeDCQhKE+N_rClfWNj
+    ports:
+      - "8080:8080"
+    volumes:
+      - netbox_media:/opt/netbox/netbox/media
+      - netbox_reports:/opt/netbox/netbox/reports
+      - netbox_scripts:/opt/netbox/netbox/scripts
+    networks:
+      - netportal
+    restart: unless-stopped
+
+  postgres-netbox:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=netbox
+      - POSTGRES_USER=netbox
+      - POSTGRES_PASSWORD=netbox
+    volumes:
+      - postgres_netbox_data:/var/lib/postgresql/data
+    networks:
+      - netportal
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - netportal
+    restart: unless-stopped
+
+  # LibreNMS - Network Monitoring
+  librenms:
+    image: librenms/librenms:latest
+    hostname: librenms
+    depends_on:
+      - mysql
+      - redis-librenms
+    environment:
+      - DB_HOST=mysql
+      - DB_NAME=librenms
+      - DB_USER=librenms
+      - DB_PASSWORD=librenms
+      - TZ=UTC
+      - PUID=1000
+      - PGID=1000
+    ports:
+      - "8001:8000"
+    volumes:
+      - librenms_data:/data
+    networks:
+      - netportal
+    restart: unless-stopped
+
+  mysql:
+    image: mariadb:10.11
+    command:
+      - "mysqld"
+      - "--innodb-file-per-table=1"
+      - "--lower-case-table-names=0"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+    environment:
+      - TZ=UTC
+      - MYSQL_ROOT_PASSWORD=librenms
+      - MYSQL_DATABASE=librenms
+      - MYSQL_USER=librenms
+      - MYSQL_PASSWORD=librenms
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - netportal
+    restart: unless-stopped
+
+  redis-librenms:
+    image: redis:7-alpine
+    networks:
+      - netportal
+    restart: unless-stopped
+
+  # Netdata - Real-time Performance Monitoring
+  netdata:
+    image: netdata/netdata:latest
+    hostname: netdata
+    ports:
+      - "19999:19999"
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - netdataconfig:/etc/netdata
+      - netdatalib:/var/lib/netdata
+      - netdatacache:/var/cache/netdata
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - netportal
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  postgres_netbox_data:
+  mysql_data:
+  ollama_data:
+  netbox_media:
+  netbox_reports:
+  netbox_scripts:
+  librenms_data:
+  netdataconfig:
+  netdatalib:
+  netdatacache:
+
+networks:
+  netportal:
+    driver: bridge
