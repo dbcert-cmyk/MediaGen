@@ -75,7 +75,7 @@ services:
       - DB_PASSWORD=netbox
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - SECRET_KEY=r8OwDznj!!dci#P9ghmRfdu1Ysxm0AiPeDCQhKE+N_rClfWNj
+      - SECRET_KEY=+ykl2MZK1K!pzgSHIbD1I3Y1URtk*spe7*!x)$@7LWkRqgX@Do
     ports:
       - "8080:8080"
     volumes:
