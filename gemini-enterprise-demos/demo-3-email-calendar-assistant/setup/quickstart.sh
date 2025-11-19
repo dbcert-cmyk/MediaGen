@@ -125,7 +125,7 @@ log_success "Dependencies installed"
 
 # Step 7: Load Firestore mock data
 log_info "Step 7/10: Loading Firestore mock data..."
-cd "$SCRIPT_DIR/../../mock-data"
+cd "$SCRIPT_DIR/../mock-data"
 python3 firestore_schema.py $PROJECT_ID
 log_success "Firestore data loaded"
 

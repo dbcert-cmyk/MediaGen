@@ -151,12 +151,12 @@ log_success "BigQuery tables created"
 
 # Step 6: Load BigQuery mock data
 log_info "Step 6/15: Loading BigQuery mock data..."
-if [ -f "$SCRIPT_DIR/../../mock-data/bigquery_customers.json" ]; then
+if [ -f "$SCRIPT_DIR/../mock-data/bigquery_customers.json" ]; then
     bq load \
         --source_format=NEWLINE_DELIMITED_JSON \
         --project_id=$PROJECT_ID \
         customer_analytics.customers \
-        "$SCRIPT_DIR/../../mock-data/bigquery_customers.json"
+        "$SCRIPT_DIR/../mock-data/bigquery_customers.json"
     log_success "Mock data loaded to BigQuery"
 else
     log_warning "Mock data file not found, skipping data load"
