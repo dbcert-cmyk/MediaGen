@@ -85,13 +85,22 @@
                     <table class="device-table">
                         <thead>
                             <tr>
-                                <th>Status</th>
-                                <th>Name</th>
-                                <th>Type</th>
-                                <th>IP Address</th>
-                                <th>MAC Address</th>
-                                <th>Last Seen</th>
+                                <th onclick="sortTable(0)" style="cursor: pointer;">Status ▲▼</th>
+                                <th onclick="sortTable(1)" style="cursor: pointer;">Name ▲▼</th>
+                                <th onclick="sortTable(2)" style="cursor: pointer;">Type ▲▼</th>
+                                <th onclick="sortTable(3)" style="cursor: pointer;">IP Address ▲▼</th>
+                                <th onclick="sortTable(4)" style="cursor: pointer;">MAC Address ▲▼</th>
+                                <th onclick="sortTable(5)" style="cursor: pointer;">Last Seen ▲▼</th>
                                 <th>Actions</th>
+                            </tr>
+                            <tr class="filter-row">
+                                <th><input type="text" id="filter-status" placeholder="Filter..." onkeyup="filterTable()"></th>
+                                <th><input type="text" id="filter-name" placeholder="Filter..." onkeyup="filterTable()"></th>
+                                <th><input type="text" id="filter-type" placeholder="Filter..." onkeyup="filterTable()"></th>
+                                <th><input type="text" id="filter-ip" placeholder="Filter..." onkeyup="filterTable()"></th>
+                                <th><input type="text" id="filter-mac" placeholder="Filter..." onkeyup="filterTable()"></th>
+                                <th><input type="text" id="filter-lastseen" placeholder="Filter..." onkeyup="filterTable()"></th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody id="devices-table-body">
@@ -142,6 +151,7 @@
                         <label for="scan-type">Scan Type:</label>
                         <select id="scan-type">
                             <option value="discovery">Discovery (Ping Sweep)</option>
+                            <option value="smart">Smart Detection (Hostname + Type)</option>
                             <option value="port_scan">Port Scan</option>
                         </select>
                     </div>

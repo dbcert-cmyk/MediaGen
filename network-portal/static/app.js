@@ -448,6 +448,82 @@ async function checkSystemHealth() {
     }
 }
 
+// Table Sorting
+let sortDirection = {};
+
+function sortTable(columnIndex) {
+    const table = document.querySelector('.device-table');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    // Initialize sort direction for this column if not set
+    if (sortDirection[columnIndex] === undefined) {
+        sortDirection[columnIndex] = 'asc';
+    }
+
+    // Toggle sort direction
+    sortDirection[columnIndex] = sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+
+    // Sort rows
+    rows.sort((a, b) => {
+        const cellA = a.cells[columnIndex]?.textContent.trim() || '';
+        const cellB = b.cells[columnIndex]?.textContent.trim() || '';
+
+        // Try to compare as numbers first (for IP addresses and dates)
+        const numA = parseFloat(cellA);
+        const numB = parseFloat(cellB);
+
+        let comparison = 0;
+        if (!isNaN(numA) && !isNaN(numB)) {
+            comparison = numA - numB;
+        } else {
+            comparison = cellA.localeCompare(cellB);
+        }
+
+        return sortDirection[columnIndex] === 'asc' ? comparison : -comparison;
+    });
+
+    // Re-append sorted rows
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+// Table Filtering
+function filterTable() {
+    const filters = {
+        status: document.getElementById('filter-status')?.value.toLowerCase() || '',
+        name: document.getElementById('filter-name')?.value.toLowerCase() || '',
+        type: document.getElementById('filter-type')?.value.toLowerCase() || '',
+        ip: document.getElementById('filter-ip')?.value.toLowerCase() || '',
+        mac: document.getElementById('filter-mac')?.value.toLowerCase() || '',
+        lastseen: document.getElementById('filter-lastseen')?.value.toLowerCase() || ''
+    };
+
+    const table = document.querySelector('.device-table');
+    const tbody = table.querySelector('tbody');
+    const rows = tbody.querySelectorAll('tr');
+
+    rows.forEach(row => {
+        if (row.cells.length < 6) return; // Skip loading/empty rows
+
+        const status = row.cells[0].textContent.toLowerCase();
+        const name = row.cells[1].textContent.toLowerCase();
+        const type = row.cells[2].textContent.toLowerCase();
+        const ip = row.cells[3].textContent.toLowerCase();
+        const mac = row.cells[4].textContent.toLowerCase();
+        const lastseen = row.cells[5].textContent.toLowerCase();
+
+        const match =
+            status.includes(filters.status) &&
+            name.includes(filters.name) &&
+            type.includes(filters.type) &&
+            ip.includes(filters.ip) &&
+            mac.includes(filters.mac) &&
+            lastseen.includes(filters.lastseen);
+
+        row.style.display = match ? '' : 'none';
+    });
+}
+
 // Modal Functions
 function showAddDeviceModal() {
     document.getElementById('add-device-modal').classList.add('active');
