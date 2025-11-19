@@ -78,8 +78,8 @@ async def run_scan_task(scan_id: int, subnet: str, scan_type: str):
             scan.results = results
             scan.completed_at = datetime.utcnow()
 
-            # Auto-create devices from discovery
-            if scan_type == "discovery" and results.get("hosts"):
+            # Auto-create devices from discovery or smart scan
+            if scan_type in ["discovery", "smart"] and results.get("hosts"):
                 for host in results["hosts"]:
                     # Check if device already exists
                     existing = db.query(Device).filter(
@@ -88,8 +88,8 @@ async def run_scan_task(scan_id: int, subnet: str, scan_type: str):
 
                     if not existing:
                         device = Device(
-                            name=f"Auto-discovered-{host['ip']}",
-                            device_type="unknown",
+                            name=host.get("hostname") or f"Auto-discovered-{host['ip']}",
+                            device_type=host.get("device_type", "unknown"),
                             ip_address=host["ip"],
                             mac_address=host.get("mac"),
                             vendor=host.get("vendor"),
@@ -98,6 +98,18 @@ async def run_scan_task(scan_id: int, subnet: str, scan_type: str):
                             metadata={"discovered_by_scan": scan_id}
                         )
                         db.add(device)
+                    else:
+                        # Update existing device with new info
+                        if host.get("hostname"):
+                            existing.name = host["hostname"]
+                        if host.get("device_type"):
+                            existing.device_type = host["device_type"]
+                        if host.get("mac"):
+                            existing.mac_address = host["mac"]
+                        if host.get("vendor"):
+                            existing.vendor = host["vendor"]
+                        existing.status = "online"
+                        existing.last_seen = datetime.utcnow()
 
             db.commit()
     except Exception as e:
