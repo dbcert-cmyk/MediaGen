@@ -4,570 +4,443 @@ Part of Gemini Enterprise Demo #3
 """
 
 import os
-from google.adk import Agent, Tool
+from google.adk.agents import Agent
 from google.cloud import firestore
 from typing import List, Dict, Any
 import datetime
 
-
-class FollowUpAgent(Agent):
-    """
-    Agent that handles automated follow-ups:
-    - Post-meeting summaries and action items
-    - Email response reminders
-    - Task tracking and completion
-    - Proactive nudges for pending items
-    """
-
-    def __init__(self, project_id: str, location: str):
-        super().__init__(
-            name="followup_agent",
-            model="gemini-2.5-pro",
-            description="Automated follow-up and task management assistant",
-            instruction="You are a follow-up and task management agent. Help users create meeting summaries with action items, track task completion, send email reminders, and generate productivity reports. Use available tools to manage action items in Firestore and keep users on top of their commitments. Prioritize overdue items and provide proactive recommendations."
-        )
-        self.project_id = project_id
-        self.location = location
-        self.db = firestore.Client(project=project_id)
-
-    @Tool(
-        name="create_meeting_followup",
-        description="Generate post-meeting summary with action items"
-    )
-    def create_meeting_followup(
-        self,
-        meeting_id: str,
-        meeting_transcript: str = None,
-        send_to_participants: bool = True
-    ) -> Dict[str, Any]:
-        """
-        Creates comprehensive meeting follow-up.
-
-        Args:
-            meeting_id: Calendar event ID
-            meeting_transcript: Optional meeting transcript from Google Meet
-            send_to_participants: Whether to email participants
-
-        Returns:
-            Follow-up package with summary, action items, and next steps
-        """
-        # Get meeting details
-        meeting = self._get_meeting_details(meeting_id)
-
-        # Extract key information
-        if meeting_transcript:
-            summary = self._generate_summary_from_transcript(meeting_transcript)
-            action_items = self._extract_action_items(meeting_transcript)
-            decisions = self._extract_decisions(meeting_transcript)
-            key_points = self._extract_key_points(meeting_transcript)
-        else:
-            # If no transcript, use meeting description and title
-            summary = f"Meeting about {meeting['title']}"
-            action_items = []
-            decisions = []
-            key_points = []
-
-        followup = {
-            "meeting_id": meeting_id,
-            "meeting_title": meeting["title"],
-            "date": meeting["start"],
-            "participants": meeting["attendees"],
-            "summary": summary,
-            "key_discussion_points": key_points,
-            "decisions_made": decisions,
-            "action_items": action_items,
-            "next_meeting": self._suggest_next_meeting(meeting, action_items),
-            "attachments": []
-        }
-
-        # Create follow-up email draft
-        email_draft = self._format_followup_email(followup)
-        followup["email_draft"] = email_draft
-
-        # Store action items in Firestore for tracking
-        self._store_action_items(action_items, meeting_id)
-
-        # Schedule follow-up reminders
-        self._schedule_reminders(action_items)
-
-        return followup
-
-    @Tool(
-        name="track_action_items",
-        description="Track status of action items and send reminders"
-    )
-    def track_action_items(
-        self,
-        user_email: str,
-        timeframe: str = "all"
-    ) -> Dict[str, Any]:
-        """
-        Tracks all action items for a user.
-
-        Args:
-            user_email: User's email address
-            timeframe: "all", "overdue", "this_week", "today"
-
-        Returns:
-            Action items with status and recommendations
-        """
-        # Query Firestore for action items
-        items_ref = self.db.collection('follow_up_tasks')
-        query = items_ref.where('user_id', '==', user_email)
-
-        # Apply timeframe filter
-        now = datetime.datetime.now()
-        if timeframe == "overdue":
-            query = query.where('due_date', '<', now).where('status', '==', 'pending')
-        elif timeframe == "this_week":
-            week_end = now + datetime.timedelta(days=7)
-            query = query.where('due_date', '<=', week_end)
-        elif timeframe == "today":
-            today_end = now.replace(hour=23, minute=59, second=59)
-            query = query.where('due_date', '<=', today_end)
-
-        items = []
-        for doc in query.stream():
-            item = doc.to_dict()
-            item['id'] = doc.id
-            items.append(item)
-
-        # Categorize items
-        categorized = {
-            "overdue": [],
-            "due_today": [],
-            "due_this_week": [],
-            "upcoming": [],
-            "completed": []
-        }
-
-        today_end = now.replace(hour=23, minute=59, second=59)
-        week_end = now + datetime.timedelta(days=7)
-
-        for item in items:
-            due_date = item.get('due_date')
-
-            if item['status'] == 'completed':
-                categorized["completed"].append(item)
-            elif due_date < now:
-                categorized["overdue"].append(item)
-            elif due_date <= today_end:
-                categorized["due_today"].append(item)
-            elif due_date <= week_end:
-                categorized["due_this_week"].append(item)
-            else:
-                categorized["upcoming"].append(item)
-
-        # Generate recommendations
-        recommendations = []
-        if categorized["overdue"]:
-            recommendations.append(
-                f"⚠️ {len(categorized['overdue'])} overdue items - prioritize these"
-            )
-        if categorized["due_today"]:
-            recommendations.append(
-                f"📅 {len(categorized['due_today'])} items due today"
-            )
-
-        return {
-            "total_items": len(items),
-            "categorized": categorized,
-            "recommendations": recommendations
-        }
-
-    @Tool(
-        name="send_email_reminder",
-        description="Send reminder for unanswered emails"
-    )
-    def send_email_reminder(
-        self,
-        email_id: str,
-        days_since_received: int
-    ) -> Dict[str, Any]:
-        """
-        Creates reminder for unanswered email.
-
-        Args:
-            email_id: Email that needs response
-            days_since_received: How many days ago it was received
-
-        Returns:
-            Reminder details with suggested response
-        """
-        # Get email context
-        email = self._get_email_details(email_id)
-
-        # Determine urgency
-        if "urgent" in email["subject"].lower() or days_since_received >= 3:
-            urgency = "high"
-        elif days_since_received >= 1:
-            urgency = "medium"
-        else:
-            urgency = "low"
-
-        reminder = {
-            "email_id": email_id,
-            "from": email["from"],
-            "subject": email["subject"],
-            "received_date": email["date"],
-            "days_since_received": days_since_received,
-            "urgency": urgency,
-            "suggested_response": self._generate_response_suggestion(email),
-            "reminder_message": self._format_reminder_message(email, days_since_received)
-        }
-
-        return reminder
-
-    @Tool(
-        name="update_action_item",
-        description="Update status of an action item"
-    )
-    def update_action_item(
-        self,
-        item_id: str,
-        status: str,
-        notes: str = None
-    ) -> Dict[str, Any]:
-        """
-        Updates action item status.
-
-        Args:
-            item_id: Action item ID
-            status: New status ("pending", "in_progress", "completed", "blocked")
-            notes: Optional notes about the update
-
-        Returns:
-            Updated action item
-        """
-        # Update in Firestore
-        item_ref = self.db.collection('follow_up_tasks').document(item_id)
-
-        update_data = {
-            'status': status,
-            'updated_at': datetime.datetime.now()
-        }
-
-        if notes:
-            update_data['notes'] = notes
-
-        if status == "completed":
-            update_data['completed_at'] = datetime.datetime.now()
-
-        item_ref.update(update_data)
-
-        # Get updated item
-        updated = item_ref.get().to_dict()
-        updated['id'] = item_id
-
-        # Check if this was part of a larger workflow
-        related_items = self._get_related_action_items(item_id)
-
-        return {
-            "updated_item": updated,
-            "related_items": related_items,
-            "workflow_status": self._check_workflow_status(related_items)
-        }
-
-    @Tool(
-        name="generate_weekly_summary",
-        description="Create weekly summary of completed tasks and upcoming items"
-    )
-    def generate_weekly_summary(
-        self,
-        user_email: str
-    ) -> Dict[str, Any]:
-        """
-        Generates weekly summary report.
-
-        Args:
-            user_email: User's email address
-
-        Returns:
-            Weekly summary with accomplishments and next week preview
-        """
-        now = datetime.datetime.now()
-        week_start = now - datetime.timedelta(days=7)
-        week_end = now + datetime.timedelta(days=7)
-
-        # Get completed items from past week
-        completed_query = self.db.collection('follow_up_tasks')\
-            .where('user_id', '==', user_email)\
-            .where('status', '==', 'completed')\
-            .where('completed_at', '>=', week_start)
-
-        completed_items = [doc.to_dict() for doc in completed_query.stream()]
-
-        # Get upcoming items for next week
-        upcoming_query = self.db.collection('follow_up_tasks')\
-            .where('user_id', '==', user_email)\
-            .where('status', '==', 'pending')\
-            .where('due_date', '<=', week_end)
-
-        upcoming_items = [doc.to_dict() for doc in upcoming_query.stream()]
-
-        # Categorize accomplishments
-        accomplishments_by_category = self._categorize_items(completed_items)
-
-        summary = {
-            "week_of": week_start.strftime("%B %d, %Y"),
-            "accomplishments": {
-                "total_completed": len(completed_items),
-                "by_category": accomplishments_by_category,
-                "highlights": self._identify_highlights(completed_items)
-            },
-            "next_week_preview": {
-                "total_upcoming": len(upcoming_items),
-                "by_priority": self._group_by_priority(upcoming_items),
-                "recommended_focus": self._recommend_focus_areas(upcoming_items)
-            },
-            "productivity_metrics": {
-                "completion_rate": self._calculate_completion_rate(user_email, week_start),
-                "average_time_to_complete": self._calculate_avg_completion_time(completed_items),
-                "on_time_percentage": self._calculate_on_time_percentage(completed_items)
-            }
-        }
-
-        return summary
-
-    # Helper methods
-
-    def _get_meeting_details(self, meeting_id: str) -> Dict[str, Any]:
-        """Retrieve meeting details"""
-        # Mock data for demo
-        return {
-            "id": meeting_id,
-            "title": "Sprint Planning",
-            "start": "2025-11-20T09:00:00-08:00",
-            "attendees": ["demo-user@company.com", "team@company.com"],
-            "description": "Plan next sprint"
-        }
-
-    def _generate_summary_from_transcript(self, transcript: str) -> str:
-        """Generate meeting summary from transcript"""
-        prompt = f"""
-        Summarize this meeting transcript in 2-3 sentences:
-
-        {transcript[:2000]}  # Limit for context
-
-        Focus on:
-        - Main topics discussed
-        - Key outcomes
-        - Overall sentiment
-        """
-
-        return self.generate_content(prompt)
-
-    def _extract_action_items(self, transcript: str) -> List[Dict]:
-        """Extract action items from transcript"""
-        prompt = f"""
-        Extract all action items from this meeting transcript.
-
-        For each action item, identify:
-        - What needs to be done
-        - Who is responsible (if mentioned)
-        - When it's due (if mentioned)
-
-        Transcript:
-        {transcript[:2000]}
-
-        Return as a structured list.
-        """
-
-        response = self.generate_content(prompt)
-
-        # Parse response into structured action items
-        # In production, use more sophisticated parsing
-        items = []
-        for line in response.strip().split('\n'):
-            if line.strip():
-                items.append({
-                    "description": line.strip(),
-                    "owner": "TBD",
-                    "due_date": datetime.datetime.now() + datetime.timedelta(days=7),
-                    "status": "pending"
-                })
-
-        return items
-
-    def _extract_decisions(self, transcript: str) -> List[str]:
-        """Extract decisions made during meeting"""
-        prompt = f"""
-        Extract all decisions that were made in this meeting.
-
-        Transcript:
-        {transcript[:2000]}
-
-        Return as a bulleted list of clear decision statements.
-        """
-
-        response = self.generate_content(prompt)
-        return [line.strip() for line in response.strip().split('\n') if line.strip()]
-
-    def _extract_key_points(self, transcript: str) -> List[str]:
-        """Extract key discussion points"""
-        prompt = f"""
-        Extract the 5-7 most important discussion points from this meeting.
-
-        Transcript:
-        {transcript[:2000]}
-
-        Return as a bulleted list.
-        """
-
-        response = self.generate_content(prompt)
-        return [line.strip() for line in response.strip().split('\n') if line.strip()]
-
-    def _suggest_next_meeting(self, meeting: Dict, action_items: List[Dict]) -> Dict:
-        """Suggest when next meeting should be scheduled"""
-        if action_items:
-            # Schedule next meeting after action items are due
-            latest_due = max([item['due_date'] for item in action_items])
-            next_meeting_date = latest_due + datetime.timedelta(days=7)
-        else:
-            # Default to 2 weeks
-            next_meeting_date = datetime.datetime.now() + datetime.timedelta(days=14)
-
-        return {
-            "suggested_date": next_meeting_date.isoformat(),
-            "reason": "Follow up on action items" if action_items else "Regular sync",
-            "duration_minutes": meeting.get("duration", 30)
-        }
-
-    def _format_followup_email(self, followup: Dict) -> str:
-        """Format follow-up as email"""
-        email = f"""
-Subject: Meeting Summary: {followup['meeting_title']}
-
-Hi everyone,
-
-Thanks for joining today's meeting. Here's a summary:
-
-SUMMARY:
-{followup['summary']}
-
-KEY DISCUSSION POINTS:
-{chr(10).join(f'• {point}' for point in followup['key_discussion_points'][:5])}
-
-DECISIONS MADE:
-{chr(10).join(f'• {decision}' for decision in followup['decisions_made'][:5])}
-
-ACTION ITEMS:
-{chr(10).join(f"• {item['description']} (Owner: {item.get('owner', 'TBD')}, Due: {item.get('due_date', 'TBD')})" for item in followup['action_items'][:10])}
-
-NEXT MEETING:
-{followup['next_meeting'].get('suggested_date', 'TBD')} - {followup['next_meeting'].get('reason', '')}
-
-Please let me know if I missed anything or if any action items need clarification.
-
-Best,
-[Auto-generated by Meeting Follow-up Agent]
-"""
-        return email
-
-    def _store_action_items(self, items: List[Dict], meeting_id: str):
-        """Store action items in Firestore"""
-        for item in items:
-            self.db.collection('follow_up_tasks').add({
-                **item,
-                'related_meeting_id': meeting_id,
-                'created_at': datetime.datetime.now()
-            })
-
-    def _schedule_reminders(self, items: List[Dict]):
-        """Schedule reminders for action items"""
-        # In production, schedule actual calendar reminders
-        pass
-
-    def _get_email_details(self, email_id: str) -> Dict:
-        """Get email details"""
-        return {
-            "id": email_id,
-            "from": "sender@example.com",
-            "subject": "Question about project",
-            "date": "2025-11-15",
-            "body": "..."
-        }
-
-    def _generate_response_suggestion(self, email: Dict) -> str:
-        """Generate suggested email response"""
-        prompt = f"""
-        Draft a brief response to this email:
-
-        From: {email['from']}
-        Subject: {email['subject']}
-
-        Keep it professional and concise.
-        """
-
-        return self.generate_content(prompt)
-
-    def _format_reminder_message(self, email: Dict, days: int) -> str:
-        """Format reminder message"""
-        return f"⏰ Reminder: Email from {email['from']} about '{email['subject']}' hasn't been answered in {days} days."
-
-    def _get_related_action_items(self, item_id: str) -> List[Dict]:
-        """Get related action items"""
-        return []
-
-    def _check_workflow_status(self, items: List[Dict]) -> str:
-        """Check overall workflow completion status"""
-        if not items:
-            return "No related items"
-
-        completed = len([i for i in items if i.get('status') == 'completed'])
-        total = len(items)
-
-        if completed == total:
-            return f"Workflow complete ({completed}/{total})"
-        else:
-            return f"In progress ({completed}/{total} completed)"
-
-    def _categorize_items(self, items: List[Dict]) -> Dict:
-        """Categorize items by type"""
-        categories = {}
-        for item in items:
-            category = item.get('task_type', 'other')
-            if category not in categories:
-                categories[category] = []
-            categories[category].append(item)
-        return categories
-
-    def _identify_highlights(self, items: List[Dict]) -> List[str]:
-        """Identify highlight accomplishments"""
-        return [item['description'] for item in items[:3]]
-
-    def _group_by_priority(self, items: List[Dict]) -> Dict:
-        """Group items by priority"""
-        grouped = {"high": [], "medium": [], "low": []}
-        for item in items:
-            priority = item.get('priority', 'medium')
-            grouped[priority].append(item)
-        return grouped
-
-    def _recommend_focus_areas(self, items: List[Dict]) -> List[str]:
-        """Recommend focus areas"""
-        return ["Complete high-priority items first", "Block focus time for complex tasks"]
-
-    def _calculate_completion_rate(self, user_email: str, since_date: datetime.datetime) -> float:
-        """Calculate completion rate"""
-        return 85.0  # Mock value
-
-    def _calculate_avg_completion_time(self, items: List[Dict]) -> str:
-        """Calculate average completion time"""
-        return "2.5 days"  # Mock value
-
-    def _calculate_on_time_percentage(self, items: List[Dict]) -> float:
-        """Calculate on-time completion percentage"""
-        return 78.0  # Mock value
-
-
-# Agent registration
+# Configuration
 PROJECT_ID = os.environ.get("PROJECT_ID", "ai-testing-458318")
 LOCATION = os.environ.get("LOCATION", "us-central1")
 
-def create_agent(project_id: str, location: str = "us-central1") -> FollowUpAgent:
-    """Factory function to create and configure the Follow-up Agent"""
-    return FollowUpAgent(project_id, location)
 
-# Export root_agent for ADK deployment
-root_agent = create_agent(PROJECT_ID, LOCATION)
+# Helper functions
+def _get_firestore_client():
+    """Get Firestore client"""
+    return firestore.Client(project=PROJECT_ID)
+
+
+def _extract_action_items(text: str) -> List[Dict[str, Any]]:
+    """Extract action items from text"""
+    # Simple extraction for demo
+    # In production, use NLP/LLM for better extraction
+    action_items = []
+    lines = text.split('\n')
+
+    for line in lines:
+        line_lower = line.lower().strip()
+        if any(indicator in line_lower for indicator in ['todo:', 'action:', '[ ]', 'task:']):
+            action_items.append({
+                "description": line.strip(),
+                "status": "pending",
+                "created_at": datetime.datetime.now().isoformat()
+            })
+
+    return action_items
+
+
+def _get_meeting_participants(meeting_id: str) -> List[str]:
+    """Get meeting participants"""
+    # In production, query Calendar data store
+    return ["demo-user@company.com", "participant@company.com"]
+
+
+def _get_email_thread(email_id: str) -> Dict[str, Any]:
+    """Get email thread context"""
+    # In production, query Gmail API
+    return {
+        "id": email_id,
+        "subject": "Project Update",
+        "participants": ["demo-user@company.com", "teammate@company.com"]
+    }
+
+
+def _calculate_urgency_score(item: Dict) -> int:
+    """Calculate urgency score for an action item"""
+    score = 0
+
+    # Check deadline
+    if item.get("deadline"):
+        try:
+            deadline = datetime.datetime.fromisoformat(item["deadline"])
+            days_until = (deadline - datetime.datetime.now()).days
+            if days_until < 0:
+                score += 100  # Overdue
+            elif days_until < 1:
+                score += 80   # Due today
+            elif days_until < 3:
+                score += 50   # Due soon
+            elif days_until < 7:
+                score += 20   # Due this week
+        except:
+            pass
+
+    # Check description for urgency indicators
+    description_lower = item.get("description", "").lower()
+    if any(kw in description_lower for kw in ["urgent", "critical", "asap", "emergency"]):
+        score += 30
+    elif any(kw in description_lower for kw in ["important", "priority", "needed"]):
+        score += 15
+
+    return score
+
+
+def _generate_summary_template(meeting_id: str, key_points: List[str]) -> str:
+    """Generate meeting summary template"""
+    return f"""
+Meeting Summary for {meeting_id}
+
+Key Discussion Points:
+{chr(10).join(f'- {point}' for point in key_points)}
+
+Action Items:
+[To be filled by agent]
+
+Next Steps:
+[To be filled by agent]
+
+Follow-up Date: [To be determined]
+"""
+
+
+# Tool functions - These are automatically wrapped by ADK as FunctionTools
+def create_meeting_followup(
+    meeting_id: str,
+    meeting_transcript: str = None,
+    send_to_participants: bool = True
+) -> Dict[str, Any]:
+    """
+    Generate post-meeting summary with action items.
+
+    Args:
+        meeting_id: Calendar event ID
+        meeting_transcript: Optional meeting transcript
+        send_to_participants: Whether to email participants
+
+    Returns:
+        Meeting follow-up package
+    """
+    db = _get_firestore_client()
+
+    # Extract action items from transcript
+    action_items = []
+    if meeting_transcript:
+        action_items = _extract_action_items(meeting_transcript)
+
+    # Get meeting participants
+    participants = _get_meeting_participants(meeting_id)
+
+    # Create follow-up document
+    followup = {
+        "meeting_id": meeting_id,
+        "created_at": datetime.datetime.now().isoformat(),
+        "summary": _generate_summary_template(meeting_id, []),
+        "action_items": action_items,
+        "participants": participants,
+        "status": "draft"
+    }
+
+    # Save to Firestore
+    doc_ref = db.collection("meeting_followups").add(followup)
+
+    # Save action items
+    for item in action_items:
+        item["meeting_id"] = meeting_id
+        item["assigned_to"] = participants[0] if participants else None
+        db.collection("follow_up_tasks").add(item)
+
+    return {
+        "followup_id": doc_ref[1].id,
+        "meeting_id": meeting_id,
+        "action_items_count": len(action_items),
+        "participants_count": len(participants),
+        "will_send_email": send_to_participants
+    }
+
+
+def track_action_item(
+    description: str,
+    assigned_to: str,
+    deadline: str = None,
+    priority: str = "medium",
+    source: str = "manual"
+) -> Dict[str, Any]:
+    """
+    Create and track an action item.
+
+    Args:
+        description: Action item description
+        assigned_to: Email of person responsible
+        deadline: ISO format deadline (optional)
+        priority: "high", "medium", "low"
+        source: "meeting", "email", "manual"
+
+    Returns:
+        Created action item details
+    """
+    db = _get_firestore_client()
+
+    action_item = {
+        "description": description,
+        "assigned_to": assigned_to,
+        "deadline": deadline,
+        "priority": priority,
+        "source": source,
+        "status": "pending",
+        "created_at": datetime.datetime.now().isoformat(),
+        "reminder_count": 0
+    }
+
+    # Calculate urgency score
+    action_item["urgency_score"] = _calculate_urgency_score(action_item)
+
+    # Save to Firestore
+    doc_ref = db.collection("follow_up_tasks").add(action_item)
+
+    return {
+        "item_id": doc_ref[1].id,
+        "description": description,
+        "assigned_to": assigned_to,
+        "deadline": deadline,
+        "urgency_score": action_item["urgency_score"]
+    }
+
+
+def get_overdue_tasks(
+    assigned_to: str = None,
+    days_overdue: int = None
+) -> List[Dict[str, Any]]:
+    """
+    Get list of overdue action items.
+
+    Args:
+        assigned_to: Filter by assignee (optional)
+        days_overdue: Minimum days overdue (optional)
+
+    Returns:
+        List of overdue action items
+    """
+    db = _get_firestore_client()
+
+    # Query pending tasks
+    query = db.collection("follow_up_tasks").where("status", "==", "pending")
+
+    if assigned_to:
+        query = query.where("assigned_to", "==", assigned_to)
+
+    overdue_items = []
+    now = datetime.datetime.now()
+
+    for doc in query.stream():
+        item = doc.to_dict()
+        item["id"] = doc.id
+
+        # Check if overdue
+        if item.get("deadline"):
+            try:
+                deadline = datetime.datetime.fromisoformat(item["deadline"])
+                if deadline < now:
+                    item["days_overdue"] = (now - deadline).days
+
+                    # Apply days_overdue filter
+                    if days_overdue is None or item["days_overdue"] >= days_overdue:
+                        overdue_items.append(item)
+            except:
+                pass
+
+    # Sort by urgency
+    overdue_items.sort(key=lambda x: x.get("urgency_score", 0), reverse=True)
+
+    return overdue_items
+
+
+def send_reminder(
+    task_id: str,
+    reminder_type: str = "gentle",
+    custom_message: str = None
+) -> Dict[str, Any]:
+    """
+    Send reminder for an action item.
+
+    Args:
+        task_id: ID of the action item
+        reminder_type: "gentle", "firm", "urgent"
+        custom_message: Optional custom message
+
+    Returns:
+        Reminder details
+    """
+    db = _get_firestore_client()
+
+    # Get task
+    doc = db.collection("follow_up_tasks").document(task_id).get()
+    if not doc.exists:
+        return {"error": "Task not found"}
+
+    task = doc.to_dict()
+
+    # Generate reminder message
+    if custom_message:
+        message = custom_message
+    else:
+        if reminder_type == "gentle":
+            tone = "Just a friendly reminder about this action item."
+        elif reminder_type == "firm":
+            tone = "This item requires your attention."
+        else:  # urgent
+            tone = "URGENT: This item is significantly overdue."
+
+        message = f"""
+{tone}
+
+Action Item: {task.get('description', 'N/A')}
+Deadline: {task.get('deadline', 'No deadline')}
+Priority: {task.get('priority', 'medium')}
+"""
+
+    # Log reminder
+    db.collection("follow_up_tasks").document(task_id).update({
+        "last_reminder": datetime.datetime.now().isoformat(),
+        "reminder_count": firestore.Increment(1)
+    })
+
+    return {
+        "task_id": task_id,
+        "reminder_type": reminder_type,
+        "message": message,
+        "sent_to": task.get("assigned_to", "unassigned"),
+        "sent_at": datetime.datetime.now().isoformat()
+    }
+
+
+def generate_productivity_report(
+    user_email: str,
+    time_range: str = "last_7_days"
+) -> Dict[str, Any]:
+    """
+    Generate productivity report for a user.
+
+    Args:
+        user_email: User's email address
+        time_range: "last_7_days", "last_30_days", "last_quarter"
+
+    Returns:
+        Productivity analytics
+    """
+    db = _get_firestore_client()
+
+    # Calculate date range
+    if time_range == "last_7_days":
+        start_date = datetime.datetime.now() - datetime.timedelta(days=7)
+    elif time_range == "last_30_days":
+        start_date = datetime.datetime.now() - datetime.timedelta(days=30)
+    else:  # last_quarter
+        start_date = datetime.datetime.now() - datetime.timedelta(days=90)
+
+    # Query tasks
+    query = db.collection("follow_up_tasks").where("assigned_to", "==", user_email)
+
+    total_tasks = 0
+    completed_tasks = 0
+    overdue_tasks = 0
+    avg_completion_time = []
+
+    for doc in query.stream():
+        task = doc.to_dict()
+
+        # Check if in time range
+        try:
+            created_at = datetime.datetime.fromisoformat(task.get("created_at", ""))
+            if created_at < start_date:
+                continue
+        except:
+            continue
+
+        total_tasks += 1
+
+        if task.get("status") == "completed":
+            completed_tasks += 1
+
+            # Calculate completion time
+            try:
+                completed_at = datetime.datetime.fromisoformat(task.get("completed_at", ""))
+                completion_time = (completed_at - created_at).days
+                avg_completion_time.append(completion_time)
+            except:
+                pass
+
+        # Check if overdue
+        if task.get("deadline") and task.get("status") != "completed":
+            try:
+                deadline = datetime.datetime.fromisoformat(task["deadline"])
+                if deadline < datetime.datetime.now():
+                    overdue_tasks += 1
+            except:
+                pass
+
+    report = {
+        "user": user_email,
+        "time_range": time_range,
+        "total_tasks": total_tasks,
+        "completed_tasks": completed_tasks,
+        "pending_tasks": total_tasks - completed_tasks,
+        "overdue_tasks": overdue_tasks,
+        "completion_rate": (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0,
+        "avg_completion_days": sum(avg_completion_time) / len(avg_completion_time) if avg_completion_time else 0,
+        "recommendations": []
+    }
+
+    # Generate recommendations
+    if report["completion_rate"] < 60:
+        report["recommendations"].append("Completion rate is below 60%. Consider reviewing task priorities and deadlines.")
+
+    if overdue_tasks > total_tasks * 0.2:
+        report["recommendations"].append("More than 20% of tasks are overdue. Consider rescheduling or delegating.")
+
+    if report["avg_completion_days"] > 7:
+        report["recommendations"].append("Tasks are taking longer than a week to complete. Break down into smaller items.")
+
+    return report
+
+
+def check_email_follow_ups(
+    days_without_response: int = 3,
+    email_filter: str = None
+) -> List[Dict[str, Any]]:
+    """
+    Check for emails that need follow-up.
+
+    Args:
+        days_without_response: Days since email was sent
+        email_filter: Optional email filter (e.g., "from:client@company.com")
+
+    Returns:
+        List of emails needing follow-up
+    """
+    # In production, query Gmail data store for sent emails
+    # Check if responses were received
+
+    # For demo, return mock data
+    follow_ups_needed = [
+        {
+            "email_id": "demo-email-1",
+            "subject": "Project proposal",
+            "sent_to": "client@prospectcorp.com",
+            "sent_at": (datetime.datetime.now() - datetime.timedelta(days=5)).isoformat(),
+            "days_since_sent": 5,
+            "has_response": False,
+            "suggested_action": "Send polite follow-up"
+        }
+    ]
+
+    return follow_ups_needed
+
+
+# Create the agent - ADK automatically wraps functions as FunctionTools
+root_agent = Agent(
+    name="followup_agent",
+    model="gemini-2.5-pro",
+    instruction="You are a follow-up and task management agent. Help users create meeting summaries with action items, track task completion, send email reminders, and generate productivity reports. Use available tools to manage action items in Firestore and keep users on top of their commitments. Prioritize overdue items and provide proactive recommendations.",
+    description="Automated follow-up and task management assistant",
+    tools=[create_meeting_followup, track_action_item, get_overdue_tasks, send_reminder, generate_productivity_report, check_email_follow_ups]
+)
