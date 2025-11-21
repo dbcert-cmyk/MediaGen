@@ -21,7 +21,7 @@ class FollowUpAgent(Agent):
 
     def __init__(self, project_id: str, location: str):
         super().__init__(
-            name="followup-agent",
+            name="followup_agent",
             model="gemini-2.5-pro",
             description="Automated follow-up and task management assistant",
             instruction="You are a follow-up and task management agent. Help users create meeting summaries with action items, track task completion, send email reminders, and generate productivity reports. Use available tools to manage action items in Firestore and keep users on top of their commitments. Prioritize overdue items and provide proactive recommendations."

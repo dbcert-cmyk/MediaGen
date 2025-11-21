@@ -22,7 +22,7 @@ class MeetingPrepAgent(Agent):
 
     def __init__(self, project_id: str, location: str):
         super().__init__(
-            name="meeting-prep-agent",
+            name="meeting_prep_agent",
             model="gemini-2.5-pro",
             description="Intelligent meeting preparation assistant",
             instruction="You are a meeting preparation agent. Help users prepare for upcoming meetings by gathering related emails and documents, creating agendas, generating talking points, and providing participant context. Use available tools to search across Gmail, Calendar, and Drive data stores. Ensure users are well-prepared and confident for every meeting."

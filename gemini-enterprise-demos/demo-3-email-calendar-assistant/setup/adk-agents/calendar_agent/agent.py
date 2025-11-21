@@ -22,7 +22,7 @@ class CalendarAgent(Agent):
 
     def __init__(self, project_id: str, location: str):
         super().__init__(
-            name="calendar-agent",
+            name="calendar_agent",
             model="gemini-2.5-pro",
             description="Intelligent calendar assistant for meeting management",
             instruction="You are a calendar management agent. Help users find optimal meeting times, schedule events, optimize their calendar, resolve conflicts, and get daily schedule briefings. Use available tools to query calendar data and coordinate with multiple attendees. Prioritize work-life balance and efficient time management."

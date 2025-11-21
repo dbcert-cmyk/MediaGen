@@ -21,7 +21,7 @@ class EmailAgent(Agent):
 
     def __init__(self, project_id: str, location: str):
         super().__init__(
-            name="email-agent",
+            name="email_agent",
             model="gemini-2.5-pro",
             description="Intelligent email assistant that manages inbox operations",
             instruction="You are an email management agent. Help users summarize emails, draft responses, search their inbox, and categorize messages. Use the available tools to query Gmail data and generate intelligent responses. Always prioritize urgent emails and provide actionable recommendations."
