@@ -3,6 +3,7 @@ Calendar Agent - Handles meeting scheduling and calendar optimization
 Part of Gemini Enterprise Demo #3
 """
 
+import os
 from google.adk import Agent, Tool
 from google.cloud import discoveryengine_v1
 from typing import List, Dict, Any, Optional
@@ -23,7 +24,8 @@ class CalendarAgent(Agent):
         super().__init__(
             name="calendar-agent",
             model="gemini-2.5-pro",
-            description="Intelligent calendar assistant for meeting management"
+            description="Intelligent calendar assistant for meeting management",
+            instruction="You are a calendar management agent. Help users find optimal meeting times, schedule events, optimize their calendar, resolve conflicts, and get daily schedule briefings. Use available tools to query calendar data and coordinate with multiple attendees. Prioritize work-life balance and efficient time management."
         )
         self.project_id = project_id
         self.location = location
@@ -449,6 +451,12 @@ class CalendarAgent(Agent):
 
 
 # Agent registration
+PROJECT_ID = os.environ.get("PROJECT_ID", "ai-testing-458318")
+LOCATION = os.environ.get("LOCATION", "us-central1")
+
 def create_agent(project_id: str, location: str = "us-central1") -> CalendarAgent:
     """Factory function to create and configure the Calendar Agent"""
     return CalendarAgent(project_id, location)
+
+# Export root_agent for ADK deployment
+root_agent = create_agent(PROJECT_ID, LOCATION)

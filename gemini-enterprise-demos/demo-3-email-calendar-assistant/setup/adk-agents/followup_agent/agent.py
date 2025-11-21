@@ -3,6 +3,7 @@ Follow-up Agent - Automates post-meeting and post-email follow-ups
 Part of Gemini Enterprise Demo #3
 """
 
+import os
 from google.adk import Agent, Tool
 from google.cloud import firestore
 from typing import List, Dict, Any
@@ -22,7 +23,8 @@ class FollowUpAgent(Agent):
         super().__init__(
             name="followup-agent",
             model="gemini-2.5-pro",
-            description="Automated follow-up and task management assistant"
+            description="Automated follow-up and task management assistant",
+            instruction="You are a follow-up and task management agent. Help users create meeting summaries with action items, track task completion, send email reminders, and generate productivity reports. Use available tools to manage action items in Firestore and keep users on top of their commitments. Prioritize overdue items and provide proactive recommendations."
         )
         self.project_id = project_id
         self.location = location
@@ -560,6 +562,12 @@ Best,
 
 
 # Agent registration
+PROJECT_ID = os.environ.get("PROJECT_ID", "ai-testing-458318")
+LOCATION = os.environ.get("LOCATION", "us-central1")
+
 def create_agent(project_id: str, location: str = "us-central1") -> FollowUpAgent:
     """Factory function to create and configure the Follow-up Agent"""
     return FollowUpAgent(project_id, location)
+
+# Export root_agent for ADK deployment
+root_agent = create_agent(PROJECT_ID, LOCATION)

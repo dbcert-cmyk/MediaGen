@@ -3,6 +3,7 @@ Email Agent - Handles email summarization, drafting, and management
 Part of Gemini Enterprise Demo #3
 """
 
+import os
 from google.adk import Agent, Tool
 from google.cloud import discoveryengine_v1
 from typing import List, Dict, Any
@@ -22,7 +23,8 @@ class EmailAgent(Agent):
         super().__init__(
             name="email-agent",
             model="gemini-2.5-pro",
-            description="Intelligent email assistant that manages inbox operations"
+            description="Intelligent email assistant that manages inbox operations",
+            instruction="You are an email management agent. Help users summarize emails, draft responses, search their inbox, and categorize messages. Use the available tools to query Gmail data and generate intelligent responses. Always prioritize urgent emails and provide actionable recommendations."
         )
         self.project_id = project_id
         self.location = location
@@ -289,6 +291,12 @@ class EmailAgent(Agent):
 
 
 # Agent registration
+PROJECT_ID = os.environ.get("PROJECT_ID", "ai-testing-458318")
+LOCATION = os.environ.get("LOCATION", "us-central1")
+
 def create_agent(project_id: str, location: str = "us-central1") -> EmailAgent:
     """Factory function to create and configure the Email Agent"""
     return EmailAgent(project_id, location)
+
+# Export root_agent for ADK deployment
+root_agent = create_agent(PROJECT_ID, LOCATION)

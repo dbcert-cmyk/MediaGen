@@ -3,6 +3,7 @@ Meeting Prep Agent - Automatically prepares for upcoming meetings
 Part of Gemini Enterprise Demo #3
 """
 
+import os
 from google.adk import Agent, Tool
 from google.cloud import discoveryengine_v1, storage
 from typing import List, Dict, Any
@@ -23,7 +24,8 @@ class MeetingPrepAgent(Agent):
         super().__init__(
             name="meeting-prep-agent",
             model="gemini-2.5-pro",
-            description="Intelligent meeting preparation assistant"
+            description="Intelligent meeting preparation assistant",
+            instruction="You are a meeting preparation agent. Help users prepare for upcoming meetings by gathering related emails and documents, creating agendas, generating talking points, and providing participant context. Use available tools to search across Gmail, Calendar, and Drive data stores. Ensure users are well-prepared and confident for every meeting."
         )
         self.project_id = project_id
         self.location = location
@@ -428,6 +430,12 @@ class MeetingPrepAgent(Agent):
 
 
 # Agent registration
+PROJECT_ID = os.environ.get("PROJECT_ID", "ai-testing-458318")
+LOCATION = os.environ.get("LOCATION", "us-central1")
+
 def create_agent(project_id: str, location: str = "us-central1") -> MeetingPrepAgent:
     """Factory function to create and configure the Meeting Prep Agent"""
     return MeetingPrepAgent(project_id, location)
+
+# Export root_agent for ADK deployment
+root_agent = create_agent(PROJECT_ID, LOCATION)
