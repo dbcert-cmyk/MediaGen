@@ -1,29 +1,34 @@
 #!/usr/bin/env python3
 """
 Deploy ADK agents to Vertex AI Agent Engine
-Usage: python deploy_agent.py <agent_name> [--staging-bucket BUCKET]
+Usage: python deploy_agent.py <agent_name> --staging-bucket gs://BUCKET
 """
 
 import sys
 import os
 import argparse
 from pathlib import Path
-import vertexai
-from vertexai.preview import reasoning_engines
+import importlib.util
 
 # Configuration
 PROJECT_ID = os.environ.get("PROJECT_ID", "ai-testing-458318")
 LOCATION = os.environ.get("LOCATION", "us-central1")
 
 
-def deploy_agent(agent_name: str, staging_bucket: str = None):
+def deploy_agent(agent_name: str, staging_bucket: str):
     """
-    Deploy an ADK agent to Vertex AI Agent Engine.
+    Deploy an ADK agent to Vertex AI Agent Engine using the SDK.
 
     Args:
         agent_name: Name of the agent to deploy (email_agent, calendar_agent, etc.)
-        staging_bucket: GCS bucket for staging (optional)
+        staging_bucket: GCS bucket for staging (gs://bucket-name)
     """
+    if not staging_bucket:
+        print("❌ Error: --staging-bucket is required")
+        print("\nCreate a GCS bucket first:")
+        print(f"  gsutil mb -p {PROJECT_ID} -l {LOCATION} gs://YOUR_BUCKET_NAME")
+        sys.exit(1)
+
     print(f"\n{'='*60}")
     print(f"Deploying {agent_name} to Vertex AI Agent Engine")
     print(f"{'='*60}\n")
@@ -37,10 +42,27 @@ def deploy_agent(agent_name: str, staging_bucket: str = None):
         sys.exit(1)
 
     print(f"✓ Found agent file: {agent_file}")
+    print(f"✓ Project: {PROJECT_ID}")
+    print(f"✓ Location: {LOCATION}")
+    print(f"✓ Staging bucket: {staging_bucket}")
+
+    # Import Vertex AI SDK
+    try:
+        import vertexai
+        from vertexai.preview import agent_engines
+        print(f"✓ Imported Vertex AI SDK")
+    except ImportError as e:
+        print(f"❌ Error: Missing required package")
+        print(f"\nInstall with:")
+        print(f"  pip install google-cloud-aiplatform[agent_engines,adk]>=1.112")
+        sys.exit(1)
 
     # Initialize Vertex AI
-    print(f"✓ Initializing Vertex AI (project={PROJECT_ID}, location={LOCATION})")
-    vertexai.init(project=PROJECT_ID, location=LOCATION)
+    print(f"\n✓ Initializing Vertex AI client...")
+    client = vertexai.Client(
+        project=PROJECT_ID,
+        location=LOCATION
+    )
 
     # Load the agent module
     print(f"✓ Loading agent module...")
@@ -48,7 +70,6 @@ def deploy_agent(agent_name: str, staging_bucket: str = None):
 
     try:
         # Import the agent module
-        import importlib.util
         spec = importlib.util.spec_from_file_location(agent_name, agent_file)
         agent_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(agent_module)
@@ -70,17 +91,14 @@ def deploy_agent(agent_name: str, staging_bucket: str = None):
     # Prepare deployment config
     config = {
         "requirements": [
-            "google-cloud-aiplatform[agent_engines,adk]>=1.111",
+            "google-cloud-aiplatform[agent_engines,adk]>=1.112",
             "google-cloud-discoveryengine",
             "google-cloud-firestore",
             "google-cloud-storage",
             "python-dateutil"
-        ]
+        ],
+        "staging_bucket": staging_bucket
     }
-
-    if staging_bucket:
-        config["staging_bucket"] = staging_bucket
-        print(f"✓ Using staging bucket: {staging_bucket}")
 
     # Deploy to Agent Engine
     print(f"\n{'='*60}")
@@ -88,12 +106,10 @@ def deploy_agent(agent_name: str, staging_bucket: str = None):
     print(f"{'='*60}\n")
 
     try:
-        # Create reasoning engine (Agent Engine backend)
-        remote_agent = reasoning_engines.ReasoningEngine.create(
-            root_agent,
-            requirements=config["requirements"],
-            display_name=agent_name,
-            description=f"Deployed ADK agent: {agent_name}"
+        # Create agent using agent_engines.create() - CORRECT API
+        remote_agent = client.agent_engines.create(
+            agent=root_agent,
+            config=config
         )
 
         print(f"\n{'='*60}")
@@ -101,12 +117,14 @@ def deploy_agent(agent_name: str, staging_bucket: str = None):
         print(f"{'='*60}\n")
         print(f"Agent Name: {agent_name}")
         print(f"Resource Name: {remote_agent.resource_name}")
-        print(f"Display Name: {remote_agent.display_name}")
+
+        if hasattr(remote_agent, 'display_name'):
+            print(f"Display Name: {remote_agent.display_name}")
+
         print(f"\nTo query this agent:")
-        print(f"  resource_name = '{remote_agent.resource_name}'")
         print(f"  response = remote_agent.query(input='Your query here')")
         print(f"\nView in console:")
-        print(f"  https://console.cloud.google.com/vertex-ai/reasoning-engines?project={PROJECT_ID}")
+        print(f"  https://console.cloud.google.com/vertex-ai/agent-engine?project={PROJECT_ID}")
 
         return remote_agent
 
@@ -117,6 +135,14 @@ def deploy_agent(agent_name: str, staging_bucket: str = None):
         print(f"Error: {e}")
         import traceback
         traceback.print_exc()
+
+        print(f"\n💡 Troubleshooting tips:")
+        print(f"  1. Ensure Vertex AI API is enabled:")
+        print(f"     gcloud services enable aiplatform.googleapis.com --project={PROJECT_ID}")
+        print(f"  2. Verify staging bucket exists:")
+        print(f"     gsutil ls {staging_bucket}")
+        print(f"  3. Check IAM permissions (need roles/aiplatform.user)")
+
         sys.exit(1)
 
 
@@ -126,7 +152,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python deploy_agent.py email_agent
+  python deploy_agent.py email_agent --staging-bucket gs://my-bucket
   python deploy_agent.py calendar_agent --staging-bucket gs://my-bucket
 
 Available agents:
@@ -134,17 +160,21 @@ Available agents:
   - calendar_agent
   - meeting_prep_agent
   - followup_agent
+
+Note: A GCS staging bucket is required. Create one with:
+  gsutil mb -p PROJECT_ID -l LOCATION gs://BUCKET_NAME
 """
     )
 
     parser.add_argument(
         "agent_name",
-        help="Name of the agent to deploy (email_agent, calendar_agent, meeting_prep_agent, followup_agent)"
+        help="Name of the agent to deploy"
     )
 
     parser.add_argument(
         "--staging-bucket",
-        help="GCS bucket for staging (optional, format: gs://bucket-name)"
+        required=True,
+        help="GCS bucket for staging (required, format: gs://bucket-name)"
     )
 
     parser.add_argument(
