@@ -91,11 +91,14 @@ def deploy_agent(agent_name: str, staging_bucket: str):
     # Prepare deployment config
     config = {
         "requirements": [
-            "google-cloud-aiplatform[agent_engines,adk]>=1.112",
+            "google-cloud-aiplatform>=1.112",
+            "google-adk",
             "google-cloud-discoveryengine",
             "google-cloud-firestore",
             "google-cloud-storage",
-            "python-dateutil"
+            "python-dateutil",
+            "pydantic",
+            "cloudpickle"
         ],
         "staging_bucket": staging_bucket
     }
@@ -116,10 +119,16 @@ def deploy_agent(agent_name: str, staging_bucket: str):
         print(f"✅ Deployment successful!")
         print(f"{'='*60}\n")
         print(f"Agent Name: {agent_name}")
-        print(f"Resource Name: {remote_agent.resource_name}")
+
+        # Print available attributes from the AgentEngine object
+        if hasattr(remote_agent, 'name'):
+            print(f"Resource Name: {remote_agent.name}")
 
         if hasattr(remote_agent, 'display_name'):
             print(f"Display Name: {remote_agent.display_name}")
+
+        if hasattr(remote_agent, 'resource_id'):
+            print(f"Resource ID: {remote_agent.resource_id}")
 
         print(f"\nTo query this agent:")
         print(f"  response = remote_agent.query(input='Your query here')")
