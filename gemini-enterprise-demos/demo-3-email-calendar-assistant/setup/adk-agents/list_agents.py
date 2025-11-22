@@ -18,30 +18,36 @@ try:
     # List all deployed agents
     agents = client.agent_engines.list()
 
+    count = 0
     for agent in agents:
+        count += 1
+        print("=" * 70)
+        print(f"Agent #{count}")
         print("=" * 70)
 
-        # Print all available attributes for debugging
-        print(f"Available attributes: {[attr for attr in dir(agent) if not attr.startswith('_')]}")
+        # Dump the model data
+        agent_data = agent.model_dump()
+
+        print(f"\nAgent Data:")
+        for key, value in agent_data.items():
+            if isinstance(value, str) and len(value) > 100:
+                print(f"  {key}: {value[:100]}...")
+            else:
+                print(f"  {key}: {value}")
+
         print()
 
-        # Try to get common attributes
-        if hasattr(agent, 'display_name'):
-            print(f"Display Name: {agent.display_name}")
-
-        if hasattr(agent, 'resource_id'):
-            print(f"Resource ID: {agent.resource_id}")
-            print(f"\nResource Path (for Gemini Enterprise):")
-            print(f"  projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{agent.resource_id}")
-
-        if hasattr(agent, 'description'):
-            desc = agent.description
-            if len(desc) > 100:
-                desc = desc[:100] + "..."
-            print(f"Description: {desc}")
+        # Extract resource path if available
+        if 'resource_id' in agent_data:
+            resource_path = f"projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{agent_data['resource_id']}"
+            print(f"📋 Resource Path for Gemini Enterprise:")
+            print(f"   {resource_path}")
 
         print("=" * 70)
         print()
+
+    if count == 0:
+        print("No agents found. Have you deployed any agents yet?")
 
 except Exception as e:
     print(f"Error listing agents: {e}")
