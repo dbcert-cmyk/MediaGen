@@ -28,20 +28,23 @@ try:
         # Dump the model data
         agent_data = agent.model_dump()
 
-        print(f"\nAgent Data:")
-        for key, value in agent_data.items():
-            if isinstance(value, str) and len(value) > 100:
-                print(f"  {key}: {value[:100]}...")
-            else:
-                print(f"  {key}: {value}")
+        # Extract key information from api_resource
+        api_resource = agent_data.get('api_resource', {})
 
-        print()
+        display_name = api_resource.get('display_name', 'N/A')
+        resource_path = api_resource.get('name', 'N/A')
+        description = api_resource.get('description', '')
+        create_time = api_resource.get('create_time', 'N/A')
 
-        # Extract resource path if available
-        if 'resource_id' in agent_data:
-            resource_path = f"projects/{PROJECT_ID}/locations/{LOCATION}/reasoningEngines/{agent_data['resource_id']}"
-            print(f"📋 Resource Path for Gemini Enterprise:")
-            print(f"   {resource_path}")
+        # Display clean output
+        print(f"\nDisplay Name: {display_name}")
+        print(f"Resource Path: {resource_path}")
+        if description:
+            print(f"Description: {description}")
+        print(f"Created: {create_time}")
+
+        print(f"\n📋 Copy this resource path for Gemini Enterprise:")
+        print(f"   {resource_path}")
 
         print("=" * 70)
         print()
