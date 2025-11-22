@@ -406,7 +406,7 @@ def schedule_prep_time(
 # Create the agent - ADK automatically wraps functions as FunctionTools
 root_agent = Agent(
     name="meeting_prep_agent",
-    model="gemini-1.5-pro",
+    model="gemini-2.5-pro",
     instruction="You are a meeting preparation agent. Help users prepare for upcoming meetings by gathering related emails and documents, creating agendas, generating talking points, and providing participant context. Use available tools to search across Gmail, Calendar, and Drive data stores. Ensure users are well-prepared and confident for every meeting.",
     description="Intelligent meeting preparation assistant",
     tools=[prepare_for_meeting, create_meeting_agenda, analyze_meeting_effectiveness, schedule_prep_time]

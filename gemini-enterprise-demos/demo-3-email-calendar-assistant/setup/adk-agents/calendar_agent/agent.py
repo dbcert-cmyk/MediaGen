@@ -425,7 +425,7 @@ def resolve_conflicts(user_email: str) -> List[Dict[str, Any]]:
 # Create the agent - ADK automatically wraps functions as FunctionTools
 root_agent = Agent(
     name="calendar_agent",
-    model="gemini-1.5-pro",
+    model="gemini-2.5-pro",
     instruction="You are a calendar management agent. Help users find optimal meeting times, schedule events, optimize their calendar, resolve conflicts, and get daily schedule briefings. Use available tools to query calendar data and coordinate with multiple attendees. Prioritize work-life balance and efficient time management.",
     description="Intelligent calendar assistant for meeting management",
     tools=[find_meeting_time, schedule_meeting, optimize_calendar, get_daily_schedule, resolve_conflicts]
