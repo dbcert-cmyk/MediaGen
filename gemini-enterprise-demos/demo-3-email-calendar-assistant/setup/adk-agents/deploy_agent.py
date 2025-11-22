@@ -46,15 +46,15 @@ def deploy_agent(agent_name: str, staging_bucket: str):
     print(f"✓ Location: {LOCATION}")
     print(f"✓ Staging bucket: {staging_bucket}")
 
-    # Import Vertex AI SDK
+    # Import Vertex AI SDK and ADK
     try:
         import vertexai
-        from vertexai.preview import agent_engines
-        print(f"✓ Imported Vertex AI SDK")
+        from google.adk import agents
+        print(f"✓ Imported Vertex AI SDK and Google ADK")
     except ImportError as e:
-        print(f"❌ Error: Missing required package")
+        print(f"❌ Error: Missing required package: {e}")
         print(f"\nInstall with:")
-        print(f"  pip install google-cloud-aiplatform[agent_engines,adk]>=1.112")
+        print(f"  pip install google-cloud-aiplatform google-adk")
         sys.exit(1)
 
     # Initialize Vertex AI
