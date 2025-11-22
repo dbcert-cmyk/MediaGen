@@ -251,7 +251,7 @@ def categorize_and_label(email_ids: List[str]) -> Dict[str, List[str]]:
 # Create the agent - ADK automatically wraps functions as FunctionTools
 root_agent = Agent(
     name="email_agent",
-    model="gemini-2.5-pro",
+    model="gemini-1.5-pro",
     instruction="You are an email management agent. Help users summarize emails, draft responses, search their inbox, and categorize messages. Use the available tools to query Gmail data and generate intelligent responses. Always prioritize urgent emails and provide actionable recommendations.",
     description="Intelligent email assistant that manages inbox operations",
     tools=[summarize_emails, draft_email_response, search_emails, categorize_and_label]
