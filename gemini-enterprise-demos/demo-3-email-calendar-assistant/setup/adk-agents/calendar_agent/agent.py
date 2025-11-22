@@ -428,6 +428,6 @@ root_agent = Agent(
     display_name="Calendar Management Agent",
     model="gemini-2.5-pro",
     instruction="You are a calendar management agent. Help users find optimal meeting times, schedule events, optimize their calendar, resolve conflicts, and get daily schedule briefings. Use available tools to query calendar data and coordinate with multiple attendees. Prioritize work-life balance and efficient time management.",
-    description="Intelligent calendar assistant for meeting management",
+    description="Smart calendar management assistant that optimizes scheduling through intelligent meeting time discovery, automated conflict resolution, calendar optimization, and daily schedule briefings. Coordinates across multiple attendees while prioritizing work-life balance and productive time management.",
     tools=[find_meeting_time, schedule_meeting, optimize_calendar, get_daily_schedule, resolve_conflicts]
 )

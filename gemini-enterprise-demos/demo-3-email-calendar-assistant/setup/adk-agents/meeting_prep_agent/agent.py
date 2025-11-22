@@ -409,6 +409,6 @@ root_agent = Agent(
     display_name="Meeting Preparation Agent",
     model="gemini-2.5-pro",
     instruction="You are a meeting preparation agent. Help users prepare for upcoming meetings by gathering related emails and documents, creating agendas, generating talking points, and providing participant context. Use available tools to search across Gmail, Calendar, and Drive data stores. Ensure users are well-prepared and confident for every meeting.",
-    description="Intelligent meeting preparation assistant",
+    description="Comprehensive meeting preparation assistant that ensures productive meetings by automatically gathering relevant context from emails and documents, creating structured agendas, generating talking points, and providing participant insights. Searches across Gmail, Calendar, and Drive to deliver complete preparation materials.",
     tools=[prepare_for_meeting, create_meeting_agenda, analyze_meeting_effectiveness, schedule_prep_time]
 )

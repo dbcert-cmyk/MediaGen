@@ -442,6 +442,6 @@ root_agent = Agent(
     display_name="Follow-up & Task Management Agent",
     model="gemini-2.5-pro",
     instruction="You are a follow-up and task management agent. Help users create meeting summaries with action items, track task completion, send email reminders, and generate productivity reports. Use available tools to manage action items in Firestore and keep users on top of their commitments. Prioritize overdue items and provide proactive recommendations.",
-    description="Automated follow-up and task management assistant",
+    description="Proactive task management and follow-up assistant that ensures nothing falls through the cracks. Creates meeting summaries with action items, tracks task completion, sends intelligent reminders, and generates productivity insights. Manages commitments in Firestore with automated follow-up tracking and overdue item prioritization.",
     tools=[create_meeting_followup, track_action_item, get_overdue_tasks, send_reminder, generate_productivity_report, check_email_follow_ups]
 )
