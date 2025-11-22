@@ -147,6 +147,8 @@ def deploy_agent(agent_name: str, staging_bucket: str):
 
 
 def main():
+    global PROJECT_ID, LOCATION
+
     parser = argparse.ArgumentParser(
         description="Deploy ADK agents to Vertex AI Agent Engine",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -192,7 +194,6 @@ Note: A GCS staging bucket is required. Create one with:
     args = parser.parse_args()
 
     # Update globals
-    global PROJECT_ID, LOCATION
     PROJECT_ID = args.project
     LOCATION = args.location
 
