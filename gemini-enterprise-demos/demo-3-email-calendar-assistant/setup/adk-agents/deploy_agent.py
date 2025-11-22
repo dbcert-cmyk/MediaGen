@@ -98,8 +98,12 @@ def deploy_agent(agent_name: str, staging_bucket: str):
     }
     display_name = display_name_map.get(agent_name, agent_name.replace('_', ' ').title())
 
+    # Get description from the agent if available
+    description = getattr(root_agent, 'description', '')
+
     config = {
         "display_name": display_name,
+        "description": description,
         "requirements": [
             "google-cloud-aiplatform>=1.112",
             "google-adk",
