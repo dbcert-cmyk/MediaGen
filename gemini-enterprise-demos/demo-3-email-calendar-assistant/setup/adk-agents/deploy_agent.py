@@ -89,7 +89,17 @@ def deploy_agent(agent_name: str, staging_bucket: str):
         sys.exit(1)
 
     # Prepare deployment config
+    # Create display name from agent name
+    display_name_map = {
+        "email_agent": "Email Management Agent",
+        "calendar_agent": "Calendar Management Agent",
+        "meeting_prep_agent": "Meeting Preparation Agent",
+        "followup_agent": "Follow-up & Task Management Agent"
+    }
+    display_name = display_name_map.get(agent_name, agent_name.replace('_', ' ').title())
+
     config = {
+        "display_name": display_name,
         "requirements": [
             "google-cloud-aiplatform>=1.112",
             "google-adk",
