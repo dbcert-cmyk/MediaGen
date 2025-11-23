@@ -261,7 +261,229 @@ class VideoEditor:
 
         return output_path
 
+    def add_audio(
+        self,
+        input_path: str,
+        audio_path: str,
+        volume: float = 1.0,
+        output_path: Optional[str] = None
+    ) -> str:
+        """
+        Add audio/music to video
+
+        Args:
+            input_path: Path to input video
+            audio_path: Path to audio file
+            volume: Volume multiplier (0.0 to 1.0)
+            output_path: Optional output path
+
+        Returns:
+            Path to video with audio
+        """
+        if output_path is None:
+            timestamp = int(time.time())
+            output_path = f"generated_media/audio_overlay_{timestamp}.mp4"
+
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        if self.mock_mode:
+            return self._mock_add_audio(input_path, audio_path, output_path)
+
+        # FFmpeg command to add audio
+        cmd = [
+            'ffmpeg',
+            '-i', input_path,
+            '-i', audio_path,
+            '-filter_complex', f'[1:a]volume={volume}[a];[0:a][a]amix=inputs=2:duration=first[aout]',
+            '-map', '0:v',
+            '-map', '[aout]',
+            '-c:v', 'copy',
+            '-c:a', 'aac',
+            '-shortest',
+            '-y',
+            output_path
+        ]
+
+        print(f"🎵 Adding audio to video (volume: {volume})")
+        try:
+            subprocess.run(cmd, capture_output=True, check=True)
+            print(f"💾 Saved video with audio to: {output_path}")
+        except subprocess.CalledProcessError as e:
+            print(f"❌ FFmpeg error: {e.stderr}")
+            raise Exception(f"FFmpeg failed to add audio: {e.stderr}")
+
+        return output_path
+
+    def apply_color_filter(
+        self,
+        input_path: str,
+        filter_type: str = "none",
+        brightness: float = 0.0,
+        contrast: float = 1.0,
+        saturation: float = 1.0,
+        output_path: Optional[str] = None
+    ) -> str:
+        """
+        Apply color filters and adjustments to video
+
+        Args:
+            input_path: Path to input video
+            filter_type: Filter type (none, vintage, cinematic, vibrant, bw)
+            brightness: Brightness adjustment (-1.0 to 1.0)
+            contrast: Contrast multiplier (0.0 to 2.0)
+            saturation: Saturation multiplier (0.0 to 2.0)
+            output_path: Optional output path
+
+        Returns:
+            Path to filtered video
+        """
+        if output_path is None:
+            timestamp = int(time.time())
+            output_path = f"generated_media/filtered_{timestamp}.mp4"
+
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        if self.mock_mode:
+            return self._mock_apply_color_filter(input_path, filter_type, output_path)
+
+        # Build filter chain
+        filters = []
+
+        # Apply brightness/contrast/saturation
+        filters.append(f"eq=brightness={brightness}:contrast={contrast}:saturation={saturation}")
+
+        # Apply preset filters
+        if filter_type == "vintage":
+            filters.append("curves=vintage")
+        elif filter_type == "cinematic":
+            filters.append("curves=cross_process")
+        elif filter_type == "vibrant":
+            filters.append("eq=saturation=1.5")
+        elif filter_type == "bw":
+            filters.append("hue=s=0")
+
+        filter_str = ",".join(filters)
+
+        cmd = [
+            'ffmpeg',
+            '-i', input_path,
+            '-vf', filter_str,
+            '-c:a', 'copy',
+            '-y',
+            output_path
+        ]
+
+        print(f"🎨 Applying color filter: {filter_type}")
+        try:
+            subprocess.run(cmd, capture_output=True, check=True)
+            print(f"💾 Saved filtered video to: {output_path}")
+        except subprocess.CalledProcessError as e:
+            print(f"❌ FFmpeg error: {e.stderr}")
+            raise Exception(f"FFmpeg failed to apply filter: {e.stderr}")
+
+        return output_path
+
+    def add_watermark(
+        self,
+        input_path: str,
+        watermark_path: str,
+        position: str = "bottom-right",
+        opacity: float = 0.5,
+        output_path: Optional[str] = None
+    ) -> str:
+        """
+        Add watermark to video
+
+        Args:
+            input_path: Path to input video
+            watermark_path: Path to watermark image
+            position: Position (top-left, top-right, bottom-left, bottom-right, center)
+            opacity: Watermark opacity (0.0 to 1.0)
+            output_path: Optional output path
+
+        Returns:
+            Path to video with watermark
+        """
+        if output_path is None:
+            timestamp = int(time.time())
+            output_path = f"generated_media/watermarked_{timestamp}.mp4"
+
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        if self.mock_mode:
+            return self._mock_add_watermark(input_path, watermark_path, output_path)
+
+        # Position mapping
+        position_map = {
+            "top-left": "10:10",
+            "top-right": "W-w-10:10",
+            "bottom-left": "10:H-h-10",
+            "bottom-right": "W-w-10:H-h-10",
+            "center": "(W-w)/2:(H-h)/2"
+        }
+        pos = position_map.get(position, position_map["bottom-right"])
+
+        # FFmpeg command with overlay filter
+        cmd = [
+            'ffmpeg',
+            '-i', input_path,
+            '-i', watermark_path,
+            '-filter_complex', f'[1]format=rgba,colorchannelmixer=aa={opacity}[logo];[0][logo]overlay={pos}',
+            '-codec:a', 'copy',
+            '-y',
+            output_path
+        ]
+
+        print(f"🏷️  Adding watermark at {position} (opacity: {opacity})")
+        try:
+            subprocess.run(cmd, capture_output=True, check=True)
+            print(f"💾 Saved watermarked video to: {output_path}")
+        except subprocess.CalledProcessError as e:
+            print(f"❌ FFmpeg error: {e.stderr}")
+            raise Exception(f"FFmpeg failed to add watermark: {e.stderr}")
+
+        return output_path
+
     # Mock mode implementations
+    def _mock_add_audio(self, input_path: str, audio_path: str, output_path: str) -> str:
+        """Mock implementation of add audio"""
+        print(f"🎭 MOCK: Adding audio from {audio_path}")
+        time.sleep(1)
+
+        actual_output = self._create_mock_video_frame(
+            input_path,
+            output_path,
+            f"Video with Audio\nMusic added"
+        )
+
+        return actual_output
+
+    def _mock_apply_color_filter(self, input_path: str, filter_type: str, output_path: str) -> str:
+        """Mock implementation of color filter"""
+        print(f"🎭 MOCK: Applying {filter_type} filter")
+        time.sleep(1)
+
+        actual_output = self._create_mock_video_frame(
+            input_path,
+            output_path,
+            f"Filtered Video\n{filter_type} filter applied"
+        )
+
+        return actual_output
+
+    def _mock_add_watermark(self, input_path: str, watermark_path: str, output_path: str) -> str:
+        """Mock implementation of watermark"""
+        print(f"🎭 MOCK: Adding watermark from {watermark_path}")
+        time.sleep(1)
+
+        actual_output = self._create_mock_video_frame(
+            input_path,
+            output_path,
+            f"Watermarked Video\nWatermark added"
+        )
+
+        return actual_output
+
     def _mock_trim_video(self, input_path: str, start_time: float, end_time: float, output_path: str) -> str:
         """Mock implementation of trim video"""
         print(f"🎭 MOCK: Trimming video from {start_time}s to {end_time}s")
