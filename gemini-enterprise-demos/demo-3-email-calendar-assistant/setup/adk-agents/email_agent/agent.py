@@ -1,23 +1,56 @@
 """
 Email Agent - Handles email summarization, drafting, and management
-Part of Gemini Enterprise Demo #3
+Part of Gemini Enterprise Demo #3 - Using Gmail API directly
 """
 
 import os
 from google.adk.agents import Agent
-from google.cloud import discoveryengine_v1
+from googleapiclient.discovery import build
+from google.auth import default
 from typing import List, Dict, Any
 import datetime
+import base64
 
 # Configuration
 PROJECT_ID = os.environ.get("PROJECT_ID", "ai-testing-458318")
 LOCATION = os.environ.get("LOCATION", "us-central1")
-GMAIL_DATASTORE = f"projects/{PROJECT_ID}/locations/global/collections/default_collection/dataStores/demo-gmail-datastore_1763851937069_google_mail"
 
 
-# Helper functions
+def _get_gmail_service():
+    """Get authenticated Gmail API service"""
+    credentials, _ = default(scopes=['https://www.googleapis.com/auth/gmail.readonly'])
+    service = build('gmail', 'v1', credentials=credentials)
+    return service
+
+
+def _parse_email(message) -> Dict[str, Any]:
+    """Parse Gmail API message into email object"""
+    headers = message.get('payload', {}).get('headers', [])
+
+    # Extract headers
+    subject = next((h['value'] for h in headers if h['name'].lower() == 'subject'), 'No Subject')
+    from_addr = next((h['value'] for h in headers if h['name'].lower() == 'from'), '')
+    date = next((h['value'] for h in headers if h['name'].lower() == 'date'), '')
+
+    # Get snippet
+    snippet = message.get('snippet', '')
+
+    # Get labels
+    labels = message.get('labelIds', [])
+
+    return {
+        "id": message['id'],
+        "from": from_addr,
+        "subject": subject,
+        "snippet": snippet,
+        "date": date,
+        "labels": labels,
+        "thread_id": message.get('threadId', '')
+    }
+
+
 def _build_time_query(time_range: str) -> str:
-    """Build time-based query filter"""
+    """Build time-based Gmail query filter"""
     today = datetime.datetime.now()
 
     if time_range == "today":
@@ -29,19 +62,6 @@ def _build_time_query(time_range: str) -> str:
         yesterday = today - datetime.timedelta(days=1)
         return f"after:{yesterday.strftime('%Y/%m/%d')}"
     return ""
-
-
-def _parse_email(search_result) -> Dict[str, Any]:
-    """Parse search result into email object"""
-    doc = search_result.document
-    return {
-        "id": doc.id,
-        "from": doc.derived_struct_data.get("from", ""),
-        "subject": doc.derived_struct_data.get("subject", ""),
-        "snippet": doc.derived_struct_data.get("snippet", ""),
-        "date": doc.derived_struct_data.get("date", ""),
-        "labels": doc.derived_struct_data.get("labels", [])
-    }
 
 
 def _filter_urgent(emails: List[Dict]) -> List[Dict]:
@@ -89,19 +109,6 @@ def _generate_recommendations(emails: List[Dict]) -> List[str]:
     return recommendations
 
 
-def _get_email_context(email_id: str) -> Dict[str, Any]:
-    """Retrieve full email context including thread"""
-    # In production, this would query the Gmail API
-    # For demo, return mock data
-    return {
-        "id": email_id,
-        "from": "sender@example.com",
-        "subject": "Re: Project Update",
-        "body": "Email body content...",
-        "thread_context": "Previous email context..."
-    }
-
-
 # Tool functions - These are automatically wrapped by ADK as FunctionTools
 def summarize_emails(time_range: str = "today") -> Dict[str, Any]:
     """
@@ -113,32 +120,51 @@ def summarize_emails(time_range: str = "today") -> Dict[str, Any]:
     Returns:
         Summary with priorities, urgent items, and recommended actions
     """
-    # Query Gemini Enterprise data store
-    client = discoveryengine_v1.SearchServiceClient()
+    try:
+        service = _get_gmail_service()
 
-    # Build search query
-    query = _build_time_query(time_range)
+        # Build query
+        query = f"is:unread {_build_time_query(time_range)}"
 
-    request = discoveryengine_v1.SearchRequest(
-        serving_config=f"{GMAIL_DATASTORE}/servingConfigs/default_search",
-        query=query,
-        page_size=50
-    )
+        # Search emails
+        results = service.users().messages().list(
+            userId='me',
+            q=query,
+            maxResults=50
+        ).execute()
 
-    response = client.search(request)
+        messages = results.get('messages', [])
 
-    # Analyze emails with Gemini
-    emails = [_parse_email(result) for result in response.results]
+        # Get full message details
+        emails = []
+        for msg in messages[:50]:  # Limit to 50
+            full_msg = service.users().messages().get(
+                userId='me',
+                id=msg['id'],
+                format='full'
+            ).execute()
+            emails.append(_parse_email(full_msg))
 
-    summary = {
-        "total_unread": len(emails),
-        "urgent": _filter_urgent(emails),
-        "important": _filter_important(emails),
-        "can_wait": _filter_can_wait(emails),
-        "recommended_actions": _generate_recommendations(emails)
-    }
+        summary = {
+            "total_unread": len(emails),
+            "urgent": _filter_urgent(emails),
+            "important": _filter_important(emails),
+            "can_wait": _filter_can_wait(emails),
+            "recommended_actions": _generate_recommendations(emails)
+        }
 
-    return summary
+        return summary
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "message": "Failed to access Gmail. Make sure agent has Gmail API access.",
+            "total_unread": 0,
+            "urgent": [],
+            "important": [],
+            "can_wait": [],
+            "recommended_actions": []
+        }
 
 
 def draft_email_response(
@@ -157,17 +183,40 @@ def draft_email_response(
     Returns:
         Dict containing the draft email and context
     """
-    # Retrieve email context
-    email_context = _get_email_context(email_id)
+    try:
+        service = _get_gmail_service()
 
-    # Return context for the agent's LLM to generate the draft
-    return {
-        "status": "context_retrieved",
-        "email_context": email_context,
-        "tone": tone,
-        "key_points": key_points or [],
-        "instruction": f"Please draft a {tone} email response addressing the key points provided."
-    }
+        # Get email details
+        message = service.users().messages().get(
+            userId='me',
+            id=email_id,
+            format='full'
+        ).execute()
+
+        email = _parse_email(message)
+
+        # Get thread for context
+        thread = service.users().threads().get(
+            userId='me',
+            id=email['thread_id']
+        ).execute()
+
+        thread_messages = [_parse_email(msg) for msg in thread.get('messages', [])]
+
+        return {
+            "status": "context_retrieved",
+            "email_context": email,
+            "thread_context": thread_messages,
+            "tone": tone,
+            "key_points": key_points or [],
+            "instruction": f"Please draft a {tone} email response addressing the key points provided."
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "message": "Failed to retrieve email context"
+        }
 
 
 def search_emails(
@@ -181,34 +230,51 @@ def search_emails(
 
     Args:
         query: Natural language search query
-        date_range: Optional date filter
+        date_range: Optional date filter (YYYY/MM/DD)
         from_sender: Optional sender filter
         has_attachment: Optional attachment filter
 
     Returns:
         List of matching emails
     """
-    client = discoveryengine_v1.SearchServiceClient()
+    try:
+        service = _get_gmail_service()
 
-    # Build enhanced query with filters
-    enhanced_query = query
-    if date_range:
-        enhanced_query += f" after:{date_range}"
-    if from_sender:
-        enhanced_query += f" from:{from_sender}"
-    if has_attachment:
-        enhanced_query += " has:attachment"
+        # Build Gmail query
+        gmail_query = query
+        if date_range:
+            gmail_query += f" after:{date_range}"
+        if from_sender:
+            gmail_query += f" from:{from_sender}"
+        if has_attachment:
+            gmail_query += " has:attachment"
 
-    request = discoveryengine_v1.SearchRequest(
-        serving_config=f"{GMAIL_DATASTORE}/servingConfigs/default_search",
-        query=enhanced_query,
-        page_size=20
-    )
+        # Search
+        results = service.users().messages().list(
+            userId='me',
+            q=gmail_query,
+            maxResults=20
+        ).execute()
 
-    response = client.search(request)
+        messages = results.get('messages', [])
 
-    results = [_parse_email(result) for result in response.results]
-    return results
+        # Get full details
+        emails = []
+        for msg in messages:
+            full_msg = service.users().messages().get(
+                userId='me',
+                id=msg['id'],
+                format='full'
+            ).execute()
+            emails.append(_parse_email(full_msg))
+
+        return emails
+
+    except Exception as e:
+        return [{
+            "error": str(e),
+            "message": "Failed to search Gmail"
+        }]
 
 
 def categorize_and_label(email_ids: List[str]) -> Dict[str, List[str]]:
@@ -229,30 +295,44 @@ def categorize_and_label(email_ids: List[str]) -> Dict[str, List[str]]:
         "follow_ups": []
     }
 
-    for email_id in email_ids:
-        email = _get_email_context(email_id)
+    try:
+        service = _get_gmail_service()
 
-        # Categorization using simple heuristics
-        subject_lower = email['subject'].lower()
-        if any(kw in subject_lower for kw in ["urgent", "asap", "deadline"]):
-            categories["urgent_action_required"].append(email_id)
-        elif "review" in subject_lower:
-            categories["review_requested"].append(email_id)
-        elif "meeting" in subject_lower or "invite" in subject_lower:
-            categories["meeting_invites"].append(email_id)
-        elif "follow" in subject_lower:
-            categories["follow_ups"].append(email_id)
-        else:
-            categories["informational"].append(email_id)
+        for email_id in email_ids:
+            message = service.users().messages().get(
+                userId='me',
+                id=email_id,
+                format='full'
+            ).execute()
 
-    return categories
+            email = _parse_email(message)
+            subject_lower = email['subject'].lower()
+
+            if any(kw in subject_lower for kw in ["urgent", "asap", "deadline"]):
+                categories["urgent_action_required"].append(email_id)
+            elif "review" in subject_lower:
+                categories["review_requested"].append(email_id)
+            elif "meeting" in subject_lower or "invite" in subject_lower:
+                categories["meeting_invites"].append(email_id)
+            elif "follow" in subject_lower:
+                categories["follow_ups"].append(email_id)
+            else:
+                categories["informational"].append(email_id)
+
+        return categories
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "message": "Failed to categorize emails"
+        }
 
 
 # Create the agent - ADK automatically wraps functions as FunctionTools
 root_agent = Agent(
     name="email_agent",
     model="gemini-2.5-pro",
-    instruction="You are an email management agent. Help users summarize emails, draft responses, search their inbox, and categorize messages. Use the available tools to query Gmail data and generate intelligent responses. Always prioritize urgent emails and provide actionable recommendations.",
-    description="AI-powered email management assistant that helps users efficiently manage their inbox through intelligent email summarization, automated prioritization, smart response drafting, and context-aware categorization. Integrates with Gmail data to provide actionable insights and recommendations.",
+    instruction="You are an email management agent. Help users summarize emails, draft responses, search their inbox, and categorize messages. Use the available tools to query Gmail data directly and generate intelligent responses. Always prioritize urgent emails and provide actionable recommendations.",
+    description="AI-powered email management assistant that helps users efficiently manage their inbox through intelligent email summarization, automated prioritization, smart response drafting, and context-aware categorization. Uses Gmail API for direct access to email data.",
     tools=[summarize_emails, draft_email_response, search_emails, categorize_and_label]
 )
