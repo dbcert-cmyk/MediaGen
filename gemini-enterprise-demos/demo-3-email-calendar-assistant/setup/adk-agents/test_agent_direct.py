@@ -31,11 +31,23 @@ def test_agent():
         print("✓ Agent loaded successfully")
         print()
 
-        # Try a simple query
+        # Try a simple query using the correct API
         print("Sending test query: 'Hello, can you help me?'")
         print()
 
-        response = remote_agent.query(input="Hello, can you help me?")
+        # Try different calling methods
+        try:
+            # Method 1: Direct call
+            response = remote_agent("Hello, can you help me?")
+        except Exception as e1:
+            print(f"Method 1 failed: {e1}")
+            try:
+                # Method 2: Chat method
+                response = remote_agent.chat("Hello, can you help me?")
+            except Exception as e2:
+                print(f"Method 2 failed: {e2}")
+                # Method 3: Using input dict
+                response = remote_agent(input="Hello, can you help me?")
 
         print("="*60)
         print("✅ AGENT RESPONDED!")
