@@ -31,23 +31,27 @@ def test_agent():
         print("✓ Agent loaded successfully")
         print()
 
-        # Try a simple query using the correct API
-        print("Sending test query: 'Hello, can you help me?'")
+        # First, let's see what methods are available
+        print("Available methods on ReasoningEngine object:")
+        methods = [m for m in dir(remote_agent) if not m.startswith('_')]
+        for method in methods[:20]:  # Show first 20
+            print(f"  - {method}")
         print()
 
-        # Try different calling methods
-        try:
-            # Method 1: Direct call
-            response = remote_agent("Hello, can you help me?")
-        except Exception as e1:
-            print(f"Method 1 failed: {e1}")
-            try:
-                # Method 2: Chat method
-                response = remote_agent.chat("Hello, can you help me?")
-            except Exception as e2:
-                print(f"Method 2 failed: {e2}")
-                # Method 3: Using input dict
-                response = remote_agent(input="Hello, can you help me?")
+        # Check if it has an execute or invoke method
+        if hasattr(remote_agent, 'execute'):
+            print("Found 'execute' method! Trying it...")
+            response = remote_agent.execute(input="Hello, can you help me?")
+        elif hasattr(remote_agent, 'invoke'):
+            print("Found 'invoke' method! Trying it...")
+            response = remote_agent.invoke(input="Hello, can you help me?")
+        elif hasattr(remote_agent, 'query'):
+            print("Found 'query' method! Trying it...")
+            response = remote_agent.query(input="Hello, can you help me?")
+        else:
+            print("⚠️  No standard invocation method found!")
+            print("The agent is deployed but the API to call it has changed.")
+            response = None
 
         print("="*60)
         print("✅ AGENT RESPONDED!")
