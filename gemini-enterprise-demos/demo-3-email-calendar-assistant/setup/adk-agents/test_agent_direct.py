@@ -46,17 +46,20 @@ def test_agent():
 
         print()
 
-        # Try calling the agent with the query method (from docs)
-        print("Sending test query: 'Hello, can you help me?'")
+        # Try calling the agent with stream_query (the correct method)
+        print("Sending test query using stream_query: 'Hello, can you help me?'")
+        print()
 
-        # According to docs, should use async_stream_query or regular query
-        if hasattr(adk_app, 'query'):
-            response = adk_app.query(input="Hello, can you help me?")
-        elif hasattr(adk_app, 'async_stream_query'):
-            # Try sync version
-            response = adk_app.query(input="Hello, can you help me?")
-        else:
-            response = "No query method found"
+        # Use stream_query which requires user_id and message
+        responses = []
+        for chunk in adk_app.stream_query(
+            message="Hello, can you help me?",
+            user_id="demo-user"
+        ):
+            responses.append(chunk)
+            print(f"Chunk received: {chunk}")
+
+        response = responses
 
         print("="*60)
         print("✅ AGENT RESPONDED!")
