@@ -25,33 +25,38 @@ def test_agent():
         # Initialize Vertex AI
         vertexai.init(project=PROJECT_ID, location=LOCATION)
 
-        print(f"Loading agent: {EMAIL_AGENT}")
-        remote_agent = reasoning_engines.ReasoningEngine(EMAIL_AGENT)
+        print(f"Loading agent using agent_engines.get(): {EMAIL_AGENT}")
+
+        # Correct way to get a deployed agent according to latest docs
+        from vertexai._genai import agent_engines
+        client = vertexai.Client(project=PROJECT_ID, location=LOCATION)
+
+        adk_app = client.agent_engines.get(name=EMAIL_AGENT)
 
         print("✓ Agent loaded successfully")
         print()
 
-        # First, let's see what methods are available
-        print("Available methods on ReasoningEngine object:")
-        methods = [m for m in dir(remote_agent) if not m.startswith('_')]
-        for method in methods[:20]:  # Show first 20
-            print(f"  - {method}")
+        # Check what operations are supported
+        print("Checking supported operations...")
+        try:
+            operations = adk_app.operation_schemas()
+            print(f"Supported operations: {operations}")
+        except:
+            print("Could not get operation schemas")
+
         print()
 
-        # Check if it has an execute or invoke method
-        if hasattr(remote_agent, 'execute'):
-            print("Found 'execute' method! Trying it...")
-            response = remote_agent.execute(input="Hello, can you help me?")
-        elif hasattr(remote_agent, 'invoke'):
-            print("Found 'invoke' method! Trying it...")
-            response = remote_agent.invoke(input="Hello, can you help me?")
-        elif hasattr(remote_agent, 'query'):
-            print("Found 'query' method! Trying it...")
-            response = remote_agent.query(input="Hello, can you help me?")
+        # Try calling the agent with the query method (from docs)
+        print("Sending test query: 'Hello, can you help me?'")
+
+        # According to docs, should use async_stream_query or regular query
+        if hasattr(adk_app, 'query'):
+            response = adk_app.query(input="Hello, can you help me?")
+        elif hasattr(adk_app, 'async_stream_query'):
+            # Try sync version
+            response = adk_app.query(input="Hello, can you help me?")
         else:
-            print("⚠️  No standard invocation method found!")
-            print("The agent is deployed but the API to call it has changed.")
-            response = None
+            response = "No query method found"
 
         print("="*60)
         print("✅ AGENT RESPONDED!")
