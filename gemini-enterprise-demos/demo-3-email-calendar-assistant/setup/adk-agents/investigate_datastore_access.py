@@ -1,40 +1,45 @@
 #!/usr/bin/env python3
 """
-Investigate why API returns empty but Gemini chat sees data
+Comprehensive datastore investigation - searches ALL datastores in project
 """
 
 from google.cloud import discoveryengine_v1
-from google.cloud import discoveryengine_v1alpha
+from google.auth import default
+import google.auth
 
 PROJECT_ID = "ai-testing-458318"
 PROJECT_NUMBER = "805114253837"
 
-# Datastores we've been trying
-DATASTORES_TO_TEST = [
-    # Current paths we've been using
-    f"projects/{PROJECT_ID}/locations/global/collections/default_collection/dataStores/demo-gmail-datastore_1763851937069_google_mail",
-    f"projects/{PROJECT_ID}/locations/global/collections/default_collection/dataStores/demo-calendar-datastore_1763851980966_google_calendar",
-    f"projects/{PROJECT_ID}/locations/global/collections/default_collection/dataStores/demo-drive-datastore_1763851832394_google_drive",
 
-    # Try with project number instead
-    f"projects/{PROJECT_NUMBER}/locations/global/collections/default_collection/dataStores/demo-gmail-datastore_1763851937069_google_mail",
-    f"projects/{PROJECT_NUMBER}/locations/global/collections/default_collection/dataStores/demo-calendar-datastore_1763851980966_google_calendar",
-    f"projects/{PROJECT_NUMBER}/locations/global/collections/default_collection/dataStores/demo-drive-datastore_1763851832394_google_drive",
-]
+def check_current_credentials():
+    """Check what credentials we're using"""
+    print("="*80)
+    print("Current Credentials")
+    print("="*80)
 
-# Different serving configs to try
-SERVING_CONFIGS = [
-    "default_search",
-    "default_config",
-    "serving_config_0"
-]
+    try:
+        credentials, project = default()
+        print(f"\nProject: {project}")
+        print(f"Credentials type: {type(credentials).__name__}")
+
+        if hasattr(credentials, 'service_account_email'):
+            print(f"Service account: {credentials.service_account_email}")
+        elif hasattr(credentials, '_service_account_email'):
+            print(f"Service account: {credentials._service_account_email}")
+        else:
+            print("Using user credentials (not service account)")
+
+        return credentials, project
+
+    except Exception as e:
+        print(f"Error getting credentials: {e}")
+        return None, None
 
 
 def list_all_datastores():
-    """Try to list all available datastores"""
-
+    """List all datastores in the project"""
     print("\n" + "="*80)
-    print("Attempting to list all datastores in project")
+    print("Discovering All Datastores")
     print("="*80)
 
     try:
@@ -44,9 +49,9 @@ def list_all_datastores():
         parent_paths = [
             f"projects/{PROJECT_ID}/locations/global/collections/default_collection",
             f"projects/{PROJECT_NUMBER}/locations/global/collections/default_collection",
-            f"projects/{PROJECT_ID}/locations/global",
-            f"projects/{PROJECT_NUMBER}/locations/global",
         ]
+
+        all_datastores = []
 
         for parent in parent_paths:
             try:
@@ -54,143 +59,226 @@ def list_all_datastores():
                 request = discoveryengine_v1.ListDataStoresRequest(parent=parent)
                 page_result = client.list_data_stores(request=request)
 
-                count = 0
                 for datastore in page_result:
-                    count += 1
-                    print(f"\n  Found datastore #{count}:")
-                    print(f"    Name: {datastore.name}")
-                    print(f"    Display name: {datastore.display_name}")
-                    if hasattr(datastore, 'industry_vertical'):
-                        print(f"    Type: {datastore.industry_vertical}")
+                    all_datastores.append(datastore)
 
-                if count > 0:
-                    print(f"\n✅ Found {count} datastores using parent: {parent}")
-                    return
+                if all_datastores:
+                    print(f"✅ Found {len(all_datastores)} datastores")
+                    break
                 else:
-                    print(f"  No datastores found")
+                    print(f"   No datastores found")
 
             except Exception as e:
-                print(f"  ❌ Error: {str(e)[:100]}")
+                print(f"   Error: {str(e)[:100]}")
 
-        print("\n⚠️  Could not list datastores with any parent path")
+        return all_datastores
 
     except Exception as e:
-        print(f"\n❌ Failed to create client: {e}")
+        print(f"\nError listing datastores: {e}")
+        return []
 
 
-def test_search_variations(datastore_path, name):
-    """Try different search methods on a datastore"""
-
-    print(f"\n" + "="*80)
-    print(f"Testing: {name}")
-    print(f"Path: {datastore_path}")
-    print("="*80)
+def search_datastore(datastore_name, display_name):
+    """Try to search a datastore and return results"""
+    print(f"\n{'='*80}")
+    print(f"Testing: {display_name}")
+    print(f"{'='*80}")
+    print(f"Path: {datastore_name}")
 
     client = discoveryengine_v1.SearchServiceClient()
 
-    # Try different queries
-    queries = [
-        "*",           # Wildcard
-        "",            # Empty
-        "email",       # Keyword
-        "meeting",     # From the example the user showed
-    ]
+    # Try different serving configs
+    serving_configs = ["default_search", "default_config", "serving_config_0"]
 
-    for query in queries:
-        for serving_config in SERVING_CONFIGS:
-            serving_config_path = f"{datastore_path}/servingConfigs/{serving_config}"
+    for serving_config in serving_configs:
+        serving_config_path = f"{datastore_name}/servingConfigs/{serving_config}"
 
-            try:
-                request = discoveryengine_v1.SearchRequest(
-                    serving_config=serving_config_path,
-                    query=query if query else "*",
-                    page_size=5
-                )
+        try:
+            request = discoveryengine_v1.SearchRequest(
+                serving_config=serving_config_path,
+                query="*",  # Wildcard to get everything
+                page_size=10
+            )
 
-                response = client.search(request)
+            response = client.search(request)
+            results = list(response.results)
 
-                result_count = sum(1 for _ in response.results)
+            if len(results) > 0:
+                print(f"\n✅ FOUND DATA - {len(results)} documents")
+                print(f"   Serving config: {serving_config}")
 
-                if result_count > 0:
-                    print(f"\n✅ SUCCESS - Found {result_count} results!")
-                    print(f"   Query: '{query}'")
-                    print(f"   Serving config: {serving_config}")
-                    print(f"\n   Sample results:")
+                # Show sample results
+                print(f"\n   Sample results:")
+                for i, result in enumerate(results[:3]):
+                    doc = result.document
+                    print(f"\n   Document {i+1}:")
+                    print(f"      ID: {doc.id}")
 
-                    # Show first result
-                    request2 = discoveryengine_v1.SearchRequest(
-                        serving_config=serving_config_path,
-                        query=query if query else "*",
-                        page_size=3
-                    )
-                    response2 = client.search(request2)
+                    # Try to show useful fields
+                    if hasattr(doc, 'derived_struct_data') and doc.derived_struct_data:
+                        data = doc.derived_struct_data
+                        # Email fields
+                        if 'subject' in data:
+                            print(f"      Subject: {data['subject']}")
+                        if 'from' in data:
+                            print(f"      From: {data['from']}")
+                        if 'snippet' in data:
+                            print(f"      Snippet: {data['snippet'][:100]}")
+                        # Calendar fields
+                        if 'title' in data:
+                            print(f"      Title: {data['title']}")
+                        if 'start' in data:
+                            print(f"      Start: {data['start']}")
+                        # Show first few keys
+                        keys = list(data.keys())[:5]
+                        if keys:
+                            print(f"      Available fields: {', '.join(keys)}")
 
-                    for i, result in enumerate(response2.results):
-                        doc = result.document
-                        print(f"\n   Result {i+1}:")
-                        print(f"      ID: {doc.id}")
-                        if hasattr(doc, 'derived_struct_data'):
-                            data = doc.derived_struct_data
-                            if 'subject' in data:
-                                print(f"      Subject: {data['subject']}")
-                            if 'from' in data:
-                                print(f"      From: {data['from']}")
-                            if 'snippet' in data:
-                                print(f"      Snippet: {data['snippet'][:100]}")
+                return len(results), serving_config
 
-                    return True
+        except google.auth.exceptions.RefreshError as e:
+            print(f"\n❌ AUTHENTICATION ERROR")
+            print(f"   {e}")
+            print(f"\n   Run: gcloud auth application-default login")
+            return 0, None
 
-            except Exception as e:
-                error_msg = str(e)
-                if "NOT_FOUND" in error_msg or "not found" in error_msg.lower():
-                    continue  # Skip not found errors
-                elif "PERMISSION_DENIED" in error_msg:
-                    print(f"\n❌ PERMISSION_DENIED for serving config: {serving_config}")
-                    print(f"   This might be the issue!")
-                else:
-                    print(f"\n⚠️  Error with query='{query}', serving_config={serving_config}")
-                    print(f"   {error_msg[:100]}")
+        except Exception as e:
+            error_str = str(e)
+            if "NOT_FOUND" not in error_str and "not found" not in error_str.lower():
+                if "PERMISSION" in error_str or "403" in error_str:
+                    print(f"\n❌ PERMISSION_DENIED")
+                    print(f"   Error: {error_str[:100]}")
+                    return 0, None
 
-    print(f"\n❌ No successful searches found for {name}")
-    return False
+    print(f"\n⚠️  No data found (or no access)")
+    return 0, None
 
 
 def main():
-    """Run investigation"""
+    """Run comprehensive investigation"""
 
     print("="*80)
-    print("Discovery Engine Data Investigation")
+    print("Comprehensive Datastore Investigation")
     print("="*80)
     print()
-    print("Regular Gemini chat shows data, but API returns empty.")
-    print("Let's find out why...")
 
-    # Step 1: Try to list all datastores
-    list_all_datastores()
+    # Check credentials
+    creds, project = check_current_credentials()
 
-    # Step 2: Try different search variations
+    if not creds:
+        print("\n❌ Cannot proceed without credentials")
+        print("\nRun this first:")
+        print("  gcloud auth application-default login")
+        return
+
+    # List all datastores
+    datastores = list_all_datastores()
+
+    if not datastores:
+        print("\n❌ No datastores found in project")
+        return
+
+    # Search each datastore
     print("\n\n" + "="*80)
-    print("Testing Search Variations")
+    print(f"Testing All {len(datastores)} Datastores")
     print("="*80)
 
-    for datastore_path in DATASTORES_TO_TEST:
-        # Extract name from path
-        name = datastore_path.split("/")[-1].split("_")[0]
-        test_search_variations(datastore_path, name)
+    results = {}
 
+    for i, datastore in enumerate(datastores, 1):
+        display_name = datastore.display_name
+        datastore_name = datastore.name
+
+        # Categorize by type
+        ds_id = datastore_name.split('/')[-1]
+        ds_type = "Unknown"
+        if 'gmail' in ds_id.lower() or 'mail' in ds_id.lower():
+            ds_type = "Gmail"
+        elif 'calendar' in ds_id.lower():
+            ds_type = "Calendar"
+        elif 'drive' in ds_id.lower():
+            ds_type = "Drive"
+        elif 'gcs' in ds_id.lower():
+            ds_type = "Cloud Storage"
+        else:
+            ds_type = "Unstructured Data"
+
+        print(f"\n[{i}/{len(datastores)}] {display_name} ({ds_type})")
+
+        count, config = search_datastore(datastore_name, display_name)
+
+        results[display_name] = {
+            'name': datastore_name,
+            'type': ds_type,
+            'count': count,
+            'serving_config': config
+        }
+
+    # Summary
     print("\n\n" + "="*80)
-    print("INVESTIGATION COMPLETE")
+    print("SUMMARY")
     print("="*80)
-    print()
-    print("If all searches failed, the issue is likely:")
-    print("  1. Service account permissions")
-    print("  2. Wrong datastore paths")
-    print("  3. Datastore configuration (different than Gemini chat uses)")
-    print()
-    print("Next step: Check Discovery Engine console to see:")
-    print("  - Actual datastore names")
-    print("  - Service account permissions")
-    print("  - API access settings")
+
+    print(f"\nTotal datastores: {len(datastores)}")
+
+    # Group by status
+    with_data = {k: v for k, v in results.items() if v['count'] > 0}
+    empty = {k: v for k, v in results.items() if v['count'] == 0}
+
+    print(f"Datastores with data: {len(with_data)}")
+    print(f"Empty/inaccessible: {len(empty)}")
+
+    if with_data:
+        print("\n🎯 DATASTORES WITH DATA:")
+        print("="*80)
+
+        for name, info in with_data.items():
+            print(f"\n✅ {name} ({info['type']})")
+            print(f"   Path: {info['name']}")
+            print(f"   Documents: ~{info['count']}")
+            print(f"   Serving config: {info['serving_config']}")
+
+            # Show how to use in agent code
+            print(f"\n   💡 Use in {info['type']} agent:")
+            print(f"   DATASTORE = \"{info['name']}\"")
+
+    if empty:
+        print("\n\n⚠️  EMPTY OR INACCESSIBLE DATASTORES:")
+        print("="*80)
+
+        # Group by type
+        by_type = {}
+        for name, info in empty.items():
+            ds_type = info['type']
+            if ds_type not in by_type:
+                by_type[ds_type] = []
+            by_type[ds_type].append(name)
+
+        for ds_type, names in by_type.items():
+            print(f"\n{ds_type}:")
+            for name in names:
+                print(f"  - {name}")
+
+    # Recommendations
+    print("\n\n" + "="*80)
+    print("RECOMMENDATIONS")
+    print("="*80)
+
+    if with_data:
+        print("\n✅ Update your agents to use the datastores with data (shown above)")
+
+    gmail_empty = any(v['type'] == 'Gmail' and v['count'] == 0 for v in results.values())
+    calendar_empty = any(v['type'] == 'Calendar' and v['count'] == 0 for v in results.values())
+    drive_empty = any(v['type'] == 'Drive' and v['count'] == 0 for v in results.values())
+
+    if gmail_empty or calendar_empty or drive_empty:
+        print("\n⚠️  Gmail/Calendar/Drive datastores are empty via API")
+        print("\nThis suggests:")
+        print("  1. Gemini Enterprise Plus uses direct Workspace API access")
+        print("  2. Not Discovery Engine datastores for Gmail/Calendar/Drive")
+        print("\n✅ SOLUTION: Use direct Gmail/Calendar/Drive APIs in your agents")
+        print("   (Already implemented in updated agent code)")
+
     print()
 
 
