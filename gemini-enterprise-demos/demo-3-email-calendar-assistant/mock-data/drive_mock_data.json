@@ -1,0 +1,110 @@
+{
+  "documents": [
+    {
+      "name": "Q1_Roadmap_Draft.pdf",
+      "type": "application/pdf",
+      "folder": "Product Planning",
+      "content": "Q1 2026 Product Roadmap\n\nPriorities:\n1. AI-powered search enhancements\n2. Multi-modal document processing\n3. Enterprise security features\n4. API integrations\n\nTimeline:\n- January: Development kick-off\n- February: Beta testing\n- March: General availability\n\nResources:\n- 5 engineers\n- 2 designers\n- 1 product manager\n\nBudget: $500K",
+      "sharing": "team",
+      "created_date": "2025-11-15"
+    },
+    {
+      "name": "API_Integration_Proposal.pdf",
+      "type": "application/pdf",
+      "folder": "Vendor Documents",
+      "content": "API Integration Proposal\nVendor: TechPartners Inc.\n\nScope:\n- REST API development\n- Authentication setup\n- Documentation\n- Testing and deployment\n\nTimeline: 4 weeks\n\nPhase 1 (Week 1): Requirements gathering\nPhase 2 (Week 2-3): Development\nPhase 3 (Week 4): Testing and deployment\n\nCost: $75,000\n\nDeliverables:\n- Fully functional API\n- Complete documentation\n- Test suite\n- Deployment support",
+      "sharing": "private",
+      "created_date": "2025-11-16"
+    },
+    {
+      "name": "Customer_Feedback_Nov2025.pdf",
+      "type": "application/pdf",
+      "folder": "Customer Feedback",
+      "content": "Enterprise Demo Feedback - Prospect Corp\n\nDate: November 12, 2025\nAttendees: CTO, VP Engineering, 3 Senior Developers\n\nHighlights:\n✓ AI-powered search impressed the team\n✓ Multi-modal capabilities are a game-changer\n✓ Real-time collaboration features loved by developers\n\nConcerns:\n- Pricing model needs clarification\n- Integration with existing systems\n- Data privacy and compliance\n\nNext Steps:\n1. Schedule pilot program discussion\n2. Provide detailed security documentation\n3. Custom pricing proposal\n\nDeal Size: $250K ARR\nClose Probability: 75%",
+      "sharing": "sales_team",
+      "created_date": "2025-11-12"
+    },
+    {
+      "name": "Infrastructure_Cost_Analysis.xlsx",
+      "type": "application/vnd.google-apps.spreadsheet",
+      "folder": "Finance",
+      "content": "Infrastructure Cost Analysis Q4 2025\n\nCurrent Monthly Costs:\n- Compute: $45,000\n- Storage: $12,000\n- Networking: $8,000\n- Databases: $15,000\nTotal: $80,000/month\n\nOptimization Opportunities:\n1. Rightsizing instances: Save $9,000/month\n2. Reserved instances: Save $12,000/month\n3. Storage lifecycle policies: Save $3,000/month\n4. Network optimization: Save $2,000/month\n\nTotal Savings: $26,000/month (32.5% reduction)\n\nImplementation Timeline: 6 weeks",
+      "sharing": "finance_team",
+      "created_date": "2025-11-14"
+    },
+    {
+      "name": "Meeting_Notes_Sprint_23.docx",
+      "type": "application/vnd.google-apps.document",
+      "folder": "Team Docs",
+      "content": "Sprint 23 Retrospective\n\nDate: November 10, 2025\n\nWhat Went Well:\n- Shipped 8 out of 10 planned features\n- Zero production incidents\n- Great team collaboration\n\nWhat Could Improve:\n- Better estimation on complex tasks\n- More frequent code reviews\n- Improve test coverage\n\nAction Items:\n- Schedule estimation workshop (Alex)\n- Set up daily code review slots (Maria)\n- Add test coverage metrics to CI (Kevin)\n\nNext Sprint Focus:\n- Performance optimizations\n- User feedback implementation\n- Technical debt reduction",
+      "sharing": "team",
+      "created_date": "2025-11-10"
+    },
+    {
+      "name": "Security_Audit_Report_Q3.pdf",
+      "type": "application/pdf",
+      "folder": "Security",
+      "content": "Security Audit Report - Q3 2025\n\nExecutive Summary:\nOverall security posture: STRONG\n\nFindings:\n- 0 Critical vulnerabilities\n- 2 Medium-severity issues (patched)\n- 5 Low-severity recommendations\n\nCompliance Status:\n✓ SOC 2 Type II certified\n✓ ISO 27001 compliant\n✓ GDPR compliant\n✓ HIPAA ready\n\nRecommendations:\n1. Implement MFA for all admin accounts\n2. Update password rotation policy\n3. Enhanced logging for API access\n4. Quarterly security training\n\nNext Audit: February 2026",
+      "sharing": "security_team",
+      "created_date": "2025-10-28"
+    },
+    {
+      "name": "Client_Demo_Script.docx",
+      "type": "application/vnd.google-apps.document",
+      "folder": "Sales Materials",
+      "content": "Enterprise AI Demo Script\n\nDuration: 30 minutes\n\nIntro (3 min):\n- Thank attendees\n- Quick company overview\n- Demo objectives\n\nDemo Flow (20 min):\n\n1. AI-Powered Search (7 min)\n   - Show natural language queries\n   - Multi-modal search (text, images, PDFs)\n   - Real-time results\n\n2. Smart Summaries (5 min)\n   - Document summarization\n   - Email thread summaries\n   - Meeting notes generation\n\n3. Intelligent Agents (8 min)\n   - Email management agent\n   - Calendar optimization\n   - Meeting preparation assistant\n\nQ&A (7 min):\n- Address technical questions\n- Discuss integration options\n- Pricing and next steps",
+      "sharing": "sales_team",
+      "created_date": "2025-11-08"
+    },
+    {
+      "name": "Performance_Review_Template.docx",
+      "type": "application/vnd.google-apps.document",
+      "folder": "HR",
+      "content": "Annual Performance Review Template\n\nEmployee Name: _____________\nReviewer: _____________\nReview Period: _____________\n\nCore Competencies (1-5 scale):\n\n1. Technical Skills: ___\n   Comments: _____________\n\n2. Communication: ___\n   Comments: _____________\n\n3. Leadership: ___\n   Comments: _____________\n\n4. Problem Solving: ___\n   Comments: _____________\n\n5. Teamwork: ___\n   Comments: _____________\n\nGoals Review:\n- Goal 1: _____________\n- Goal 2: _____________\n- Goal 3: _____________\n\nNext Year Goals:\n- Goal 1: _____________\n- Goal 2: _____________\n- Goal 3: _____________\n\nOverall Rating: ___\nSalary Recommendation: ___",
+      "sharing": "hr_managers",
+      "created_date": "2025-11-01"
+    },
+    {
+      "name": "Tech_Stack_Architecture.pdf",
+      "type": "application/pdf",
+      "folder": "Engineering Docs",
+      "content": "Technology Stack & Architecture\n\nFrontend:\n- React 18\n- TypeScript\n- TailwindCSS\n- Vite\n\nBackend:\n- Python 3.11\n- FastAPI\n- PostgreSQL\n- Redis\n\nAI/ML:\n- Google Vertex AI\n- Gemini Pro\n- Vector embeddings\n- Discovery Engine\n\nInfrastructure:\n- Google Cloud Platform\n- Kubernetes (GKE)\n- Cloud Storage\n- Cloud Run\n\nCI/CD:\n- GitHub Actions\n- Cloud Build\n- Terraform\n\nMonitoring:\n- Cloud Logging\n- Cloud Monitoring\n- Error Reporting\n\nSecurity:\n- Cloud IAM\n- Secret Manager\n- VPC Service Controls",
+      "sharing": "engineering_team",
+      "created_date": "2025-10-15"
+    },
+    {
+      "name": "Competitor_Analysis.xlsx",
+      "type": "application/vnd.google-apps.spreadsheet",
+      "folder": "Product Strategy",
+      "content": "Competitive Analysis Matrix\n\nCompetitors:\n1. Microsoft Copilot\n2. Salesforce Einstein\n3. OpenAI Enterprise\n4. Anthropic Claude\n\nFeature Comparison:\n\n                    Us    MSFT   SFDC   OpenAI  Anthropic\nEmail Agent         ✓     ✓      -      -       -\nCalendar Agent      ✓     ✓      -      -       -\nMulti-modal Search  ✓     Partial ✓     -       -\nEnterprise Search   ✓     ✓      ✓      -       -\nCustom Agents       ✓     Limited ✓     ✓       ✓\nGoogle Integration  ✓     -      -      -       -\n\nPricing (per user/month):\nUs: $45\nMicrosoft: $30\nSalesforce: $75\nOpenAI: $60\nAnthropic: $50\n\nOur Differentiators:\n- Native Google Workspace integration\n- Purpose-built agents\n- Lower total cost\n- Faster deployment",
+      "sharing": "leadership",
+      "created_date": "2025-11-05"
+    }
+  ],
+  "folders": [
+    "Product Planning",
+    "Vendor Documents",
+    "Customer Feedback",
+    "Finance",
+    "Team Docs",
+    "Security",
+    "Sales Materials",
+    "HR",
+    "Engineering Docs",
+    "Product Strategy"
+  ],
+  "stats": {
+    "total_documents": 10,
+    "total_folders": 10,
+    "sharing_breakdown": {
+      "team": 3,
+      "private": 1,
+      "sales_team": 2,
+      "finance_team": 1,
+      "security_team": 1,
+      "hr_managers": 1,
+      "engineering_team": 1,
+      "leadership": 1
+    }
+  }
+}
