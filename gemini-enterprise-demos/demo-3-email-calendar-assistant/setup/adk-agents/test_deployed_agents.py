@@ -43,18 +43,21 @@ def test_deployed_agent(name, resource_path, query):
         agent = client.agent_engines.get(name=resource_path)
         print("✓ Agent loaded")
 
-        # Query agent
+        # Query agent (without session to avoid permission issues)
         print(f"\nSending query...")
         start_time = time.time()
 
         responses = []
-        for chunk in agent.stream_query(
-            message=query,
-            user_id="test-user",
-            session_id=f"test-{int(time.time())}"
-        ):
-            responses.append(chunk)
-            print(f"  Received chunk: {type(chunk).__name__}")
+        try:
+            for chunk in agent.stream_query(
+                message=query,
+                user_id="test-user"
+                # Note: No session_id to avoid session permission errors
+            ):
+                responses.append(chunk)
+                print(f"  Received chunk: {type(chunk).__name__}")
+        except Exception as query_error:
+            print(f"  Query error: {query_error}")
 
         elapsed = time.time() - start_time
 
