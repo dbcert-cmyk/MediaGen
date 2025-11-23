@@ -1,11 +1,12 @@
 """
 Calendar Agent - Handles meeting scheduling and calendar optimization
-Part of Gemini Enterprise Demo #3
+Part of Gemini Enterprise Demo #3 - Using Google Calendar API directly
 """
 
 import os
 from google.adk.agents import Agent
-from google.cloud import discoveryengine_v1
+from googleapiclient.discovery import build
+from google.auth import default
 from typing import List, Dict, Any, Optional
 import datetime
 from dateutil import parser as date_parser
@@ -13,10 +14,65 @@ from dateutil import parser as date_parser
 # Configuration
 PROJECT_ID = os.environ.get("PROJECT_ID", "ai-testing-458318")
 LOCATION = os.environ.get("LOCATION", "us-central1")
-CALENDAR_DATASTORE = f"projects/{PROJECT_ID}/locations/global/collections/default_collection/dataStores/demo-calendar-datastore_1763851980966_google_calendar"
 
 
-# Helper functions
+def _get_calendar_service():
+    """Get authenticated Google Calendar API service"""
+    credentials, _ = default(scopes=['https://www.googleapis.com/auth/calendar.readonly'])
+    service = build('calendar', 'v3', credentials=credentials)
+    return service
+
+
+def _parse_calendar_event(event) -> Dict[str, Any]:
+    """Parse Google Calendar API event into standard format"""
+    return {
+        "id": event.get('id', ''),
+        "title": event.get('summary', 'No Title'),
+        "start": event.get('start', {}).get('dateTime', event.get('start', {}).get('date', '')),
+        "end": event.get('end', {}).get('dateTime', event.get('end', {}).get('date', '')),
+        "attendees": [a.get('email', '') for a in event.get('attendees', [])],
+        "location": event.get('location', ''),
+        "description": event.get('description', ''),
+        "status": event.get('status', 'confirmed')
+    }
+
+
+def _get_calendar_events(user_email: str, time_range: str) -> List[Dict]:
+    """Query Google Calendar for events"""
+    try:
+        service = _get_calendar_service()
+
+        # Parse time range
+        if time_range == "today":
+            time_min = datetime.datetime.now().replace(hour=0, minute=0, second=0)
+            time_max = time_min + datetime.timedelta(days=1)
+        elif time_range == "this_week":
+            time_min = datetime.datetime.now()
+            time_max = time_min + datetime.timedelta(days=7)
+        elif time_range == "next_30_days":
+            time_min = datetime.datetime.now()
+            time_max = time_min + datetime.timedelta(days=30)
+        else:  # next_7_days
+            time_min = datetime.datetime.now()
+            time_max = time_min + datetime.timedelta(days=7)
+
+        # Query calendar
+        events_result = service.events().list(
+            calendarId='primary',
+            timeMin=time_min.isoformat() + 'Z',
+            timeMax=time_max.isoformat() + 'Z',
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+
+        events = events_result.get('items', [])
+        return [_parse_calendar_event(e) for e in events]
+
+    except Exception as e:
+        print(f"Error fetching calendar events: {e}")
+        return []
+
+
 def _get_attendee_availability(
     attendees: List[str],
     date_range: str
@@ -98,18 +154,11 @@ def _calculate_end_time(start_time: str, duration_minutes: int) -> str:
     return end.isoformat()
 
 
-def _get_calendar_events(user_email: str, time_range: str) -> List[Dict]:
-    """Query calendar data store for events"""
-    # In production, query Gemini Enterprise Calendar data store
-    # For demo, return mock events
-    return []
-
-
 def _calculate_meeting_hours(events: List[Dict]) -> float:
     """Calculate total hours in meetings"""
     total_minutes = sum(
         (date_parser.parse(e["end"]) - date_parser.parse(e["start"])).seconds / 60
-        for e in events
+        for e in events if e.get("start") and e.get("end")
     )
     return round(total_minutes / 60, 1)
 
@@ -127,9 +176,10 @@ def _find_overload_days(events: List[Dict]) -> List[str]:
     """Find days with excessive meeting time"""
     day_hours = {}
     for event in events:
-        day = date_parser.parse(event["start"]).date().isoformat()
-        duration = (date_parser.parse(event["end"]) - date_parser.parse(event["start"])).seconds / 3600
-        day_hours[day] = day_hours.get(day, 0) + duration
+        if event.get("start") and event.get("end"):
+            day = date_parser.parse(event["start"]).date().isoformat()
+            duration = (date_parser.parse(event["end"]) - date_parser.parse(event["start"])).seconds / 3600
+            day_hours[day] = day_hours.get(day, 0) + duration
 
     return [day for day, hours in day_hours.items() if hours >= 5]
 
@@ -187,15 +237,19 @@ def _all_attendees_free(
     """Check if all attendees are free"""
     for attendee, events in availability.items():
         for event in events:
-            event_start = date_parser.parse(event["start"])
-            event_end = date_parser.parse(event["end"])
-            if not (slot_end <= event_start or slot_start >= event_end):
-                return False
+            if event.get("start") and event.get("end"):
+                event_start = date_parser.parse(event["start"])
+                event_end = date_parser.parse(event["end"])
+                if not (slot_end <= event_start or slot_start >= event_end):
+                    return False
     return True
 
 
 def _events_overlap(event1: Dict, event2: Dict) -> bool:
     """Check if two events overlap"""
+    if not (event1.get("start") and event1.get("end") and event2.get("start") and event2.get("end")):
+        return False
+
     start1 = date_parser.parse(event1["start"])
     end1 = date_parser.parse(event1["end"])
     start2 = date_parser.parse(event2["start"])
@@ -243,20 +297,27 @@ def find_meeting_time(
     Returns:
         List of available time slots with scoring
     """
-    # Get availability for all attendees
-    availability = _get_attendee_availability(attendees, date_range)
+    try:
+        # Get availability for all attendees
+        availability = _get_attendee_availability(attendees, date_range)
 
-    # Find overlapping free slots
-    free_slots = _find_free_slots(
-        availability,
-        duration_minutes,
-        preferred_time_range
-    )
+        # Find overlapping free slots
+        free_slots = _find_free_slots(
+            availability,
+            duration_minutes,
+            preferred_time_range
+        )
 
-    # Score and rank slots
-    ranked_slots = _rank_time_slots(free_slots, attendees)
+        # Score and rank slots
+        ranked_slots = _rank_time_slots(free_slots, attendees)
 
-    return ranked_slots[:5]  # Return top 5 options
+        return ranked_slots[:5]  # Return top 5 options
+
+    except Exception as e:
+        return [{
+            "error": str(e),
+            "message": "Failed to find meeting times"
+        }]
 
 
 def schedule_meeting(
@@ -293,13 +354,13 @@ def schedule_meeting(
         "status": "confirmed"
     }
 
-    # Log for demo
-    print(f"Creating meeting: {title} at {start_time}")
-    print(f"Attendees: {', '.join(attendees)}")
-    if send_invites:
-        print(f"Sending invites to {len(attendees)} attendees")
-
-    return event
+    # Note: Actually creating events would require write scope
+    # For read-only demo, we just return the event structure
+    return {
+        "status": "event_planned",
+        "event": event,
+        "message": "Event details prepared. To actually create, grant calendar write access."
+    }
 
 
 def optimize_calendar(
@@ -316,44 +377,51 @@ def optimize_calendar(
     Returns:
         Analysis and recommendations
     """
-    # Get user's calendar events
-    events = _get_calendar_events(user_email, time_range)
+    try:
+        # Get user's calendar events
+        events = _get_calendar_events(user_email, time_range)
 
-    analysis = {
-        "total_meetings": len(events),
-        "total_hours": _calculate_meeting_hours(events),
-        "back_to_back_meetings": _find_back_to_back(events),
-        "meeting_overload_days": _find_overload_days(events),
-        "fragmented_time": _find_fragmented_time(events),
-        "recommendations": []
-    }
+        analysis = {
+            "total_meetings": len(events),
+            "total_hours": _calculate_meeting_hours(events),
+            "back_to_back_meetings": _find_back_to_back(events),
+            "meeting_overload_days": _find_overload_days(events),
+            "fragmented_time": _find_fragmented_time(events),
+            "recommendations": []
+        }
 
-    # Generate recommendations
-    if analysis["back_to_back_meetings"]:
-        analysis["recommendations"].append({
-            "type": "add_breaks",
-            "priority": "high",
-            "message": f"You have {len(analysis['back_to_back_meetings'])} back-to-back meetings. Consider adding 15-min buffers.",
-            "suggested_actions": _suggest_break_times(analysis["back_to_back_meetings"])
-        })
+        # Generate recommendations
+        if analysis["back_to_back_meetings"]:
+            analysis["recommendations"].append({
+                "type": "add_breaks",
+                "priority": "high",
+                "message": f"You have {len(analysis['back_to_back_meetings'])} back-to-back meetings. Consider adding 15-min buffers.",
+                "suggested_actions": _suggest_break_times(analysis["back_to_back_meetings"])
+            })
 
-    if analysis["meeting_overload_days"]:
-        analysis["recommendations"].append({
-            "type": "redistribute_meetings",
-            "priority": "medium",
-            "message": f"{len(analysis['meeting_overload_days'])} day(s) have 5+ hours of meetings.",
-            "suggested_actions": _suggest_reschedule(analysis["meeting_overload_days"])
-        })
+        if analysis["meeting_overload_days"]:
+            analysis["recommendations"].append({
+                "type": "redistribute_meetings",
+                "priority": "medium",
+                "message": f"{len(analysis['meeting_overload_days'])} day(s) have 5+ hours of meetings.",
+                "suggested_actions": _suggest_reschedule(analysis["meeting_overload_days"])
+            })
 
-    if analysis["fragmented_time"]:
-        analysis["recommendations"].append({
-            "type": "consolidate_focus_time",
-            "priority": "medium",
-            "message": "Calendar has fragmented time blocks. Consider grouping meetings.",
-            "suggested_actions": ["Block 2-hour focus time slots", "Move 1:1s to same day"]
-        })
+        if analysis["fragmented_time"]:
+            analysis["recommendations"].append({
+                "type": "consolidate_focus_time",
+                "priority": "medium",
+                "message": "Calendar has fragmented time blocks. Consider grouping meetings.",
+                "suggested_actions": ["Block 2-hour focus time slots", "Move 1:1s to same day"]
+            })
 
-    return analysis
+        return analysis
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "message": "Failed to optimize calendar"
+        }
 
 
 def get_daily_schedule(user_email: str) -> Dict[str, Any]:
@@ -366,32 +434,35 @@ def get_daily_schedule(user_email: str) -> Dict[str, Any]:
     Returns:
         Today's schedule with meeting prep info
     """
-    today = datetime.datetime.now().date()
-    events = _get_calendar_events(
-        user_email,
-        f"{today.isoformat()}/{today.isoformat()}"
-    )
+    try:
+        events = _get_calendar_events(user_email, "today")
 
-    schedule = {
-        "date": today.isoformat(),
-        "total_meetings": len(events),
-        "first_meeting": events[0]["start"] if events else None,
-        "last_meeting": events[-1]["end"] if events else None,
-        "meetings": []
-    }
-
-    for event in events:
-        meeting_info = {
-            "time": event["start"],
-            "title": event["title"],
-            "attendees": event.get("attendees", []),
-            "location": event.get("location", ""),
-            "prep_needed": _assess_prep_needs(event),
-            "context": _get_meeting_context(event)
+        schedule = {
+            "date": datetime.datetime.now().date().isoformat(),
+            "total_meetings": len(events),
+            "first_meeting": events[0]["start"] if events else None,
+            "last_meeting": events[-1]["end"] if events else None,
+            "meetings": []
         }
-        schedule["meetings"].append(meeting_info)
 
-    return schedule
+        for event in events:
+            meeting_info = {
+                "time": event["start"],
+                "title": event["title"],
+                "attendees": event.get("attendees", []),
+                "location": event.get("location", ""),
+                "prep_needed": _assess_prep_needs(event),
+                "context": _get_meeting_context(event)
+            }
+            schedule["meetings"].append(meeting_info)
+
+        return schedule
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "message": "Failed to get daily schedule"
+        }
 
 
 def resolve_conflicts(user_email: str) -> List[Dict[str, Any]]:
@@ -404,29 +475,36 @@ def resolve_conflicts(user_email: str) -> List[Dict[str, Any]]:
     Returns:
         List of conflicts with resolution suggestions
     """
-    events = _get_calendar_events(user_email, "next_30_days")
+    try:
+        events = _get_calendar_events(user_email, "next_30_days")
 
-    conflicts = []
-    for i, event1 in enumerate(events):
-        for event2 in events[i+1:]:
-            if _events_overlap(event1, event2):
-                conflict = {
-                    "conflict_type": "double_booking",
-                    "event1": event1,
-                    "event2": event2,
-                    "severity": _assess_conflict_severity(event1, event2),
-                    "suggestions": _generate_resolution_options(event1, event2)
-                }
-                conflicts.append(conflict)
+        conflicts = []
+        for i, event1 in enumerate(events):
+            for event2 in events[i+1:]:
+                if _events_overlap(event1, event2):
+                    conflict = {
+                        "conflict_type": "double_booking",
+                        "event1": event1,
+                        "event2": event2,
+                        "severity": _assess_conflict_severity(event1, event2),
+                        "suggestions": _generate_resolution_options(event1, event2)
+                    }
+                    conflicts.append(conflict)
 
-    return conflicts
+        return conflicts
+
+    except Exception as e:
+        return [{
+            "error": str(e),
+            "message": "Failed to resolve conflicts"
+        }]
 
 
 # Create the agent - ADK automatically wraps functions as FunctionTools
 root_agent = Agent(
     name="calendar_agent",
     model="gemini-2.5-pro",
-    instruction="You are a calendar management agent. Help users find optimal meeting times, schedule events, optimize their calendar, resolve conflicts, and get daily schedule briefings. Use available tools to query calendar data and coordinate with multiple attendees. Prioritize work-life balance and efficient time management.",
-    description="Smart calendar management assistant that optimizes scheduling through intelligent meeting time discovery, automated conflict resolution, calendar optimization, and daily schedule briefings. Coordinates across multiple attendees while prioritizing work-life balance and productive time management.",
+    instruction="You are a calendar management agent. Help users find optimal meeting times, schedule events, optimize their calendar, resolve conflicts, and get daily schedule briefings. Use available tools to query Google Calendar directly and coordinate with multiple attendees. Prioritize work-life balance and efficient time management.",
+    description="Smart calendar management assistant that optimizes scheduling through intelligent meeting time discovery, automated conflict resolution, calendar optimization, and daily schedule briefings. Uses Google Calendar API for direct access to calendar data.",
     tools=[find_meeting_time, schedule_meeting, optimize_calendar, get_daily_schedule, resolve_conflicts]
 )
