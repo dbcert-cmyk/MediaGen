@@ -202,6 +202,27 @@ def list_demo_files(service):
         print(f"- {file['name']} ({file['mimeType']})")
 
 
+def verify_drive_access(service, target_email=None):
+    """Verify we can access Drive for the target account"""
+    try:
+        about = service.about().get(fields='user').execute()
+        current_email = about['user']['emailAddress']
+
+        print(f"\n✓ Authenticated as: {current_email}")
+
+        if target_email and target_email.lower() != current_email.lower():
+            print(f"❌ ERROR: You specified {target_email}")
+            print(f"   But you're authenticated as {current_email}")
+            print(f"\nPlease authenticate as {target_email} or use {current_email}")
+            return None
+
+        return current_email
+
+    except Exception as e:
+        print(f"❌ Error accessing Drive: {e}")
+        return None
+
+
 def main():
     """Main entry point"""
     print("="*60)
@@ -216,14 +237,36 @@ def main():
     print("4. Files will be created in 'Demo Data' folder")
     print()
 
-    response = input("Ready to populate Drive with mock data? (yes/no): ")
-    if response.lower() != 'yes':
-        print("Cancelled.")
-        return
+    # Ask for target email (unless already set by populate_all.py)
+    target_email = os.environ.get('DEMO_TARGET_EMAIL', '').strip()
+
+    if not target_email:
+        print("Which Drive account should receive the mock data?")
+        print("(This should match your Discovery Engine datastore connection)")
+        target_email = input("Enter email address: ").strip()
+
+        if not target_email:
+            print("❌ Error: Email address is required")
+            return
+
+    print()
 
     try:
         service = create_drive_service()
-        print("✓ Drive API authenticated\n")
+        print("✓ Drive API authenticated")
+
+        # Verify we can access the target account
+        verified_email = verify_drive_access(service, target_email)
+        if not verified_email:
+            return
+
+        print(f"\n🎯 Mock data will be created in: {verified_email}")
+        print()
+
+        response = input("Continue? (yes/no): ")
+        if response.lower() != 'yes':
+            print("Cancelled.")
+            return
 
         populate_drive_from_json(service)
 

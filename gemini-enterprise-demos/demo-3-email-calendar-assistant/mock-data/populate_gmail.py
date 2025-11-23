@@ -108,6 +108,27 @@ def populate_emails_from_json(service, json_file='gmail_mock_data.json'):
     print("Check sync status with: python ../setup/adk-agents/check_datastores.py")
 
 
+def verify_gmail_access(service, target_email=None):
+    """Verify we can access Gmail for the target account"""
+    try:
+        profile = service.users().getProfile(userId='me').execute()
+        current_email = profile['emailAddress']
+
+        print(f"\n✓ Authenticated as: {current_email}")
+
+        if target_email and target_email.lower() != current_email.lower():
+            print(f"❌ ERROR: You specified {target_email}")
+            print(f"   But you're authenticated as {current_email}")
+            print(f"\nPlease authenticate as {target_email} or use {current_email}")
+            return None
+
+        return current_email
+
+    except Exception as e:
+        print(f"❌ Error accessing Gmail: {e}")
+        return None
+
+
 def main():
     """Main entry point"""
     print("="*60)
@@ -121,14 +142,36 @@ def main():
     print("3. Grant Gmail permissions when prompted")
     print()
 
-    response = input("Ready to populate Gmail with mock data? (yes/no): ")
-    if response.lower() != 'yes':
-        print("Cancelled.")
-        return
+    # Ask for target email (unless already set by populate_all.py)
+    target_email = os.environ.get('DEMO_TARGET_EMAIL', '').strip()
+
+    if not target_email:
+        print("Which Gmail account should receive the mock data?")
+        print("(This should match your Discovery Engine datastore connection)")
+        target_email = input("Enter email address: ").strip()
+
+        if not target_email:
+            print("❌ Error: Email address is required")
+            return
+
+    print()
 
     try:
         service = create_gmail_service()
-        print("✓ Gmail API authenticated\n")
+        print("✓ Gmail API authenticated")
+
+        # Verify we can access the target account
+        verified_email = verify_gmail_access(service, target_email)
+        if not verified_email:
+            return
+
+        print(f"\n🎯 Mock data will be created in: {verified_email}")
+        print()
+
+        response = input("Continue? (yes/no): ")
+        if response.lower() != 'yes':
+            print("Cancelled.")
+            return
 
         populate_emails_from_json(service)
 

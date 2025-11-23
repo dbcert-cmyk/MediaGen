@@ -173,6 +173,27 @@ def clear_demo_events(service):
     print(f"Deleted {deleted_count} events")
 
 
+def verify_calendar_access(service, target_email=None):
+    """Verify we can access Calendar for the target account"""
+    try:
+        cal_list = service.calendarList().get(calendarId='primary').execute()
+        current_email = cal_list.get('id', 'Unknown')
+
+        print(f"\n✓ Authenticated as: {current_email}")
+
+        if target_email and target_email.lower() != current_email.lower():
+            print(f"❌ ERROR: You specified {target_email}")
+            print(f"   But you're authenticated as {current_email}")
+            print(f"\nPlease authenticate as {target_email} or use {current_email}")
+            return None
+
+        return current_email
+
+    except Exception as e:
+        print(f"❌ Error accessing Calendar: {e}")
+        return None
+
+
 def main():
     """Main entry point"""
     print("="*60)
@@ -187,14 +208,36 @@ def main():
     print("4. Events will be created in current week (preserving times)")
     print()
 
-    response = input("Ready to populate Calendar with mock data? (yes/no): ")
-    if response.lower() != 'yes':
-        print("Cancelled.")
-        return
+    # Ask for target email (unless already set by populate_all.py)
+    target_email = os.environ.get('DEMO_TARGET_EMAIL', '').strip()
+
+    if not target_email:
+        print("Which Calendar account should receive the mock data?")
+        print("(This should match your Discovery Engine datastore connection)")
+        target_email = input("Enter email address: ").strip()
+
+        if not target_email:
+            print("❌ Error: Email address is required")
+            return
+
+    print()
 
     try:
         service = create_calendar_service()
-        print("✓ Calendar API authenticated\n")
+        print("✓ Calendar API authenticated")
+
+        # Verify we can access the target account
+        verified_email = verify_calendar_access(service, target_email)
+        if not verified_email:
+            return
+
+        print(f"\n🎯 Mock data will be created in: {verified_email}")
+        print()
+
+        response = input("Continue? (yes/no): ")
+        if response.lower() != 'yes':
+            print("Cancelled.")
+            return
 
         populate_calendar_from_json(service)
 
