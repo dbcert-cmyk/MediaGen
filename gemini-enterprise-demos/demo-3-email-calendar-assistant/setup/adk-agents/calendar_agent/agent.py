@@ -7,6 +7,7 @@ import os
 from google.adk.agents import Agent
 from googleapiclient.discovery import build
 from google.auth import default
+from google.oauth2 import service_account
 from typing import List, Dict, Any, Optional
 import datetime
 from dateutil import parser as date_parser
@@ -15,12 +16,43 @@ from dateutil import parser as date_parser
 PROJECT_ID = os.environ.get("PROJECT_ID", "ai-testing-458318")
 LOCATION = os.environ.get("LOCATION", "us-central1")
 
+# Calendar API scopes
+CALENDAR_SCOPES = [
+    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/calendar.events'
+]
 
-def _get_calendar_service():
-    """Get authenticated Google Calendar API service"""
-    credentials, _ = default(scopes=['https://www.googleapis.com/auth/calendar.readonly'])
-    service = build('calendar', 'v3', credentials=credentials)
-    return service
+
+def _get_calendar_service(user_email: str = None):
+    """
+    Get authenticated Google Calendar API service with domain-wide delegation.
+
+    Args:
+        user_email: Email of user to impersonate. If None, tries to use default credentials.
+
+    Returns:
+        Calendar API service object
+    """
+    try:
+        # Get default credentials (service account in Vertex AI)
+        credentials, project = default()
+
+        # If we have a user email and credentials support delegation, impersonate the user
+        if user_email and hasattr(credentials, 'with_subject'):
+            # This is a service account - use domain-wide delegation
+            credentials = credentials.with_subject(user_email)
+            credentials = credentials.with_scopes(CALENDAR_SCOPES)
+        elif hasattr(credentials, 'with_scopes'):
+            # Add required scopes
+            credentials = credentials.with_scopes(CALENDAR_SCOPES)
+
+        service = build('calendar', 'v3', credentials=credentials)
+        return service
+    except Exception as e:
+        print(f"Error getting Calendar service: {e}")
+        # Return a service with default credentials as fallback
+        credentials, _ = default()
+        return build('calendar', 'v3', credentials=credentials)
 
 
 def _parse_calendar_event(event) -> Dict[str, Any]:
@@ -40,7 +72,7 @@ def _parse_calendar_event(event) -> Dict[str, Any]:
 def _get_calendar_events(user_email: str, time_range: str) -> List[Dict]:
     """Query Google Calendar for events"""
     try:
-        service = _get_calendar_service()
+        service = _get_calendar_service(user_email=user_email)
 
         # Parse time range
         if time_range == "today":
